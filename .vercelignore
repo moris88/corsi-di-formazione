@@ -1,0 +1,6 @@
+# Su Vercel il sito è statico (dist/): il server Express serve solo in locale
+server.mjs
+nodemon.json
+others/
+dist/
+node_modules/
