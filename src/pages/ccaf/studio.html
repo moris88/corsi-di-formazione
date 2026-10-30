@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1e1e1e" />
+    <meta
+      name="description"
+      content="Guida e materiali di studio per la certificazione Claude Certified Architect – Foundations."
+    />
+    <title>Materiali di studio · Claude Certified Architect</title>
+    <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../../css/ccaf/studio.css" />
+    <script src="../../js/theme.js"></script>
+  </head>
+  <body class="page-study" data-home="../ccaf.html">
+    <header class="topbar">
+      <a
+        class="brand"
+        href="../../index.html"
+        aria-label="Torna a tutte le certificazioni"
+        title="Torna a tutte le certificazioni"
+      >
+        <image src="../../assets/ccaf.png" class="brand-mark" aria-hidden="true"></image>
+        <span class="brand-name" data-short="CCA-F">Claude Certified Architect<br />Foundations</span>
+      </a>
+      <div class="topbar-actions">
+        <span class="topbar-note"
+          >
+          <span>By</span>
+          <a
+            class="brand"
+            href="https://www.mauriziotolomeo.it"
+            aria-label="Visita il sito di Maurizio Tolomeo"
+            title="Visita il sito di Maurizio Tolomeo"
+          >
+            Maurizio Tolomeo
+          </a></span
+        >
+      </div>
+    </header>
+    <div class="read-progress" aria-hidden="true">
+      <span id="read-progress-fill"></span>
+    </div>
+
+    <div class="workspace">
+      <aside class="catalog" aria-label="Catalogo dei materiali">
+        <div class="catalog-head">
+          <p class="catalog-kicker">Biblioteca CCA-F</p>
+          <h2 class="catalog-title">Materiali</h2>
+        </div>
+        <div class="search-wrap">
+          <label for="catalog-search">Cerca nella teoria</label>
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input
+            class="search-input"
+            id="catalog-search"
+            data-search
+            type="search"
+            placeholder="Cerca nella teoria…"
+            autocomplete="off"
+          />
+        </div>
+        <nav id="catalog-nav" aria-label="Materiali di studio"></nav>
+      </aside>
+
+      <details class="mobile-catalog">
+        <summary>Apri il catalogo dei materiali</summary>
+        <div class="search-wrap">
+          <label for="catalog-search-mobile">Cerca nella teoria</label>
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input
+            class="search-input"
+            id="catalog-search-mobile"
+            data-search
+            type="search"
+            placeholder="Cerca nella teoria…"
+            autocomplete="off"
+          />
+        </div>
+        <nav id="mobile-catalog-nav" aria-label="Materiali di studio"></nav>
+      </details>
+
+      <main class="article-shell" id="main-content">
+        <div class="article-topline">
+          <span class="article-category" id="article-category"
+            >Materiali di studio</span
+          >
+          <div class="article-nav">
+            <button
+              class="icon-button"
+              id="previous-doc"
+              type="button"
+              title="Documento precedente"
+              aria-label="Documento precedente"
+            >
+              ←
+            </button>
+            <button
+              class="icon-button"
+              id="next-doc"
+              type="button"
+              title="Documento successivo"
+              aria-label="Documento successivo"
+            >
+              →
+            </button>
+            <button
+              class="icon-button"
+              id="share-doc"
+              type="button"
+              title="Condividi il link"
+              aria-label="Condividi il link"
+            >
+              <svg class="icon-button-svg" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M10 14a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5" />
+                <path d="M14 10a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <header class="article-header">
+          <h1 class="article-title" id="article-title">Caricamento…</h1>
+          <p class="article-description" id="article-description"></p>
+          <div class="article-meta" id="article-meta"></div>
+        </header>
+        <div class="status" id="reader-status" role="status" aria-live="polite">
+          Apro il documento…
+        </div>
+        <article class="article-content" id="article-content" hidden></article>
+        <details class="mobile-toc" id="mobile-toc" hidden>
+          <summary>Indice del documento</summary>
+          <nav
+            class="toc-list"
+            id="mobile-toc-list"
+            aria-label="Indice del documento"
+          ></nav>
+        </details>
+      </main>
+
+      <aside class="toc" aria-label="Indice del documento">
+        <p class="toc-title">In questo documento</p>
+        <nav class="toc-list" id="toc-list"></nav>
+        <p class="toc-empty" id="toc-empty">Nessuna sezione</p>
+      </aside>
+    </div>
+    <footer class="footer-bar">
+      <span>Claude Certified Architect · Foundations</span>
+      <span><a href="./simulazione.html">Apri la simulazione d’esame</a></span>
+    </footer>
+
+    <script type="module" src="../../js/ccaf/studio.js"></script>
+  </body>
+</html>

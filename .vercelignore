@@ -1,6 +1,4 @@
-# Su Vercel il sito è statico (dist/): il server Express serve solo in locale
-server.mjs
+# Ignora i file e le cartelle non necessari per il deploy su Vercel
 nodemon.json
-others/
 dist/
 node_modules/

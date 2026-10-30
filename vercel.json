@@ -4,15 +4,8 @@
   "installCommand": "npm install",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "cleanUrls": false,
-  "headers": [
-    {
-      "source": "/(.*)\\.(html|md|css|js)",
-      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
-    },
-    {
-      "source": "/(.*)\\.(png|webp|jpg|svg|pdf)",
-      "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400" }]
-    }
-  ]
+  "functions": {
+    "api/index.mjs": { "includeFiles": "dist/**" }
+  },
+  "routes": [{ "src": "/(.*)", "dest": "/api/index.mjs" }]
 }

@@ -6,58 +6,57 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Materiali di studio in italiano sui corsi Anthropic. La parte "applicativa" è un piccolo sito statico per la preparazione alla certificazione **Claude Certified Architect — Foundations (CCA-F)**; le altre cartelle tematiche (`Sviluppo con l'API di Claude/`, `Introduzione agli agent skills/`, ecc.) contengono solo appunti Markdown, PDF e notebook.
 
-Tutti i contenuti e i testi dell'interfaccia sono in **italiano**; le banche quesiti in `CCA-F/questions/` sono in **inglese** (come l'esame reale).
+Tutti i contenuti e i testi dell'interfaccia sono in **italiano**; le banche quesiti in `src/assets/ccaf/questions/` sono in **inglese** (come l'esame reale).
 
 ## Esecuzione
 
-HTML/CSS/JS vanilla, nessun framework e nessun test. Le uniche dipendenze npm servono al server Express e alla build di minimizzazione; i sorgenti funzionano anche senza.
-
-Le pagine caricano i Markdown con `fetch()`, quindi vanno servite da un server (da `file://` il caricamento fallisce). In sviluppo, sui sorgenti, dalla radice del repo:
-
-```bash
-npx serve .        # oppure: python -m http.server
-```
-
-In produzione il sito è servito da Express (`server.mjs`: gzip, `Cache-Control` no-cache per HTML/MD/CSS/JS e un giorno per immagini e PDF, 404 con la home) a partire dalla build minimizzata in `dist/` (non versionata):
+HTML/CSS/JS vanilla, nessun framework UI e nessun test. Strumenti: **Vite** (dev server e build), **Biome** (lint e formattazione), Express per servire la build.
 
 ```bash
 npm install
-npm run build      # scripts/build.mjs: copia index.html, src/, public/ e CCA-F/ in dist/ minimizzando HTML (con CSS inline), CSS e JS
-npm start          # http://localhost:3000 (porta da PORT)
+npm run dev        # Vite su src/ (con hot reload); le pagine caricano i Markdown con fetch(), quindi serve sempre un server
+npm run build      # vite build: src/ → dist/ minimizzata
+npm start          # Express su dist/ (http://localhost:3001, porta da PORT)
 npm run serve      # build + start
-npm run dev        # nodemon (nodemon.json): a ogni modifica di index.html, src/, public/, CCA-F/, server.mjs o scripts/ rifà la build e riavvia il server
+npm run check      # Biome: lint + formattazione (npm run lint / npm run format per i singoli passi)
 ```
 
-Su Vercel non gira Express: `vercel.json` (`framework: null`, `buildCommand: npm run build`, `outputDirectory: dist`) pubblica `dist/` come sito statico e replica le intestazioni di cache; `.vercelignore` esclude `server.mjs`, `nodemon.json` e `others/` dal deploy. Senza `vercel.json` Vercel tratterebbe il progetto come app Express (dove `express.static` non è usato) o pubblicherebbe solo `public/`, e il CSS non verrebbe servito.
+**Build** (`vite.config.mjs`, root `src/`, uscita `dist/` non versionata): ogni `.html` di `src/` è un input. Vite raggruppa e minimizza CSS e gli script `type="module"` in `dist/assets/` con hash nel nome; immagini linkate dagli HTML finiscono anch'esse in `assets/`. Un plugin (`copy-static`) poi minimizza gli HTML con html-minifier-terser, copia con lo stesso percorso tutti gli altri file di `src/` (Markdown, PDF, immagini, banche quesiti: letti a runtime con `fetch()` o link, Vite non li vede) e minimizza con Terser `js/theme.js` e `server.mjs`. `publicDir` è disattivato: `src/assets/` (logo, icona, Markdown, PDF, banche quesiti) è copiata così com'è in `dist/assets/`, accanto a CSS e JS con hash generati da Vite; le immagini linkate dagli HTML tengono il nome originale (`assetFileNames`), così non compaiono doppie.
+- `src/js/theme.js` resta uno **script classico nel `<head>`** (deve applicare il tema prima del rendering): Vite avvisa che non lo può raggruppare, è voluto. Gli script delle pagine sono invece moduli ES (`type="module"`), quindi senza variabili globali condivise.
+- Biome (`biome.json`) controlla `src/` e `vite.config.mjs`, escludendo i Markdown e `src/others/`; formattazione dell'HTML disattivata.
 
-Dopo ogni modifica ai sorgenti va rieseguito `npm run build`; si modificano sempre i sorgenti, mai `dist/`. Solo `index.html`, `src/`, `public/` e `CCA-F/` finiscono in `dist/`: un nuovo file o cartella pubblica fuori da questi va aggiunto all'array `entries` di `scripts/build.mjs`. Terser accorcia i nomi locali ma non quelli globali degli script.
+**Server**: `src/server.mjs` viene copiato in `dist/` e serve la cartella in cui si trova: gzip, CSS e JS con hash generati da Vite in `assets/` in cache per un anno (`immutable`), `no-cache` per HTML/MD/CSS/JS, un giorno per immagini e PDF, 404 con la home; `/server.mjs` non è scaricabile. Esporta l'app e chiama `listen` solo se avviato direttamente.
 
-I PDF accanto ai Markdown vengono generati a mano con l'estensione VS Code *Markdown PDF* (vedi `.vscode/settings.json`): quando modifichi un `.md` che ha un PDF collegato, il PDF va rigenerato dall'utente.
+**Vercel**: `api/index.mjs` riesporta l'app di `dist/server.mjs` come funzione serverless e `vercel.json` (`framework: null`, `buildCommand: npm run build`) instrada con `routes` ogni richiesta a quella funzione, includendo `dist/**` nel suo bundle (`includeFiles`). Il sito pubblica e serve solo `dist/`; `.vercelignore` esclude `dist/` e `node_modules/` (ricreate da Vercel con install e build).
+
+Si modificano sempre i sorgenti in `src/`, mai `dist/`. I percorsi negli HTML e nei JS sono relativi alla pagina (es. da `src/pages/ccaf/studio.html`: `../../css/style.css`, `../../assets/ccaf/guide/…`); i link `./studio.html?doc=…` nei Markdown restano relativi alla pagina che li mostra. `dist/` e `node_modules/` sono in `.gitignore`.
+
+I Markdown dei materiali non hanno più un PDF accanto: gli unici PDF rimasti sono le slide (`appunti/presentazioni/`) e i documenti ufficiali Anthropic in `src/assets/ccaf/`.
 
 ## Architettura
 
-- `index.html` (radice) — **portale** di tutte le certificazioni (`body.page-home.page-portal`): una scheda `.path` per ogni certificazione. Ogni certificazione vive in una propria cartella (oggi solo `CCA-F/`) con la sua `index.html`; per aggiungerne una: nuova cartella, nuova scheda nel portale, nuova voce in `entries` di `scripts/build.mjs`.
-- `CCA-F/index.html` — home della certificazione CCA-F (`body.page-home`): avviso fisso sugli aggiornamenti d'esame (`.home-alert`, non chiudibile), logo e titolo, dati riassuntivi (domini, scenari, durata, numero di domande, scritti a mano) e i link alle tre pagine.
+- `src/index.html` — **portale** di tutte le certificazioni (`body.page-home.page-portal`): una scheda `.path` per ogni certificazione. Ogni certificazione ha una home `src/pages/<sigla>.html` (oggi solo `src/pages/ccaf.html`) e le sue pagine in `src/pages/<sigla>/`; i suoi Markdown e PDF stanno in `src/assets/<sigla>/`. Per aggiungerne una: nuova home e cartella in `src/pages/`, nuova scheda nel portale.
+- `src/pages/ccaf.html` — home della certificazione CCA-F (`body.page-home`): avviso fisso sugli aggiornamenti d'esame (`.home-alert`, non chiudibile), logo e titolo, dati riassuntivi (domini, scenari, durata, numero di domande, scritti a mano) e i link alle tre pagine.
 - **Header**: nel portale solo la scritta "Certificazioni Anthropic", senza logo. Nelle pagine di una certificazione logo + nome esteso (es. "Claude Certified Architect<br />Foundations"); su mobile il nome è sostituito via CSS (`::after` con `attr(data-short)`) dalla sigla indicata in `data-short` sullo `.brand-name` (es. `data-short="CCA-F"`). Il logo porta sempre al portale.
-- `src/css/style.css` — un unico foglio di stile condiviso da tutte le pagine, diviso in sezioni numerate (componenti condivisi, pagine, tema scuro `:root[data-theme="dark"]`, stampa).
+- `src/css/style.css` — stili **condivisi** (usati da più pagine), divisi in sezioni numerate (token, componenti condivisi, home, elementi comuni studio/esame, pagine d'esame `page-exam`, tema scuro `:root[data-theme="dark"]`, stampa). Le regole che valgono per **una sola pagina** (anche le loro varianti per tema scuro, `@media` e stampa) vanno in `src/css/ccaf/<pagina>.css` (`studio.css`, `allenamento.css`, `simulazione.css`). Ogni CSS di pagina comincia con `@import "../style.css";` e la pagina collega **solo** il proprio CSS: così Vite produce un unico file con le regole condivise prima di quelle della pagina. Con due `<link>` separati, nella build Vite caricherebbe il CSS condiviso (chunk comune) *dopo* quello della pagina, invertendo la cascata. Le home (`index.html`, `pages/ccaf.html`) collegano direttamente `style.css`.
   - **Colori**: il colore principale è il coral (`--coral: #b85a43`), esposto come `--primary`, `--primary-dark`, `--primary-pale`; usare questi token per link, pulsanti e stati attivi. Il verde (`--green*`) è riservato a risposte corrette ed esito superato. Entrambi i temi usano grigi neutri (header `--forest`, grigio scuro), senza tinte verdi.
   - **Pulsanti**: `.button` è il principale (coral pieno); `.button.secondary` è trasparente con bordo e testo coral. Non introdurre varianti di colore per singole pagine o schede.
   - **Responsive**: breakpoint a 1080, 760 e 480 px. Sotto 760 px i pulsanti Home/Feedback diventano solo icone.
 - `src/js/theme.js` — incluso da ogni pagina. Gestisce il tema chiaro/scuro (salvato in `localStorage`) e **inietta nella `.topbar-actions` gli elementi comuni** (link **Home**: nelle pagine di una certificazione porta alla sua home, indicata da `data-home` sul `<body>`; nella home della certificazione porta al portale; assente nel portale (`page-portal`); pulsante tema; link "Segnala / Feedback" alle issue GitHub). Gli elementi che devono essere identici in tutte le pagine vanno aggiunti qui, non duplicati nei singoli HTML.
-- `public/` — file statici condivisi senza elaborazione (immagini come il logo `blob.png`), copiati così come sono nella build.
+- `src/assets/` — file statici condivisi senza elaborazione (immagini come il logo `ccaf.png`), copiati così come sono nella build.
 
-Ogni pagina di `CCA-F/` (studio, simulazione, allenamento) è autonoma e ha `data-home="index.html"` sul `<body>`: il markup è nell’HTML e la logica in un proprio file `src/js/cca-f/<pagina>.js` (script classico, non modulo, caricato in fondo al `<body>`), con il proprio parser Markdown minimale (non una libreria). Gli HTML devono restare il più snelli possibile: niente `<script>` né `<style>` inline e niente attributi `style=`. Gli stili specifici di una pagina vanno in `src/css/cca-f/<pagina>.css` (caricato dopo `style.css`; oggi `allenamento.css` e `simulazione.css`), i testi lunghi in file Markdown caricati con `fetch()` (es. `CCA-F/guida-formato.md`, la guida al formato mostrata nella schermata iniziale di `simulazione.html`). Se cambi la sintassi supportata in una pagina, le altre non ne beneficiano.
+Ogni pagina di `src/pages/ccaf/` (studio, simulazione, allenamento) è autonoma e ha `data-home="../ccaf.html"` sul `<body>`: il markup è nell’HTML e la logica in un proprio file `src/js/ccaf/<pagina>.js` (modulo ES, `<script type="module">` in fondo al `<body>`), con il proprio parser Markdown minimale (non una libreria). Gli HTML devono restare il più snelli possibile: niente `<script>` né `<style>` inline e niente attributi `style=`. Gli stili specifici di una pagina vanno in `src/css/ccaf/<pagina>.css` (vedi sopra), i testi lunghi in file Markdown caricati con `fetch()` (es. `src/assets/ccaf/guida-formato.md`, la guida al formato mostrata nella schermata iniziale di `simulazione.html`). Se cambi la sintassi supportata in una pagina, le altre non ne beneficiano.
 
-- `studio.html` — lettore dei materiali. L'array `documents` in `src/js/cca-f/studio.js` è il catalogo: ogni voce ha `id`, `title`, `group`, `path` (Markdown), opzionali `pdf` / `slidesPdf` (pulsanti di download) e `deep` (id di un altro documento, aperto dal pulsante "Approfondisci"), `index` (etichetta nel menu) e `external: true` per link aperti in una nuova scheda. **L'ordine dei gruppi nel menu laterale e la navigazione precedente/successivo derivano dall'ordine dell'array.** Gruppi attuali: Orientamento, Domini d'esame, Domini approfonditi, Approfondimenti, Esercitazioni, Trappole d'esame, Riferimenti. Il documento aperto è nell'URL (`?doc=<id>#<sezione>`); nei Markdown i link `./studio.html?doc=<id>#<id-titolo>` aprono un altro documento senza ricaricare (l'id del titolo è lo slug generato da `slugify`, quindi rinominare un titolo rompe i link che puntano a esso).
-- `simulazione.html` — simulazione d'esame a tempo. Elenco esplicito dei test (array con `file:` verso `questions/…`), più caricamento di un Markdown dall'utente. Sessione e storico in `localStorage`.
-- `allenamento.html` — quiz di allenamento che pesca domande da tutte le banche. Scopre i test automaticamente provando `questions/Domande e risposte test N - Claude Certified Architect.md` per N crescente, fermandosi dopo due numeri consecutivi mancanti.
+- `studio.html` — lettore dei materiali. L'array `documents` in `src/js/ccaf/studio.js` è il catalogo: ogni voce ha `id`, `title`, `group`, `path` (Markdown), opzionale `slidesPdf` (pulsante "Presentazione"), `index` (etichetta nel menu) e `external: true` per link aperti in una nuova scheda. **L'ordine dei gruppi nel menu laterale e la navigazione precedente/successivo derivano dall'ordine dell'array.** Gruppi attuali: Orientamento, Domini d'esame, Domini approfonditi, Approfondimenti, Esercitazioni, Trappole d'esame, Riferimenti. Il documento aperto è nell'URL (`?doc=<id>#<sezione>`); nei Markdown i link `./studio.html?doc=<id>#<id-titolo>` aprono un altro documento senza ricaricare (l'id del titolo è lo slug generato da `slugify`, quindi rinominare un titolo rompe i link che puntano a esso).
+- `simulazione.html` — simulazione d'esame a tempo. Elenco esplicito dei test (array con `file:` verso `../../assets/ccaf/questions/…`), più caricamento di un Markdown dall'utente. Sessione e storico in `localStorage`.
+- `allenamento.html` — quiz di allenamento che pesca domande da tutte le banche. Scopre i test automaticamente provando `../../assets/ccaf/questions/Domande e risposte test N - Claude Certified Architect.md` per N crescente, fermandosi dopo due numeri consecutivi mancanti.
 
 Quindi un nuovo file di test va nominato secondo quello schema; per vederlo in `simulazione.html` va anche aggiunto al suo array.
 
 ## Formato dei contenuti
 
-- Formato delle banche quesiti: `CCA-F/formato-test.md` (specifica) e `template-test.md` (modello). In breve: frontmatter YAML (`title`, `duration_minutes`), `## Scenario: …`, `### Question N`, opzioni `- **A.** …`, e `#### Correct answer…: X` con spiegazione.
-- Struttura dei materiali di studio: `guide/` (guida d'esame, pre-corso, vocabolario), `appunti/` (spiegazioni e verifiche per dominio; `domains/` approfondimenti tecnici per dominio; `presentazioni/` slide PDF; `approfondimenti/` temi trasversali), `consigli/` (trappole d'esame).
+- Formato delle banche quesiti: `src/assets/ccaf/formato-test.md` (specifica) e `template-test.md` (modello). In breve: frontmatter YAML (`title`, `duration_minutes`), `## Scenario: …`, `### Question N`, opzioni `- **A.** …`, e `#### Correct answer…: X` con spiegazione.
+- Struttura dei materiali di studio (tutti in `src/assets/ccaf/`, insieme ai PDF e alle banche quesiti `questions/`): `guide/` (guida d'esame, pre-corso, vocabolario), `appunti/` (spiegazioni e verifiche per dominio; `domains/` approfondimenti tecnici per dominio; `presentazioni/` slide PDF; `approfondimenti/` temi trasversali), `consigli/` (trappole d'esame).
 - I domini d'esame sono indicati come D1–D5 in tutto il materiale (es. il vocabolario tagga ogni voce con il dominio).
 
 ## Convenzioni

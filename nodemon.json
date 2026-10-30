@@ -1,7 +1,0 @@
-{
-  "watch": ["index.html", "src", "public", "CCA-F", "server.mjs", "scripts"],
-  "ext": "html,css,js,mjs,md,json,png,jpg,svg,pdf",
-  "ignore": ["dist/**", "node_modules/**"],
-  "exec": "node scripts/build.mjs && node server.mjs",
-  "delay": 300
-}

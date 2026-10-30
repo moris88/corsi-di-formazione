@@ -3,9 +3,7 @@
  * La scelta viene salvata in localStorage; senza scelta salvata
  * si segue la preferenza del sistema operativo.
  */
-(function () {
-  "use strict";
-
+(() => {
   const STORAGE_KEY = "ccaf-theme";
   const root = document.documentElement;
   const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -69,7 +67,7 @@
     feedback.target = "_blank";
     feedback.rel = "noopener noreferrer";
     feedback.title = "Segnala un errore o lascia un feedback su GitHub";
-    feedback.setAttribute("aria-label", feedback.title + " (si apre in una nuova scheda)");
+    feedback.setAttribute("aria-label", `${feedback.title} (si apre in una nuova scheda)`);
     feedback.innerHTML =
       '<span class="feedback-icon" aria-hidden="true">!</span><span class="feedback-text">Segnala / Feedback</span>';
     button.after(feedback);
@@ -86,8 +84,7 @@
       home.href = certHome && !onCertHome ? certHome : brand ? brand.getAttribute("href") : "../index.html";
       home.title = certHome && !onCertHome ? "Torna alla home della certificazione" : "Torna a tutte le certificazioni";
       home.setAttribute("aria-label", home.title);
-      home.innerHTML =
-        '<span class="home-icon" aria-hidden="true">⌂</span><span class="home-text">Home</span>';
+      home.innerHTML = '<span class="home-icon" aria-hidden="true">⌂</span><span class="home-text">Home</span>';
       button.before(home);
     }
   });
