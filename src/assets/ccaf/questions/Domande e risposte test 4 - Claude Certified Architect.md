@@ -36,7 +36,7 @@ You ask Claude Code to update `engines/recommendations/src/features/user_vector.
 
 Instructions combine: the root `CLAUDE.md` always applies, the `engines/recommendations/CLAUDE.md` is loaded because the edited file lives in that directory, and every `.claude/rules/` file whose `paths` glob matches the file becomes active. Here both `engines/**/*.py` and `engines/recommendations/**` match `user_vector.py`.
 
-A is wrong because path-scoped rules load only when their glob matches. C is wrong because `.claude/rules/` is discovered automatically, without links. D is wrong because there is no "first match wins": all matching rules apply.
+Listing every rule file, including the Android and other unrelated ones, is wrong because path-scoped rules load only when their glob matches. Ignoring `.claude/rules/` is wrong because those files are discovered automatically, without links. Taking only the first matching rule file is wrong because there is no "first match wins": all matching rules apply.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -55,7 +55,7 @@ During a pull request validation run, Claude Code calls an MCP tool named `map_i
 
 The error is explicitly marked `isRetryable: true` with a `retryAfterMs` hint: it is a transient failure. The correct behavior is to honor the metadata, wait the indicated interval and retry, then continue with the real result.
 
-A and B treat a retryable error as terminal and needlessly fail the check. C silently skips a step whose output (which tests to generate) the workflow actually needs.
+Applying the standard handler or stopping for manual review treats a retryable error as terminal and needlessly fails the check. Logging the failure and skipping test selection silently drops a step whose output (which tests to generate) the workflow actually needs.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -74,7 +74,7 @@ A team wants Claude Code to add offline draft synchronization to a collaborative
 
 The change spans several layers and contains an open design decision (conflict resolution for simultaneous edits). This is exactly the case for plan mode: review the architecture, affected files and sequencing, then approve once intent is clear enough.
 
-A and B skip planning on a multi-file, ambiguous change and shift the cost to rework. C goes to the opposite extreme: a plan must clarify direction, not predict every signature and assertion of the final diff.
+Implementing directly or skipping plan mode skips planning on a multi-file, ambiguous change and shifts the cost to rework. Planning until every signature and assertion is predictable goes to the opposite extreme: a plan must clarify direction, not predict every detail of the final diff.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -93,7 +93,7 @@ Claude Code reviews schema migration pull requests in your CI pipeline and often
 
 The vague criterion "unsafe" produces both false positives and misses. Defining the criterion explicitly, with short contrasting examples of what to flag (rename without backfill/compatibility layer) and what not to flag (additive nullable column with rollback), makes the review precise and actionable.
 
-B removes a valuable check. C only softens the wording without changing what gets flagged. D pushes the decision onto another team instead of improving the criterion.
+Removing the migration-safety check throws away a valuable check. Softening the comment text changes only the wording, not what gets flagged. Sending authors to the data platform team pushes the decision onto another team instead of improving the criterion.
 
 ## Scenario: Multi-Agent Research System
 
@@ -112,7 +112,7 @@ A research platform runs a weekly “evidence sweep” for 300 client topics. Fo
 
 Large volumes of independent work that can finish later (abstract extraction, citation scoring) are ideal for the Message Batches API: lower cost, high throughput. The coordinator and the live review session need low latency, so they stay on real-time calls.
 
-A is false: batch and real-time can coexist in the same system. C pays full price for work that can wait. D breaks interactivity, since a batch can take up to 24 hours.
+Claiming that batch jobs are incompatible with a coordinator is false: batch and real-time calls can coexist in the same system. Keeping everything synchronous pays full price for work that can wait. Routing every coordinator decision through Batch breaks interactivity, since a batch can take up to 24 hours.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -131,7 +131,7 @@ A support team uses Claude Code to maintain a resolution agent for subscription 
 
 Skills kept only on personal laptops are not shared, not versioned and cannot be reviewed: that is how the regression in escalation logic slipped in. Placing them in the project's `.claude/skills/` directory and editing them through pull requests gives history, review and rollback.
 
-A keeps the drift problem. B removes all control over changes. C is false: Claude Code supports project-level skills under `.claude/skills/`.
+Keeping the skills in each engineer's profile preserves the drift problem. Letting agents overwrite them removes all control over changes. Documenting them while leaving the files local rests on a false premise: Claude Code supports project-level skills under `.claude/skills/`.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -150,7 +150,7 @@ A platform team is using a Claude Agent SDK assistant to update 58 TypeScript AP
 
 The handlers are heterogeneous (different `actor` sources, early returns, partial calls already present), so a blind textual replacement would break cases. The reliable pattern is: find candidates with Glob/Grep, Read each file, apply a targeted Edit and verify the result.
 
-A relies on regex and on tests to catch errors after the fact. B delegates everything to an opaque tool and reduces the agent to summarizing. C produces a generic script that suffers the same variability problems.
+A repository-wide regex replacement relies on tests to catch errors after the fact. A bulk-refactor MCP server delegates everything to an opaque tool and reduces the agent to summarizing. A standalone migration script is generic and suffers the same variability problems.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -169,7 +169,7 @@ A payments company runs a merge-queue validation job that asks Claude Code to in
 
 Thousands of independent requests, no one waiting, deadline the next business day: this is the canonical use case for the Message Batches API, which reduces cost (about 50%) in exchange for asynchronous processing within 24 hours.
 
-A misunderstands prompt caching: it caches the input prefix, not the output of other requests. B describes a feature that does not exist. D: streaming improves perceived latency but does not lower cost.
+Prompt caching is misunderstood here: it caches the input prefix, not the output of other requests. A prompt-grouping endpoint does not exist. Streaming improves perceived latency but does not lower cost.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -188,7 +188,7 @@ A returns assistant handles vague messages such as, “The headphones arrived br
 
 A business prerequisite (verified customer and matched order before a refund) must be guaranteed deterministically. A hook that inspects the run's history and blocks `process_refund` with a structured error enforces the rule while leaving the agent free on everything else.
 
-A depends on fragile conversation heuristics. B turns the agent into a rigid pipeline and loses flexibility on non-refund cases. C is just a prompt instruction: it improves behavior but does not guarantee it, and the logs already show violations.
+Steering `tool_choice` from refund keywords depends on fragile conversation heuristics. A single fixed route turns the agent into a rigid pipeline and loses flexibility on non-refund cases. A system prompt rule improves behavior but does not guarantee it, and the logs already show violations.
 
 ## Scenario: Multi-Agent Research System
 
@@ -207,7 +207,7 @@ A lab’s Claude Code research workspace now has a lead agent that decomposes re
 
 A small shared `CLAUDE.md` for common standards plus separate, role-specific files composed with `@import` give modularity (one place to edit) and isolation (each agent sees only what it needs).
 
-A loads everything into everyone's context, wasting tokens and creating confusion. B invents an unsupported mechanism (`roleConditions`). C duplicates the guidance and makes every update error-prone.
+One giant file loads everything into everyone's context, wasting tokens and creating confusion. A `roleConditions` YAML manifest is an unsupported, invented mechanism. Copying the same policy into every AgentDefinition duplicates the guidance and makes every update error-prone.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -226,7 +226,7 @@ A Claude Agent SDK support agent handles subscription cancellations using MCP to
 
 When the policy leaves room for judgment, inconsistency comes from the model not knowing where the boundaries lie. Representative few-shot examples in the system prompt (resolve, partial remedy, decline with rationale, escalate) calibrate decisions on borderline cases.
 
-B underestimates the effect of examples, which are one of the most effective levers for consistency. C waits for examples that may never arrive. D: test sets are needed to measure behavior, but they do not change it at runtime.
+Avoiding examples underestimates their effect: they are one of the most effective levers for consistency. Waiting for a similar prior case relies on examples that may never arrive. Test sets are needed to measure behavior, but they do not change it at runtime.
 
 ## Scenario: Multi-Agent Research System
 
@@ -245,7 +245,7 @@ In your multi-agent research system, the document-analysis subagent uses an MCP 
 
 A good tool error must be actionable: `is_error: true`, a probable cause in plain language (password-protected/encrypted PDF), file and stage involved, and a suggested next step (ask for an unlocked copy or permission to omit the source).
 
-A is too generic and adds a needless tool call. B returns only internal diagnostics that the agent cannot use to guide the user. C hides the failure (`is_error: false`) and lets synthesis proceed on a missing source.
+A generic "document extraction failed" message is not actionable and adds a needless tool call. Returning only internal diagnostics gives the agent nothing it can use to guide the user. Returning `is_error: false` with an empty result hides the failure and lets synthesis proceed on a missing source.
 
 ## Scenario: Structured Data Extraction
 
@@ -264,7 +264,7 @@ A health insurer uses Claude to extract prior-authorization details from uploade
 
 Traceability months later requires concise metadata useful for review: per-field confidence, source references (file, page/span) and an extraction timestamp. These enable validation, routing of uncertain cases and verification against the original.
 
-A adds technical metadata that does not help a reviewer locate the value. B removes the needed traceability. D bloats the record with heavy diagnostics (full transcripts, tokens, host) that belong in logs, not in the schema.
+Parser version, temperature and template name are technical metadata that do not help a reviewer locate the value. Rejecting all metadata removes the needed traceability. Full transcripts, retry history and token counts bloat the record with heavy diagnostics that belong in logs, not in the schema.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -283,7 +283,7 @@ A mobile app team wants Claude Code to apply the same accessibility checklist, s
 
 The `@path/to/file` syntax in `CLAUDE.md` imports external files, keeping the root concise and the guidance reusable and maintainable separately.
 
-A uses an `#include` directive that does not exist. B: `CLAUDE.md` files in arbitrary subfolders are not merged automatically at startup (they load only when working on files in those folders). C does not match the requested requirement of a short root with links to reusable files.
+An `#include` directive does not exist in `CLAUDE.md`. `CLAUDE.md` files in arbitrary `.claude/guidance/` subfolders are not merged automatically at startup (they load only when working on files in those folders). Moving everything into `.claude/rules/` does not match the requirement of a short root with links to reusable files.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -302,7 +302,7 @@ A Claude Agent SDK assistant is helping investigate an intermittent issue in a l
 
 An intermittent bug in a large system calls for an evidence-driven, iterative investigation: start from real failing job IDs and their logs/traces, examine the first implicated subsystem, and refine the hypothesis at each step.
 
-B scatters effort and floods the context with irrelevant summaries. C follows a fixed checklist disconnected from the evidence. D tries to map the whole system up front, which is costly and not focused on the actual failure.
+Starting analysis of every subsystem at once scatters effort and floods the context with irrelevant summaries. A fixed reliability checklist is disconnected from the evidence. Mapping every execution path up front is costly and not focused on the actual failure.
 
 ### Question 16
 
@@ -319,7 +319,7 @@ A DevEx group is building a Claude Agent SDK documentation agent for a legacy de
 
 New engineers need several levels: a subsystem map, component responsibilities, API references and runnable scenarios. Planning separate passes and linking them lets readers move from overview to detail.
 
-A produces a monolithic document organized by file, not by concept. C blocks the work on exhaustive criteria when the problem is already clear. D lists symbols without architectural context, which is exactly what is missing today.
+One long Markdown file in repository order is organized by file, not by concept. Asking the team for exhaustive acceptance criteria blocks the work when the problem is already clear. An alphabetical catalog of symbols lacks architectural context, which is exactly what is missing today.
 
 ## Scenario: Structured Data Extraction
 
@@ -338,7 +338,7 @@ An insurance analytics group is using Claude to extract claimant names, incident
 
 With 120,000 heterogeneous documents, the prompt and schema must be validated on a representative pilot covering every document type, with human review against the sources, then refined before the full run.
 
-A tests a single ideal document and does not represent the variety. B uses production as a test, with costly errors that are hard to correct. C assumes generalization without verification: schema validity does not guarantee correct values.
+Testing one ideal PDF does not represent the variety of documents. Starting the full job with a repair queue uses production as a test, with costly errors that are hard to correct. Reusing the current prompt and schema assumes generalization without verification: schema validity does not guarantee correct values.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -357,7 +357,7 @@ A customer says, “Your system promised me a $38 loyalty credit after a delayed
 
 `stop_reason: "tool_use"` means Claude is requesting a tool call. The runtime must extract the `tool_use` block from the content, execute the tool with the given arguments, append the `tool_result` to the conversation and call Claude again to continue the loop.
 
-A treats a tool request as a final answer. C is wrong: `stop_reason` does not contain the parameters, which live in the `tool_use` block. D calls the model again without the result, breaking the protocol.
+Treating the response as a completed resolution confuses a tool request with a final answer. Reading parameters from `stop_reason` is wrong: `stop_reason` does not contain them, they live in the `tool_use` block. Calling Claude again without running the tool omits the result and breaks the protocol.
 
 ## Scenario: Multi-Agent Research System
 
@@ -376,7 +376,7 @@ The synthesis subagent in your research system calls an MCP tool named `dataset_
 
 Transient errors (timeouts, 429, 5xx) are best handled inside the tool with bounded retries and backoff. Permanent errors (wrong ID, expired credentials, license denial) must instead be returned as structured errors so the agent can correct the request or escalate.
 
-B hides the real cause and prevents correction. C wastes retries on errors that will never succeed. D burdens the agent with transient failures the tool can resolve on its own.
+Collapsing every failure into "source temporarily unavailable" hides the real cause and prevents correction. Retrying every failure five times wastes retries on errors that will never succeed. Returning every failure raw to the synthesis agent burdens it with transient failures the tool can resolve on its own.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -395,7 +395,7 @@ A Claude Agent SDK support agent is being added to a retailer's returns queue. I
 
 Streaming a compact header of fast data first lets the agent respond immediately and ask targeted questions, while slower details (warranty, warehouse exceptions, fraud review) arrive afterward. This balances responsiveness and reliable decisions.
 
-A removes information needed for correct decisions. B accepts a poor user experience while waiting for optimizations. C keeps the user waiting in silence without using the data already available.
+Removing the slow sections drops information needed for correct decisions. Focusing only on database tuning accepts a poor user experience while waiting for optimizations. Warning customers and then staying silent keeps the user waiting without using the data already available.
 
 ### Question 21
 
@@ -412,7 +412,7 @@ A billing-support agent is helping a user who says, “I was charged twice; my l
 
 A successful query with no results is a "not found" error: not transient and not retryable. The right response states it in structured form (`not_found`, `isRetryable: false`) and the agent asks the user to verify the email or provide another identifier.
 
-A invents a placeholder account and proceeds on false data. B and C misclassify the error as transient/capacity, causing useless retries and misleading messages about system outages.
+Returning a placeholder "temp-unknown" account invents data and proceeds on it. Classifying the error as transient or capacity is wrong: it causes useless retries and misleading messages about system outages.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -431,7 +431,7 @@ A mobile team wants Claude Code to use an internal “test-data” MCP server th
 
 Project-scoped MCP servers live in a `.mcp.json` file committed to the repository: anyone who clones gets the configuration, and changes go through normal review.
 
-B uses a non-standard path that Claude Code does not read. C: rules files contain instructions, not MCP configuration. D keeps the configuration personal and unshared, with no review.
+A `.mcp/servers.json` structure is a non-standard path that Claude Code does not read. Rules files such as `.claude/rules/testing.md` contain instructions, not MCP configuration. Each developer's `~/.claude.json` keeps the configuration personal and unshared, with no review.
 
 ### Question 23
 
@@ -448,7 +448,7 @@ A platform team maintains a monorepo where every service must follow the same in
 
 The workflow supported for a short `CLAUDE.md` is to keep high-level context at the root and use `@import` references to separate files containing detailed policies, loaded in every session.
 
-A is not the expected answer: the question asks for the supported mechanism to include reusable instructions from the root `CLAUDE.md`. B invents an `includes:` front matter that does not exist. D: nested `CLAUDE.md` files under `.claude/` are not merged automatically.
+Path rules in `.claude/rules/` are not what is asked: the question wants the supported mechanism to include reusable instructions from the root `CLAUDE.md`. An `includes:` front matter does not exist. Nested `CLAUDE.md` files under `.claude/` are not merged automatically.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -467,7 +467,7 @@ A retailer’s Claude Agent SDK support agent can verify identity, inspect loyal
 
 Good escalation criteria are observable and tied to real limits: an explicit request for a human, a remedy outside the agent's authority, or no policy-compliant path left. This way the agent resolves what it can and escalates only when needed.
 
-A uses a rigid matrix that ignores context and blocks resolvable cases. C uses an arbitrary counter that also penalizes legitimate steps. D escalates based on sentiment even when the agent could resolve the issue, harming first-contact resolution.
+A fixed escalation matrix ignores context and blocks resolvable cases. Escalating after exactly three unsuccessful calls uses an arbitrary counter that also penalizes legitimate steps. Escalating on detected anger or sarcasm hands off cases the agent could resolve, harming first-contact resolution.
 
 ## Scenario: Structured Data Extraction
 
@@ -486,7 +486,7 @@ A healthcare data team uses Claude to extract `patient_id`, `specimen_site`, `co
 
 All outputs are schema-valid, yet some fields are unstable across runs: a sign of ambiguity in the sources or in the instructions. The right path is to diagnose the unstable cases, inspect the source passages, tighten criteria, constraints, settings and ambiguity handling, then re-test.
 
-A picks an arbitrary result. B averages timestamps and votes on clinical values, producing data that may not exist in the document. C accepts unreliable data in a critical healthcare context.
+Taking the first schema-valid object picks an arbitrary result. Rerunning and merging by majority and average produces data that may not exist in the document. Documenting the variation as expected accepts unreliable data in a critical healthcare context.
 
 ## Scenario: Multi-Agent Research System
 
@@ -505,7 +505,7 @@ In a multi-agent research pipeline, the source-harvesting subagent calls an `ext
 
 Provenance must be verified deterministically before the evidence enters the pipeline. A PostToolUse hook that compares quotes, URLs, timestamps and locators against the actual payload blocks inconsistent records at the source.
 
-A relies on the agent deciding when it is "uncertain." B checks too late, after the evidence has already shaped the work. C is only a prompt instruction: it helps but does not guarantee anything.
+A citation-audit tool relies on the agent deciding when it is "uncertain." A final review by the coordinator checks too late, after the evidence has already shaped the work. Strengthening the system prompt is only an instruction: it helps but does not guarantee anything.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -524,7 +524,7 @@ A platform team is adding Claude Code checks to CI for pull requests in a GraphQ
 
 Multiple independent reviews add value when each has a distinct focus (API compatibility, data validation, test adequacy): they cover different aspects instead of repeating the same check, and their findings are then merged into one comment.
 
-A justifies the choice only by speed. B is false: multiple agents are more complex, not simpler. C overstates: separate invocations reduce self-confirmation bias, but they do not make the result "objectively neutral."
+Running parallel jobs mainly for CI speed justifies the choice only by speed. Claiming that multiple agents are easier to configure is false: they are more complex, not simpler. Claiming that separate invocations make the result objectively neutral overstates: they reduce self-confirmation bias, but do not remove it.
 
 ## Scenario: Structured Data Extraction
 
@@ -543,7 +543,7 @@ A legal operations team uses Claude to extract structured lease abstracts from c
 
 Errors are plausible, correctly typed values from the wrong section: schema validation cannot detect them. With limited review capacity, you need confidence calibrated per field on a labeled set, with routing of high-risk cases according to reviewer capacity.
 
-A measures quality but does not route review where it matters. B only checks for missing fields, which are not the problem here. C uses layout signals that do not correlate with the actual error (a value taken from an exhibit or superseded amendment).
+Random weekly audits measure quality but do not route review where it matters. Sending only records with missing fields checks something that is not the problem here. Ranking by layout signals uses cues that do not correlate with the actual error (a value taken from an exhibit or superseded amendment).
 
 ## Scenario: Developer Productivity with Claude
 
@@ -562,7 +562,7 @@ A team is building a Claude Agent SDK assistant that generates React components 
 
 The source of truth lives outside the repos, which contain outdated examples. Exposing the rules through an MCP server (a resource or tool) gives the agent consistent, always-current access to the official guidance.
 
-A depends on manual, error-prone copy-paste. C and D infer the rules from the repository code, which the scenario says contains old examples and partial notes.
+Pasting the checklist into every prompt depends on manual, error-prone copy-paste. Inferring the rules from component comments or searching files with Glob and Grep relies on repository code, which the scenario says contains old examples and partial notes.
 
 ### Question 30
 
@@ -579,7 +579,7 @@ A Claude Agent SDK assistant is adding a `rotate-api-keys` command to a Go servi
 
 When the codebase has a clear dominant convention (11 of 15 recent commands use `cmdregistry`) and requirements are straightforward, the agent should follow that convention and briefly document the choice, without blocking work.
 
-A introduces a new pattern not present in the project. B picks the model by name rather than by convention, and may adopt the deprecated style. D asks the user something the evidence already answers.
+A new decorator-based framework introduces a pattern not present in the project. Copying the command with the closest name chooses the model by name rather than by convention, and may adopt the deprecated style. Pausing to ask the user asks something the evidence already answers.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -598,7 +598,7 @@ A team is adding Claude Code to the CI pipeline for a database-backed inventory 
 
 To build trust after a noisy bot, start small: a few explicit, high-confidence categories, measure comment acceptance, and expand only when results are consistently useful.
 
-B adds manual overhead without improving prompt quality. C repeats the flood of comments that destroyed trust. D is so cautious that it delivers no value directly in the PR workflow.
+Requiring the service owner to validate every finding adds manual overhead without improving prompt quality. Flagging every possible concern repeats the flood of comments that destroyed trust. A read-only preview job is so cautious that it delivers no value directly in the pull request workflow.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -617,7 +617,7 @@ A support resolution agent is handling a cancellation request: “Please cancel 
 
 The service responded correctly but found no contract: it is a non-retryable `not_found` error. The agent should report it in structured form and ask the customer to recheck the number or provide an alternative identifier.
 
-A and C misclassify it as a temporary failure and trigger useless retries. D fabricates a nonexistent record and continues the workflow on false data.
+Classifying the miss as a capacity or temporary failure triggers useless retries. Returning an "active" contract with an unknown customer fabricates a nonexistent record and continues the workflow on false data.
 
 ## Scenario: Multi-Agent Research System
 
@@ -636,7 +636,7 @@ A research coordinator invokes several Claude Agent SDK subagents through the Ta
 
 To guarantee the format before the coordinator uses the results, deterministic validation is needed: a PostToolUse hook on the Task calls that parses the `ChronologyCard`, verifies required fields and references, and fails or requests repair.
 
-A lets malformed data into the coordinator context anyway. B relies on prompt instructions and model self-checking, which are not guaranteed. C adds an approval message but does not block or correct invalid output.
+Telling synthesis to ignore malformed cards still lets bad data into the coordinator context. Prompt rules with self-checks rely on the model and are not guaranteed. A separate reviewer agent adds an approval message but does not block or correct invalid output.
 
 ## Scenario: Structured Data Extraction
 
@@ -655,7 +655,7 @@ A healthcare analytics team uses Claude to extract medication-change events from
 
 Training data must be high quality: errors propagate into the trained model. You need traceability (source span), calibrated confidence with conservative inclusion thresholds, and periodic human audits.
 
-A: a good aggregate F1 can hide specific errors. B lowers quality and assumes the model will "generalize away" noise. D: JSON shape validation says nothing about whether the content is supported by the note.
+A good aggregate F1 score can hide specific errors. Lowering the inclusion threshold reduces quality and assumes the model will "generalize away" noise. Reusing the production workflow unchanged validates only JSON shape, which says nothing about whether the content is supported by the note.
 
 ### Question 35
 
@@ -672,7 +672,7 @@ A finance team is building a Claude-based pipeline to extract purchase order num
 
 Before a large, heterogeneous backfill (PDFs, OCR, international invoices, varied layouts), a pilot on a stratified sample with manual review against the sources is needed to refine schema and prompt.
 
-B uses production as a test. C tests a single standard document that does not represent the variety. D assumes that schema plus model is enough without empirical verification.
+Starting production with monitoring uses production as a test. Testing one standard invoice does not represent the variety. Running the full archive directly assumes that schema plus model is enough without empirical verification.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -691,7 +691,7 @@ A repository’s CI review step uses Claude Code to comment on pull requests. Th
 
 Rule files in `.claude/rules/` with `paths` globs are applied automatically according to the changed files: exactly the requested path-based behavior, across multiple directories and file types.
 
-B: `CLAUDE.md` files per folder work by directory but are less precise than globs by extension (e.g., `*.tf`, `*.ipynb`). C requires manual invocation of commands. D invents a `.claude-policy.yml` file that does not exist.
+Separate `CLAUDE.md` files per folder work by directory but are less precise than globs by extension (e.g., `*.tf`, `*.ipynb`). Dedicated slash commands require manual invocation. A `.claude-policy.yml` file with path branches does not exist.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -710,7 +710,7 @@ A Claude Agent SDK-based repository assistant needs to allow deployments from `r
 
 When editing an existing configuration file, the change should be minimal and targeted: read the file, update only the needed array, and preserve comments, ordering and indentation (the comments contain important safety information).
 
-A reformats and deletes maintainer comments. B asks for an unnecessary decision, since the file already has a consistent style. D creates a duplicate file and an ambiguous loading order.
+Rewriting the file with sorted keys and no comments reformats it and deletes maintainer comments. Asking the user about formatting requests an unnecessary decision, since the file already has a consistent style. A separate generated file creates a duplicate and an ambiguous loading order.
 
 ## Scenario: Multi-Agent Research System
 
@@ -729,7 +729,7 @@ In a market research system, a SourceCheck subagent verifies quotations from emb
 
 Access to sensitive data must be limited at the tool level (least privilege): SourceCheck receives only a scoped tool that checks clearance, returns only the permitted excerpt and logs every access.
 
-A relies on prompt instructions to protect embargoed data. B exposes complete data and redacts too late. C grants access to every agent connected to the server, without per-agent or per-engagement scoping.
+Giving the full toolset with prompt instructions relies on the prompt to protect embargoed data. Retrieving complete files and redacting later exposes the data and redacts too late. A separate MCP server for the workspace grants access to every connected agent, without per-agent or per-engagement scoping.
 
 ## Scenario: Structured Data Extraction
 
@@ -750,7 +750,7 @@ Which JSON schema design is the best choice for the `insured_address` field?
 
 Conflicting values must be modeled, not hidden: an object with a normalized value, a list of candidates with their source, and conflict flags lets the platform route uncertain records to review.
 
-A and B pick a value heuristically (frequency, order) and lose the conflict. C rejects the entire extraction instead of reporting the field-level uncertainty.
+Choosing the most frequent or the first address picks a value heuristically and loses the conflict. Rejecting the whole extraction whenever several addresses appear discards everything instead of reporting the field-level uncertainty.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -769,7 +769,7 @@ A monorepo has a root `CLAUDE.md` with baseline engineering practices and a `pac
 
 In Claude Code instructions are cumulative: the root `CLAUDE.md`, the `CLAUDE.md` of the folder containing the file, and all scoped rules whose globs match the path (`packages/ui/**`, `**/*.tsx`, `**/*.stories.tsx`).
 
-A is wrong: there is no "most specific wins" selection, all matching rules apply. B loads irrelevant rules. D is wrong: subfolder `CLAUDE.md` files and scoped rules do not require explicit links.
+Selecting only the most specific rule is wrong: there is no "most specific wins" selection, all matching rules apply. Loading every convention file brings in irrelevant rules. Requiring explicit links is wrong: subfolder `CLAUDE.md` files and scoped rules load without them.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -788,7 +788,7 @@ A platform team adds an MCP server to Claude Code with a tool called `api_migrat
 
 The agent picks tools based on their metadata. A description like "Finds API changes" does not communicate the tool's value, so the agent falls back to Grep. Rewriting name, description and input schema to explain what it analyzes and what it returns makes it the natural choice.
 
-A fragments the capability without fixing the poor description. B is a workaround that does not address the cause. C removes a useful tool and forces behavior rigidly.
+Splitting the tool into narrower ones fragments the capability without fixing the poor description. A project instruction to prefer the server is a workaround that does not address the cause. Removing Grep takes away a useful tool and forces behavior rigidly.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -807,7 +807,7 @@ Your Claude Agent SDK support agent handles subscription disputes for a streamin
 
 Combine two levels: prompt rules with observable triggers (guiding the model) and a deterministic PreToolUse guard on `process_refund` that blocks risky refunds and redirects to `escalate_to_human`. Ordinary cases stay automated.
 
-A is vague and unenforceable. C requires approval for every refund and destroys first-contact resolution. D accepts preventable losses.
+A generic "be careful with fraud" prompt is vague and unenforceable. Supervisor approval for every refund destroys first-contact resolution. Accepting that some fraud slips through accepts preventable losses.
 
 ## Scenario: Multi-Agent Research System
 
@@ -826,7 +826,7 @@ A coordinator agent assigns a web-investigation subagent to verify whether a sta
 
 Web research is exploratory: results reveal alternate names and contradictions that call for new queries. The subagent needs its tools, the goal and the citation requirements, plus the autonomy to iterate until it has enough evidence.
 
-A fixes the queries before learning anything from the results. C turns the coordinator into a micromanager and wastes its context. D follows a rigid sequence that cannot adapt.
+Generating all searches up front fixes the queries before learning anything from the results. Calling the subagent once per query turns the coordinator into a micromanager and wastes its context. A fixed search-and-fetch sequence cannot adapt.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -843,9 +843,9 @@ A developer productivity team integrates an MCP server into Claude Code with a t
 
 #### Correct answer to Question 44: A
 
-Same principle as question 41: the tool exists but the agent does not choose it because the description ("Looks up test failures") is too poor. Describing what it correlates and what it returns (ranked hypotheses, evidence, next commands) improves tool selection.
+The tool exists but the agent does not choose it because the description ("Looks up test failures") is too poor. Describing what it correlates and what it returns (ranked hypotheses, evidence, next commands) improves tool selection.
 
-B removes Grep, which is still useful. C imposes a rule without making the tool understandable. D fragments the tool with descriptions just as poor.
+Removing Grep when the CI server is enabled takes away a tool that is still useful. A project instruction to call the tool first imposes a rule without making the tool understandable. Replacing it with narrower tools fragments it, with descriptions just as poor.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -864,7 +864,7 @@ Your team uses a Claude Code slash command, `/gen-validator`, to create Kotlin v
 
 The code is structurally correct but violates product rules on edge cases: the model does not know the expected semantics. Concrete examples and executable tests on boundary cases (zero amounts, missing currency, conflicting discounts) define the expected behavior unambiguously.
 
-B adds process but not knowledge of the rules. C touches only naming style. D adds context that does not contain the missing product rules.
+Mandatory plan mode adds process but not knowledge of the rules. Stricter naming conventions in `CLAUDE.md` touch only style. Loading more repository context adds files that do not contain the missing product rules.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -883,7 +883,7 @@ A CI workflow runs Claude Code after each pull request to suggest pytest coverag
 
 To replicate a specific style (fixtures, naming, parametrization, coverage depth), selected examples in the prompt are the most effective technique: they show concretely what generic descriptions cannot convey.
 
-A and C describe quality in abstract terms that do not capture the team's conventions. D lets the agent explore on its own without telling it which examples are representative.
+A broader testing section in `CLAUDE.md` or a paragraph about idiomatic tests describes quality in abstract terms that do not capture the team's conventions. Asking Claude to inspect the repository on its own does not tell it which examples are representative.
 
 ## Scenario: Structured Data Extraction
 
@@ -902,7 +902,7 @@ A finance team is using Claude to extract vendor name, invoice total, tax amount
 
 Inputs of varying quality call for a preprocessing stage: detect type and quality, apply OCR/cleanup when needed, and record the steps and quality signals. These signals then feed the decision between automatic posting and review.
 
-B and C exclude legitimate documents instead of handling them. D skips preprocessing and loses the signals needed to calibrate confidence.
+Declining low-quality images or requiring vendors to resubmit excludes legitimate documents instead of handling them. Sending everything without OCR skips preprocessing and loses the signals needed to calibrate confidence.
 
 ## Scenario: Multi-Agent Research System
 
@@ -921,7 +921,7 @@ In your multi-agent research system, the report-generation subagent receives can
 
 Effective few-shot examples cover not only ideal cases but also edge cases and negative cases: well-formed entries, downgraded or rejected entries, ambiguous sources, each with the exact expected output. This teaches the decision criteria.
 
-B shows only positive outputs and does not teach when to downgrade or reject. C relies on a schema, which validates structure but not judgment. D provides inputs without the expected outputs, so it does not demonstrate the behavior.
+Showing only polished entries teaches nothing about when to downgrade or reject. A detailed JSON schema validates structure but not judgment. Raw snippets without completed entries provide inputs without the expected outputs, so they do not demonstrate the behavior.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -950,7 +950,7 @@ A developer invokes this skill midway through a long feature implementation sess
 
 `context: fork` runs the skill in an isolated subagent context: exploratory reads and intermediate findings stay out of the main conversation, which receives only the final result. Useful in long sessions to avoid filling the context.
 
-A describes the opposite behavior. C confuses the term with a Git fork. D: the fork is about context isolation, not running in parallel with the main session.
+Appending all notes to the active conversation describes the opposite behavior. A temporary Git fork confuses the term with Git. A concurrent worker is also wrong: the fork is about context isolation, not running in parallel with the main session.
 
 ### Question 50
 
@@ -965,9 +965,9 @@ A backend team is adding a shared “log-inspector” MCP server so Claude Code 
 
 #### Correct answer to Question 50: C
 
-Same principle as question 22: a shared MCP server that must reach whoever clones the repo, with review, goes in a `.mcp.json` committed to the project.
+A shared MCP server that must reach whoever clones the repo, with review, goes in a `.mcp.json` committed to the project.
 
-A is a personal, unshared configuration. B: rules files are not for MCP configuration. D uses a path Claude Code does not recognize.
+A personal `~/.claude.json` entry is unshared and unreviewed. Rules files such as `.claude/rules/api.md` are not for MCP configuration. A `.mcp/servers.json` folder is a path Claude Code does not recognize.
 
 ## Scenario: Multi-Agent Research System
 
@@ -986,7 +986,7 @@ In a multi-agent research system, the synthesis subagent calls an MCP trend-extr
 
 The tool returned `isError: false` but the content is semantically unreliable. The subagent with domain context should treat it as suspect but nonfatal and adapt its strategy (rerun with narrower inputs, request supporting passages, keep only verifiable themes).
 
-A centralizes repair in a coordinator that lacks the specific context. B retries the same call, which will likely produce the same problem. C aborts the whole run when the problem can be recovered locally.
+A coordinator hook that repairs data centrally lacks the specific context. Retrying the same call three times will likely produce the same problem. Aborting the whole run is excessive when the problem can be recovered locally.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -1005,7 +1005,7 @@ A CI team is piloting Claude Code reviews for a repository that includes a laten
 
 PRs that touch several domains benefit from specialized agents with scoped tools and rubrics, plus a coordinator that merges, deduplicates and checks cross-domain interactions: in-depth coverage with concise comments.
 
-A uses a generalist with a broad checklist, less thorough. B is a sequential pipeline that loses parallelism and filters prematurely. D posts uncoordinated output with duplicates and noise in the PR.
+A single generalist reviewer with a broad checklist is less thorough. A fixed sequence of agents loses parallelism and filters prematurely. Posting each agent's output directly adds duplicates and noise to the pull request.
 
 ### Question 53
 
@@ -1022,7 +1022,7 @@ A release pipeline now runs separate Claude Code agents for migration review, AP
 
 Role boundaries are enforced through configuration, not prompts: a separate Task configuration per agent with an `allowedTools` list limited to what is needed (least privilege).
 
-B and C rely on conventions or instructions the model may not follow. D grants every agent full access and hopes the role description is enough.
+A naming convention or a strict system prompt instruction relies on rules the model may not follow. Giving every agent the full toolset grants full access and hopes the role description is enough.
 
 ## Scenario: Structured Data Extraction
 
@@ -1041,7 +1041,7 @@ A healthcare revenue team uses Claude to extract procedure dates, payer names, d
 
 Degradation shows up as semantically wrong but still schema-valid values. Continuous monitoring of field-level confidence metrics, segmented by vendor/type/language, with alerts and sampled human or benchmark validation, catches drift early.
 
-B is too infrequent to catch changes. C uses a frozen benchmark that does not include the new letter formats. D monitors only the structure, which keeps passing even as content degrades.
+Comparing a small batch twice a year is too infrequent to catch changes. A frozen benchmark at each release does not include the new letter formats. Monitoring only schema pass rates and exceptions checks the structure, which keeps passing even as content degrades.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -1060,7 +1060,7 @@ A Claude Code agent has added a “regional invoice export” option to an inter
 
 Before declaring completion, the agent must verify concretely: run the relevant unit and integration tests, the build or type-check of the affected packages, and review docs/config for consistency.
 
-A declares success without verification. B delegates to the engineer checks the agent can run itself. C adds a single test and treats it as full verification.
+Summarizing the edits and marking the feature complete declares success without verification. Asking the engineer to test locally delegates checks the agent can run itself. Adding a single regression test treats one test as full verification.
 
 ### Question 56
 
@@ -1077,7 +1077,7 @@ A Claude Agent SDK assistant helped a platform team understand how warehouse inv
 
 Resuming the session preserves the analysis work; telling the agent which files changed lets it update only the affected areas, efficiently and without relying on stale information.
 
-A rereads everything, wasting time and context. C throws away useful work. D risks building on assumptions invalidated by the changes.
+Rereading every file wastes time and context. A brand-new session throws away useful work. Resuming without mentioning the changes risks building on assumptions they have invalidated.
 
 ### Question 57
 
@@ -1094,7 +1094,7 @@ A Claude Agent SDK assistant has completed a deep pass over a warehouse inventor
 
 Forking from the post-discovery state gives every branch the same complete investigation, but each evolves independently: no contamination between alternatives.
 
-A mixes the three analyses in the same thread, letting assumptions leak. B gives an advantage to one branch and loses detail in the others. D replaces the full context with a short summary.
+Evaluating the three proposals sequentially in one thread mixes the analyses and lets assumptions leak. Resuming for one design and exporting notes for the others favors one branch and loses detail in the rest. Three new sessions with a short summary replace the full context with a summary.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -1113,7 +1113,7 @@ A support agent uses an MCP tool named `apply_account_credit` to resolve billing
 
 For the agent to react correctly it must distinguish the cases: a typed error with code, category, retryability, a customer-safe message and a correlation ID. Transient outages are marked as retryable; policy denials come with an explanation.
 
-A collapses everything into a generic failure. C adds a step but leaves failures indistinguishable. D forces the agent to infer the cause from ambiguous text.
+Internal retries that return a generic failure collapse every case into one. An eligibility tool adds a step but leaves failures indistinguishable. A single natural-language error string forces the agent to infer the cause from ambiguous text.
 
 ## Scenario: Multi-Agent Research System
 
@@ -1132,7 +1132,7 @@ A multi-agent research system was interrupted while preparing a compensation ben
 
 Subagents do not automatically inherit the coordinator's history. After resuming the session, the coordinator must pass explicitly, in every invocation, a summary of the findings and the new requirements (scope, normalization, source limits, ranking).
 
-A throws away the existing context. B assumes subagents read the coordinator's messages, which they do not. C: a fork does not inject the new requirements into subagents.
+Starting a completely new run throws away the existing context. Invoking the subagents normally assumes they read the coordinator's messages, which they do not. Forking the coordinator does not inject the new requirements into the subagents.
 
 ## Scenario: Structured Data Extraction
 
@@ -1151,4 +1151,4 @@ A legal operations team uses Claude to extract contract terms into a JSON object
 
 The field exists in the documents but is expressed with varied wording and positions (paragraphs, tables, footnotes). Few-shot examples covering layouts and synonyms teach the model to recognize it, while schema validation keeps catching omissions.
 
-B relies on fragile regex that does not handle synonyms and tables. C hides the problem by making the field optional. D retries hoping for a different value, potentially accepting invented content.
+Regex preprocessing is fragile and does not handle synonyms and tables. Making `renewalWindow` optional hides the problem. Resubmitting until a value appears hopes for a different answer and may accept invented content.

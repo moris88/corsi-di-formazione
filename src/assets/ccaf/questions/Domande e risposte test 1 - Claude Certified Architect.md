@@ -97,9 +97,9 @@ Automated code review generates test-case suggestions for every pull request. A 
 
 Claude proposes tests that are valid in the abstract, but it does not know which cases are already in the suite. Providing the existing test file lets it compare the new functionality with current coverage and avoid duplicates.
 
-- **A** reduces the number of suggestions but does not guarantee fewer duplicates.
-- **B** is fragile: test names may not represent the scenarios actually covered.
-- **C** may improve quality, but risks missing important tests for the main paths.
+- Requesting fewer suggestions reduces their number but does not guarantee fewer duplicates.
+- Filtering by keywords in test names is fragile: names may not represent the scenarios actually covered.
+- Focusing only on edge cases may improve quality, but risks missing important tests for the main paths.
 
 ### Question 6
 
@@ -114,9 +114,9 @@ Automated review analyzes comments and docstrings. The current prompt asks Claud
 
 The problem is a vague instruction: "verify that comments are accurate and up to date." Claude interprets it broadly and flags acceptable patterns such as TODOs or simple descriptions. The best fix is to make the criterion actionable: flag a comment only when it describes behavior that the code no longer implements or that contradicts the actual behavior.
 
-- **A.** `git blame` can provide timing clues, but an old comment is not automatically wrong.
-- **C.** This reduces noise, but risks hiding genuinely problematic comments.
-- **D.** Few-shot examples can help, but a clear criterion for what to flag is needed first.
+- `git blame` data can provide timing clues, but an old comment is not automatically wrong.
+- Filtering TODO and descriptive-comment patterns reduces noise, but risks hiding genuinely problematic comments.
+- Few-shot examples of misleading comments can help, but a clear criterion for what to flag is needed first.
 
 ### Question 7
 
@@ -163,9 +163,9 @@ After an initial automated review generates 12 findings, a developer submits new
 
 Claude runs a new review without knowing about earlier comments, so it may repost findings that have already been resolved or discussed. Providing previous findings as context lets it distinguish issues that are still present, those that have been resolved, and new issues introduced by later commits.
 
-- **A** risks missing issues that remain in files changed in earlier commits.
-- **B** reduces useful feedback during the development cycle.
-- **D** is fragile: matching by path and description does not guarantee that two findings describe the same issue.
+- Limiting the review to the latest files risks missing issues that remain in files changed in earlier commits.
+- Reviewing only at creation and before merge reduces useful feedback during the development cycle.
+- A post-processing filter is fragile: matching by path and description does not guarantee that two findings describe the same issue.
 
 ### Question 10
 
@@ -180,7 +180,7 @@ The automated review system assigns inconsistent severity levels: similar issues
 
 The problem is **inconsistent calibration**: Claude does not use a stable scale to distinguish "critical," "high," and "medium" severity. The most reliable method is to provide explicit criteria for each level, concrete code examples, and edge cases showing when a null-pointer risk is critical and when it is medium.
 
-Option A may be useful, but a simple mapping in `CLAUDE.md` risks being too generic: the same type of issue can have different severity depending on context, impact, and reachability. Concrete examples are more helpful.
+A default-severity mapping in `CLAUDE.md` may be useful, but it risks being too generic: the same type of issue can have different severity depending on context, impact, and reachability. Concrete examples are more helpful.
 
 ### Question 11
 
@@ -206,7 +206,7 @@ A pull request modifies 14 files in the inventory tracking module. A single-pass
 
 #### Correct answer to Question 12: B
 
-Splitting the review into focused passes addresses the root cause: attention becomes diffuse when many files are processed together. File-by-file analysis ensures consistent depth, while a separate integration pass identifies cross-file issues. Option A could miss real bugs because it requires them to be found in multiple runs.
+Splitting the review into focused passes addresses the root cause: attention becomes diffuse when many files are processed together. File-by-file analysis ensures consistent depth, while a separate integration pass identifies cross-file issues. Keeping only issues found in at least two of three runs could miss real bugs, because it requires them to be found in multiple runs.
 
 ### Question 13
 
@@ -232,7 +232,7 @@ The CI pipeline runs the Claude Code CLI in `--print` mode and uses `CLAUDE.md` 
 
 #### Correct answer to Question 14: C
 
-Automated inline comments require a **structured, validated format**, with fields such as `file_path`, `line_number`, `severity`, and `suggested_fix`. The `--output-format json` and `--json-schema` flags can enforce this format, which can then be processed through the GitHub API. Options B and D are more fragile because the model may deviate from the instructions. Option A adds an unnecessary step and can introduce errors.
+Automated inline comments require a **structured, validated format**, with fields such as `file_path`, `line_number`, `severity`, and `suggested_fix`. The `--output-format json` and `--json-schema` flags can enforce this format, which can then be processed through the GitHub API. Formatting instructions in the prompt or in `CLAUDE.md` are more fragile because the model may deviate from them. Generating a JSON summary from prose adds an unnecessary step and can introduce errors.
 
 ### Question 15
 
@@ -355,7 +355,7 @@ Production monitoring reveals inconsistent synthesis quality. When aggregated re
 
 #### Correct answer to Question 23: A
 
-The problem is a classic **context-position effect**: the model uses information at the beginning and end well, but may lose information in the middle. It is better to place a summary of the key findings at the beginning and organize details into clear sections with explicit headings, making sources, evidence, and gaps easier to retrieve. Option D could help, but it is more drastic and risks removing useful detail; the question asks to restructure the input, not necessarily compress it heavily.
+The problem is a classic **context-position effect**: the model uses information at the beginning and end well, but may lose information in the middle. It is better to place a summary of the key findings at the beginning and organize details into clear sections with explicit headings, making sources, evidence, and gaps easier to retrieve. Compressing everything below 20,000 tokens could help, but it is more drastic and risks removing useful detail; the question asks to restructure the input, not necessarily compress it heavily.
 
 ### Question 24
 
@@ -394,7 +394,7 @@ Production monitoring shows that requests like "analyze the quarterly report I u
 
 #### Correct answer to Question 26: B
 
-The root cause is **semantic similarity between the tools**: `analyze_content` and `analyze_document` have nearly identical names and descriptions. The best fix is to make the web tool specific in both its name and description, clarifying that it processes web results and URLs, not uploaded documents. Option C may help, but leaves the web tool ambiguous; D may improve routing without fixing the structural cause; A adds complexity to compensate for poorly designed tool definitions.
+The root cause is **semantic similarity between the tools**: `analyze_content` and `analyze_document` have nearly identical names and descriptions. The best fix is to make the web tool specific in both its name and description, clarifying that it processes web results and URLs, not uploaded documents. Expanding only the document tool description may help, but leaves the web tool ambiguous; few-shot routing examples may improve routing without fixing the structural cause; a preliminary classifier adds complexity to compensate for poorly designed tool definitions.
 
 ### Question 27
 
@@ -420,7 +420,7 @@ During system design, you gave the document analysis agent a generic `fetch_url`
 
 #### Correct answer to Question 28: A
 
-The document analysis agent has a tool that is too generic: `fetch_url` lets it stray from its role and improvise web searches. It is preferable to constrain the tool to its intended task, allowing it to load PDFs, DOCX, TXT, CSV, and spreadsheets, while validating the MIME type, extension, or content type and rejecting generic HTML pages or search-engine results pages. Web search remains the responsibility of the specialized agent. Option B leaves the tool too powerful; C covers only some domains; D is excessive because the document agent may need to load documents from URLs.
+The document analysis agent has a tool that is too generic: `fetch_url` lets it stray from its role and improvise web searches. It is preferable to constrain the tool to its intended task, allowing it to load PDFs, DOCX, TXT, CSV, and spreadsheets, while validating the MIME type, extension, or content type and rejecting generic HTML pages or search-engine results pages. Web search remains the responsibility of the specialized agent. Prompt instructions leave the tool too powerful; blocking search-engine domains covers only some cases; removing URL loading entirely is excessive because the document agent may need to load documents from URLs.
 
 ### Question 29
 
@@ -433,7 +433,7 @@ While researching a broad topic, the web research and document analysis agents b
 
 #### Correct answer to Question 29: B
 
-The problem originates in **orchestration**: agents work in parallel without a clear division of scope, duplicating work and consuming tokens. The coordinator should assign distinct tasks: for example, web research for recent trends, news, and public sources, and document analysis for uploaded studies, internal reports, and PDFs; or separate subtopics such as market, technology, risks, and regulation. Option D removes duplication only after tokens have already been wasted; A adds complexity; C reduces parallelism unnecessarily.
+The problem originates in **orchestration**: agents work in parallel without a clear division of scope, duplicating work and consuming tokens. The coordinator should assign distinct tasks: for example, web research for recent trends, news, and public sources, and document analysis for uploaded studies, internal reports, and PDFs; or separate subtopics such as market, technology, risks, and regulation. Deduplicating at the end removes duplication only after tokens have already been wasted; a shared registry of work areas adds complexity; sequential execution reduces parallelism unnecessarily.
 
 ### Question 30
 
@@ -463,7 +463,7 @@ Production metrics show that for complex cases involving billing disputes or ret
 
 #### Correct answer to Question 31: D
 
-The gaps vary from case to case: sometimes the applicable policy is missing; other times the timeline or next step is missing. Examples for five common cases do not cover every situation, so a dynamic check of the generated response is needed. Before sending, a self-critique step can verify that the resolution is justified, relevant policies and timelines are included, and likely customer questions are anticipated. Option A shifts the problem to the customer, B does not guarantee completeness, and C covers only known patterns.
+The gaps vary from case to case: sometimes the applicable policy is missing; other times the timeline or next step is missing. Examples for five common cases do not cover every situation, so a dynamic check of the generated response is needed. Before sending, a self-critique step can verify that the resolution is justified, relevant policies and timelines are included, and likely customer questions are anticipated. Asking the customer whether the answer is complete shifts the problem to the customer, a bigger model does not guarantee completeness, and examples for five case types cover only known patterns.
 
 ### Question 32
 
@@ -502,7 +502,7 @@ Production data shows that in 12% of cases the agent skips `get_customer` and ca
 
 #### Correct answer to Question 34: D
 
-A programmatic constraint is necessary to guarantee a tool-call sequence required by critical business logic, such as identity verification before processing a refund. Prompts and examples depend on probabilistic compliance and do not provide sufficient guarantees when errors have financial consequences. Option B controls tool availability, not call order.
+A programmatic constraint is necessary to guarantee a tool-call sequence required by critical business logic, such as identity verification before processing a refund. Prompts and examples depend on probabilistic compliance and do not provide sufficient guarantees when errors have financial consequences. A routing classifier controls tool availability, not call order.
 
 ### Question 35
 
@@ -557,7 +557,7 @@ Production logs show that the agent sometimes chooses `get_customer` when `looku
 
 #### Correct answer to Question 38: A
 
-The problem occurs in ambiguous cases. The examples should therefore show how to distinguish between plausible tools: `get_customer` is for identifying or verifying a customer and account; `lookup_order` is for purchases, orders, shipping, returns, refunds, or order status. Edge-case examples are more useful than obvious ones. Option B may be generally useful, but the question asks for a few-shot approach.
+The problem occurs in ambiguous cases. The examples should therefore show how to distinguish between plausible tools: `get_customer` is for identifying or verifying a customer and account; `lookup_order` is for purchases, orders, shipping, returns, refunds, or order status. Edge-case examples are more useful than obvious ones. Guidance in the tool descriptions may be generally useful, but the question asks for a few-shot approach.
 
 ### Question 39
 
@@ -570,7 +570,7 @@ The `get_customer` tool returns all matches found when searching by name. When i
 
 #### Correct answer to Question 39: A
 
-The problem is ambiguity about the customer's identity. Choosing the account with the most recent order is risky and already causes errors. Before acting on an account, order, or refund, the agent must ask for an additional identifier. Options B and C retain automatic decisions about ambiguous identities; D hides the ambiguity instead of handling it.
+The problem is ambiguity about the customer's identity. Choosing the account with the most recent order is risky and already causes errors. Before acting on an account, order, or refund, the agent must ask for an additional identifier. A confidence threshold or inference from context still makes automatic decisions about ambiguous identities; returning only the most likely match hides the ambiguity instead of handling it.
 
 ### Question 40
 
@@ -593,7 +593,7 @@ Case facts:
 - Requested refund amount: $48.90.
 ```
 
-Option D may help, but it is still fragile: even a good summary can lose details. The more robust solution is to separate transactional facts from the conversation history.
+Asking the summary to preserve numbers verbatim may help, but it is still fragile: even a good summary can lose details. The more robust solution is to separate transactional facts from the conversation history.
 
 ### Question 41
 
@@ -606,7 +606,7 @@ Production logs show that the agent misinterprets data returned by MCP tools: Un
 
 #### Correct answer to Question 41: C
 
-The data arrives in different formats, and some third-party MCP tools cannot be modified. A `PostToolUse` hook can normalize results immediately after a tool call and before the agent interprets them, for example by converting status code `2` to `"shipped"` or a Unix timestamp to an ISO 8601 date. Option A fragments the solution across modified tools and wrappers; B leaves the model responsible for interpreting the formats; D requires an extra call and depends on the agent remembering to use the tool.
+The data arrives in different formats, and some third-party MCP tools cannot be modified. A `PostToolUse` hook can normalize results immediately after a tool call and before the agent interprets them, for example by converting status code `2` to `"shipped"` or a Unix timestamp to an ISO 8601 date. Modifying tools and wrapping third-party ones fragments the solution; documenting formats in the system prompt leaves the model responsible for interpreting them; a `normalize_data` tool requires an extra call and depends on the agent remembering to use it.
 
 ### Question 42
 
@@ -660,9 +660,9 @@ After calling `get_customer` and `lookup_order`, the agent has retrieved all ava
 
 The agent has all the data, but there is no clear policy: the policy covers price reductions on the company's own site, not competitor prices. The policy must be interpreted or an exception considered, making this an appropriate reason to call `escalate_to_human`.
 
-- **A.** Two requests together can be decomposed and handled without necessarily involving a human.
-- **B.** The agent can carefully explain the discrepancy with tracking and suggest next steps.
-- **C.** The existing policy for shipped orders, cancellations, or returns can be applied.
+- A billing question plus a return request can be decomposed and handled without necessarily involving a human.
+- A "never received" claim against signed delivery tracking can be handled by carefully explaining the discrepancy and suggesting next steps.
+- Cancelling a shipped order falls under the existing policy for shipped orders, cancellations, or returns.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -729,7 +729,7 @@ The team wants to add a GitHub MCP server to look up pull requests and check CI 
 
 #### Correct answer to Question 50: C
 
-A project-level configuration provides consistent tools for the whole team; `${GITHUB_TOKEN}` expansion lets it read the token from the environment without storing it in the repository. Each developer sets their own token locally. Option B produces different configurations across developers, D is more fragile, and A adds unnecessary complexity.
+A project-level configuration provides consistent tools for the whole team; `${GITHUB_TOKEN}` expansion lets it read the token from the environment without storing it in the repository. Each developer sets their own token locally. User-level configuration produces different setups across developers, a placeholder token overridden locally is more fragile, and a custom wrapper adds unnecessary complexity.
 
 In the project's `.mcp.json`, the GitHub server configuration should read the credential from `env.GITHUB_TOKEN: "${GITHUB_TOKEN}"`; the README should explain how developers can set the environment variable locally.
 
@@ -750,7 +750,7 @@ This configuration solves all three problems:
 - `context: fork` isolates execution from previous conversations;
 - `allowed-tools` limits available tools and reduces the risk of destructive operations.
 
-Option D relies only on instructions and is therefore more fragile. A does not isolate context or limit tools; B splits creation and application but does not adequately solve the context and missing-argument problems.
+Validation instructions in `SKILL.md` rely only on the model and are therefore more fragile. Positional parameters with `@` references do not isolate context or limit tools; splitting into two skills separates creation and application but does not adequately solve the context and missing-argument problems.
 
 ### Question 52
 

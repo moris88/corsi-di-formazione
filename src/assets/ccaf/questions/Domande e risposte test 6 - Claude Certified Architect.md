@@ -22,7 +22,7 @@ Audit logs show that in 3% of refunds the agent called `process_refund` for an o
 
 When a step must always come before another (identity verification before a financial action), the order is enforced in code: a programmatic gate that blocks `process_refund` without a prior successful verification works regardless of how the model reasons.
 
-B stays probabilistic: the instruction was already there and failed in 3% of cases. C does not verify ownership, it only merges calls. D relies on the statement of the person who could be the fraudster.
+Rewriting the instruction in capital letters stays probabilistic: the instruction was already there and failed in 3% of cases. Merging the two tools does not verify ownership, it only merges calls. Asking the customer to confirm relies on the statement of the person who could be the fraudster.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -41,7 +41,7 @@ A developer is convinced that Claude Code is ignoring the rule "never use defaul
 
 `/memory` shows which memory files are loaded in the current session and lets you open them: it is the direct way to diagnose differences between developers (e.g., a user-level file that contradicts the project one).
 
-A is destructive and imprecise. C relies on the model's recall, not on the actual configuration. D does not address a configuration issue.
+Deleting CLAUDE.md files is destructive and imprecise. Asking Claude which rules it remembers relies on the model's recall, not on the actual configuration. Reinstalling Claude Code does not address a configuration issue.
 
 ## Scenario: Multi-Agent Research System
 
@@ -60,7 +60,7 @@ All four subagents are configured with the same full toolset: WebSearch, WebFetc
 
 Tool access should be limited per role: a subagent without web search cannot add unvetted sources. Least privilege improves both focus and safety, and also helps tool selection.
 
-A is probabilistic. B reduces specialization without fixing the cause. D wastes work and detects the problem only afterwards.
+A prompt line about appropriate tools is probabilistic. Merging synthesis and report generation reduces specialization without fixing the cause. Validating calls afterwards wastes work and detects the problem only later.
 
 ## Scenario: Structured Data Extraction
 
@@ -79,7 +79,7 @@ Suppliers often send a single PDF containing several invoices, from 1 to 15. The
 
 When a document can contain several entities, the schema must model them: an array of complete objects keeps each invoice's line items separate and handles any number of invoices in a single call.
 
-A loses data. B breaks multi-page invoices. C multiplies cost and makes "invoice N" ambiguous.
+Extracting only the largest invoice loses data. Splitting every page breaks multi-page invoices. Asking 15 times for "invoice number N" multiplies cost and makes "invoice N" ambiguous.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -98,7 +98,7 @@ The automated review uses the prompt "Find all the bugs in this pull request." O
 
 "Find all the bugs" implies bugs exist, pushing the model to fill the quota. Saying that "no issues" is valid and requiring a concrete failure scenario for each finding cuts speculative comments and restores trust.
 
-B hides real findings on PRs with several bugs. C still posts the noise. D skips small PRs that can contain bugs.
+One comment per PR hides real findings on PRs with several bugs. A "Possible issue:" prefix still posts the noise. Reviewing only large PRs skips small ones that can contain bugs.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -117,7 +117,7 @@ An engineer asks the agent to bump a logging library version and update the depr
 
 For repetitive, mechanical changes at scale, the agent is best used to create and validate a deterministic tool (a script), which is then applied uniformly. The result is consistent and verifiable.
 
-A reduces drift but each repository is still reinterpreted. C multiplies 230 independent interpretations of the same change. D exceeds any reasonable output limit and is impossible to review.
+Fresh sessions every 40 repositories reduce drift, but each repository is still reinterpreted. 230 parallel subagents multiply independent interpretations of the same change. One giant patch exceeds any reasonable output limit and is impossible to review.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -136,7 +136,7 @@ A customer writes in a single message: "I want to return the shoes from order 44
 
 Multi-issue messages should be decomposed into distinct items, each investigated (also in parallel where possible) with the shared context, and then answered in a unified response. This directly increases first-contact resolution.
 
-A escalates cases the agent can resolve. B and D leave requests unresolved and force new contacts.
+Escalating multi-request messages hands off cases the agent can resolve. Handling one request per conversation, or only the most valuable one, leaves requests unresolved and forces new contacts.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -155,7 +155,7 @@ The team wants every file edited by Claude Code to be automatically formatted wi
 
 Claude Code hooks run deterministically on lifecycle events: a `PostToolUse` hook on the edit tools, configured in the project's `.claude/settings.json` (shared through version control), formats every file immediately after each edit.
 
-A is a probabilistic instruction. B depends on manual action. C works only at commit, so intermediate edits and diffs reviewed during the session stay unformatted.
+A `CLAUDE.md` instruction is probabilistic. A `/format` command depends on manual action. A Git pre-commit hook works only at commit, so intermediate edits and diffs reviewed during the session stay unformatted.
 
 ## Scenario: Multi-Agent Research System
 
@@ -174,7 +174,7 @@ The web search subagent returns to the coordinator the full text of every page i
 
 Subagents exist precisely to absorb verbose work in their own context and return only what matters. Condensed, structured findings (with provenance preserved) keep the coordinator's context lean.
 
-B throws away results the coordinator needs. C concerns output, not the input that saturates the context. D sacrifices coverage on broad topics.
+Deleting the oldest results throws away information the coordinator needs. A larger `max_tokens` concerns output, not the input that saturates the context. Three pages per subtopic sacrifices coverage on broad topics.
 
 ## Scenario: Structured Data Extraction
 
@@ -193,7 +193,7 @@ The pipeline submits 40,000 extraction requests to the Message Batches API each 
 
 Batch results are correlated by `custom_id`: you can isolate the failed requests, fix the specific cause, and resubmit only those, without reprocessing what already succeeded.
 
-A doubles cost for nothing. C loses data silently. D does not solve the size problem and loses the batch discount.
+Resubmitting all 40,000 requests doubles cost for nothing. Discarding the failures loses data silently. Switching to synchronous calls does not solve the size problem and loses the batch discount.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -212,7 +212,7 @@ The CI job generates tests with Claude Code and needs to run the test suite to c
 
 Claude Code permissions support rules scoped to specific commands: allowing only `npm test` lets the agent verify the tests and iterate, without the ability to run arbitrary commands.
 
-A is a probabilistic instruction. B takes away the agent's ability to iterate on failing tests. D isolates but still allows arbitrary commands inside the container, and root privileges increase the risk.
+Allowing all Bash with a prompt instruction is probabilistic. Disallowing Bash takes away the agent's ability to iterate on failing tests. A root container isolates but still allows arbitrary commands inside it, and root privileges increase the risk.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -231,7 +231,7 @@ The platform team wants to prevent the agent, used by 300 engineers, from runnin
 
 A `PreToolUse` hook intercepts the command before execution and blocks it deterministically, returning a reason the agent can use to adjust. Normal Bash use stays possible.
 
-B is probabilistic. C removes a broadly useful capability and requires a tool for every operation. D only detects afterwards, when the damage is done.
+A list of forbidden commands in the system prompt is probabilistic. Removing Bash takes away a broadly useful capability and requires a tool for every operation. Weekly log reviews only detect afterwards, when the damage is done.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -250,7 +250,7 @@ When the agent calls `escalate_to_human`, the human operator receives only a tic
 
 The handoff to a human must be self-contained: the operator does not have the agent's context. A structured summary (who, what, what was done, why it is escalated, what is proposed) cuts handling time and avoids the customer repeating information.
 
-A does not reduce reading work. B shifts the burden onto the customer. C escalates cases the agent could resolve.
+Attaching the full transcript does not reduce reading work. Asking the customer to forward a summary shifts the burden onto them. Escalating after at most 5 turns hands off cases the agent could resolve.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -269,7 +269,7 @@ A product manager asks for a "smart notification digest" feature. The requiremen
 
 When requirements are ambiguous, having Claude interview you to bring out decisions and edge cases before designing prevents rework. It clarifies scope before writing any code.
 
-A and C produce code based on assumptions (C also adds unnecessary complexity). D commits to a data model before knowing the requirements it depends on.
+Implementing the most common design, or making every option configurable, produces code based on assumptions (and the second adds unnecessary complexity). Writing the migration first commits to a data model before knowing the requirements it depends on.
 
 ## Scenario: Multi-Agent Research System
 
@@ -288,7 +288,7 @@ To reduce latency, a developer proposes letting the web search subagent send its
 
 In hub-and-spoke orchestration the coordinator mediates every exchange: it has visibility into results and failures, can handle errors and gaps, and maintains control of the flow. Direct communication between subagents loses this observability.
 
-A recovers only transient failures, not those that need a decision. B adds latency and still has no one handling errors. D relies on a vague "looks complete" check at the end.
+Retries on every hop recover only transient failures, not those that need a decision. A shared folder polled every minute adds latency and still has no one handling errors. A final "looks complete" check relies on a vague judgment at the end.
 
 ## Scenario: Structured Data Extraction
 
@@ -307,7 +307,7 @@ The system extracts `annual_revenue` from financial statements. Some tables stat
 
 Making scale and currency explicit as separate fields, with the source text that determined them, makes the interpretation verifiable and the conversion deterministic downstream, avoiding silent errors of orders of magnitude.
 
-A is wrong in every non-thousands case. C is an arbitrary heuristic that does not fix the scale. D removes the structured value downstream systems need.
+Always multiplying by 1,000 is wrong in every case not expressed in thousands. Rejecting values below 10,000 is an arbitrary heuristic that does not fix the scale. A text string with units removes the structured value downstream systems need.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -326,7 +326,7 @@ For PRs that fix a bug, Claude Code generates a regression test. Review shows th
 
 A real regression test must fail without the fix and pass with it. Verifying this condition objectively, and returning the result to the agent so it can iterate, ensures the test captures the bug.
 
-B multiplies tests without verifying them. C confuses quantity of assertions with relevance. D only shifts the evaluation to humans.
+Five tests per fix multiply tests without verifying them. Ten assertions per test confuse quantity with relevance. A comment explaining the bug only shifts the evaluation to humans.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -345,7 +345,7 @@ The agent connects to two MCP servers, one for the internal wiki and one for the
 
 The model chooses tools based on names and descriptions. Generic, identical names and descriptions make the choice random; distinctive names and descriptions that explain domain and use differentiate them clearly.
 
-A gives up a capability. B relies on an order that is not stable. D doubles the calls and pollutes the context with irrelevant results.
+Disconnecting the wiki server gives up a capability. A rule based on "first" and "second" search tool relies on an order that is not stable. Calling both tools every time doubles the calls and pollutes the context with irrelevant results.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -364,7 +364,7 @@ Logs show that when `process_refund` times out, the agent retries, and in some c
 
 An action with financial side effects must be safe to retry: an idempotency key prevents duplicates at the backend level, and a clear error ("outcome unknown") guides the agent to check before retrying.
 
-A turns 1% of transient failures into escalations. C reduces the frequency but not the risk. D causes friction for the customer by charging them back afterwards.
+Never retrying and escalating every timeout turns 1% of transient failures into escalations. A longer timeout reduces the frequency but not the risk. A nightly reconciliation causes friction for the customer by charging them back afterwards.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -383,7 +383,7 @@ The team created a `release-notes` skill that reads the git log since the last t
 
 `allowed-tools` in the skill frontmatter limits the tools it can use while running: restricting it to read operations makes edits and tag creation impossible.
 
-A isolates the context, not filesystem side effects. B is only a hint for arguments, with no permission effect. C is probabilistic.
+`context: fork` isolates the context, not filesystem side effects. `argument-hint` is only a hint for arguments, with no permission effect. A sentence in the skill body is probabilistic.
 
 ## Scenario: Multi-Agent Research System
 
@@ -402,7 +402,7 @@ Users ask both deep questions ("comprehensive analysis of semiconductor supply c
 
 A coordinator should route dynamically based on the query, invoking only the needed subagents, instead of always running a fixed pipeline. This reduces latency and cost for simple questions without sacrificing deep ones.
 
-B shifts the choice to users. C helps only identical repeated queries. D degrades deep analyses as well.
+A separate application for simple questions shifts the choice to users. Caching full reports helps only identical repeated queries. Reducing every subagent's `max_tokens` degrades deep analyses as well.
 
 ## Scenario: Structured Data Extraction
 
@@ -421,7 +421,7 @@ The model classifies the `governing_law` of contracts. Some contracts mention tw
 
 When documents can be ambiguous or have multiple values, the schema must be able to represent that: `"multiple"`/`"unclear"` with supporting details make these cases explicit and routable to review.
 
-A is deterministic but often wrong. B loses data on many contracts. D asks for a legal judgment, not an extraction.
+Always choosing the first jurisdiction is deterministic but often wrong. Removing the field for long contracts loses data on many of them. Picking the most favorable jurisdiction asks for a legal judgment, not an extraction.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -440,7 +440,7 @@ The automated reviewer repeatedly flags the use of `any` in files under `src/gen
 
 False positives on intentional patterns are reduced by giving the reviewer explicit context about accepted conventions (where and why), as examples of what not to report.
 
-A also gives up finding real bugs in those folders. C keeps the noise. D assumes learning between runs that does not happen without added context.
+Excluding those folders from review also gives up finding real bugs in them. Posting with `minor` severity keeps the noise. Replying "intentional" assumes learning between runs that does not happen without added context.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -459,7 +459,7 @@ An engineer asks the agent to explain how an HTTP request to `/api/orders` is pr
 
 Efficient exploration starts from the entry point and follows the code incrementally, reading only the relevant files: it builds understanding without filling the context with unrelated code.
 
-A uses a proxy (size) unrelated to the question. B gives up a capability the agent has. C infers without reading the actual code.
+Reading the 50 largest files uses size as a proxy unrelated to the question. Asking for a diagram gives up a capability the agent has. Inferring the flow from build configuration avoids reading the actual code.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -478,7 +478,7 @@ Quality review finds conversations in which the agent told the customer "Your re
 
 If the loop returns an empty string, the model has no evidence of the failure and assumes success. Errors must be passed back as tool results with `is_error` and an informative message, so the agent can react correctly.
 
-A treats the symptom; the model lacks the information. C removes automation from all refunds. D concerns another problem.
+Lowering temperature with a prompt rule treats the symptom: the model lacks the information. Escalating every refund removes automation from all of them. Requiring `get_customer` addresses a different problem.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -497,7 +497,7 @@ A team has unit tests colocated with source files across 40 directories (e.g., `
 
 When the scope is a file type spread across many directories, a rule with a `paths` glob is the right tool: one file, loaded only when the matching files are involved.
 
-B multiplies duplication (40 copies). C loads testing rules even when they are not needed. D depends on manual memory.
+A `CLAUDE.md` in each of the 40 directories multiplies duplication. Putting the conventions in the root `CLAUDE.md` loads testing rules even when they are not needed. A `/test-conventions` command depends on manual memory.
 
 ## Scenario: Multi-Agent Research System
 
@@ -516,7 +516,7 @@ The web search subagent returns "No relevant sources found" in two very differen
 
 A valid empty result and an access failure are different situations: the first is information ("no sources with these queries"), the second is an error to handle (retry, annotate the gap). Merging them produces false conclusions.
 
-A wastes calls on real empty results. B leads to irrelevant sources. C blocks research even when the result was legitimately empty.
+Always retrying three times wastes calls on genuine empty results. Broadening until something is found leads to irrelevant sources. Treating every empty result as an error blocks research even when the result was legitimately empty.
 
 ## Scenario: Structured Data Extraction
 
@@ -535,7 +535,7 @@ The team built extraction for loan applications, which requires a multi-turn int
 
 Each batch request produces one response: there is no mid-request tool execution loop. Workflows that need multiple turns with tools remain synchronous, unless they are restructured to gather the data beforehand and make the extraction single-turn.
 
-A is false. C introduces fabricated data. D would chain batches with up to 24 hours each, impractical.
+Claiming batches support the same tool loop is false. Estimating bureau and employer data introduces fabricated values. Ten sequential batches per application would chain waits of up to 24 hours each, impractical.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -554,7 +554,7 @@ The review job currently passes the entire repository (about 1.2 million tokens 
 
 The review needs the changes plus the context relevant to evaluate them, not the whole repository. Starting from the diff with related context, with the option to explore more when needed, reduces cost and noise.
 
-B lacks the context to judge correctness (e.g., a function's contract). C multiplies costs and still reviews code outside the PR. D provides stale, imprecise context.
+Only the changed lines without context lack what is needed to judge correctness (e.g., a function's contract). Twelve parallel reviews of the whole codebase multiply costs and still review code outside the PR. A monthly repository summary provides stale, imprecise context.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -573,7 +573,7 @@ An engineer uses a personal MCP server that connects to their own notes applicat
 
 User-scoped MCP configuration is personal and applies to all of the user's projects, without being shared through version control: ideal for personal tools with personal credentials.
 
-A requires repetition in every project and touches team repositories' `.gitignore`. C does not configure MCP servers. D would impose the server on the whole team.
+A gitignored `.mcp.json` in each project requires repetition everywhere and touches team repositories' `.gitignore`. `CLAUDE.md` does not configure MCP servers. A shared `.mcp.json` in the team repository would impose the server on the whole team.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -592,7 +592,7 @@ A customer is trying to update the payment method on their account. Over the con
 
 Lack of progress after repeated attempts is an escalation trigger: continuing the same loop frustrates the customer. Escalation with the error code and the steps tried lets the operator pick up the case efficiently.
 
-A repeats a failed solution. B leaves the problem unresolved. D drags on further attempts without new evidence.
+Repeating the same fix keeps a solution that has already failed. Telling the customer to try again in 24 hours leaves the problem unresolved. Cycling through devices, browsers and networks drags on further attempts without new evidence.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -611,7 +611,7 @@ A developer asks Claude Code to write a function that parses free-form shipping 
 
 Vague feedback produces vague iterations. Concrete input/output examples, turned into tests, give an objective goal the agent can verify and iterate against autonomously.
 
-A is even vaguer. B adds planning without solving the lack of verifiable criteria. D shifts the problem to production.
+"Make the parser more robust" is even vaguer. An architecture document adds planning without solving the lack of verifiable criteria. Accepting the current version shifts the problem to production.
 
 ## Scenario: Multi-Agent Research System
 
@@ -630,7 +630,7 @@ A long research session crashed after 3 hours, during synthesis. Before the cras
 
 Resuming a session preserves prior work, but its context may contain stale information. Informing the agent about what changed lets it targetedly redo only the affected analyses.
 
-B uses stale analyses without knowing it. C throws away hours of valid work. D unnecessarily removes relevant sources.
+Resuming as is uses stale analyses without knowing it. Restarting from scratch throws away hours of valid work. Removing the two changed documents unnecessarily drops relevant sources.
 
 ## Scenario: Structured Data Extraction
 
@@ -649,7 +649,7 @@ The system extracts the `termination_clause` from 180-page master service agreem
 
 Information in the middle of very long contexts is often neglected ("lost in the middle"). Splitting by sections and consolidating ensures each part gets full attention.
 
-A does not change how attention is distributed over the document. B ignores the clauses actually in the middle. D gives up the required information.
+Repeating the instruction three times does not change how attention is distributed over the document. Sending only the first and last 20 pages ignores the clauses actually in the middle. A yes/no question gives up the required information.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -668,7 +668,7 @@ Developers say the bot's comments are "true but useless": examples include "This
 
 Actionable feedback states where, what goes wrong and when, and how to fix it. Requiring this structure turns generic comments into concrete actions.
 
-B lengthens without making it more actionable. C does not change content quality. D reduces quantity but not usefulness.
+Longer comments with more background are not more actionable. Tagging the author does not change content quality. Halving the number of comments reduces quantity but not usefulness.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -687,7 +687,7 @@ After a long debugging session, the engineer decides to compact the context. In 
 
 `/compact` accepts instructions about what to keep in the summary: specifying the critical details ensures they survive compaction.
 
-A degrades the session up to the limit. C throws away valid progress. D re-introduces all the content compaction was meant to remove.
+Working until the context limit degrades the session along the way. `/clear` throws away valid progress. Pasting the whole conversation back after compacting re-introduces all the content compaction was meant to remove.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -706,7 +706,7 @@ The agent's system prompt contains 9,000 tokens of policies, product catalog rul
 
 Prompt caching reuses an identical prefix across requests, reducing cost and latency for the cached part. It requires the static content to come first and stay unchanged.
 
-A removes policies the agent needs. B adds a call and still puts the same tokens in context. D removes the instructions from later turns, changing behavior.
+Shortening the prompt removes policies the agent needs. A policy tool adds a call and still puts the same tokens in context. Sending the system prompt only on the first turn removes the instructions from later turns, changing behavior.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -725,7 +725,7 @@ A developer has spent an hour with Claude Code fixing a memory leak in the image
 
 For an unrelated task, the earlier context is only noise and cost: `/clear` or a new session gives a clean context.
 
-A cannot remove the content from context. B keeps irrelevant information. C does not change the accumulated context.
+"Forget the previous task" cannot remove content from the context. `/compact` keeps irrelevant information. Plan mode does not change the accumulated context.
 
 ## Scenario: Multi-Agent Research System
 
@@ -744,7 +744,7 @@ The coordinator's prompt to the web search subagent is a rigid procedure: "Step 
 
 Delegating with goals, questions, and quality criteria (rather than rigid procedures) lets the subagent adapt its strategy to the topic while still knowing what counts as a good result.
 
-A makes the procedure even more rigid and long. C takes away specialization and burdens the coordinator. D provides too little context to do good research.
+Adding more fixed steps makes the procedure even more rigid and long. Having the coordinator search takes away specialization and burdens the coordinator. A single keyword provides too little context to do good research.
 
 ## Scenario: Structured Data Extraction
 
@@ -763,7 +763,7 @@ After six months in production with stratified accuracy verified at launch, the 
 
 Production distributions change over time. Continuous sampling of real extractions, stratified by source, detects drift that a fixed test set cannot see.
 
-B tests old documents, not new templates. C: the model may be confidently wrong. D depends on third parties.
+Rerunning the launch test set tests old documents, not new templates. An average confidence alert misses cases where the model is confidently wrong. Waiting for supplier notifications depends on third parties.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -782,7 +782,7 @@ The review bot reports "Possible null dereference: `getUser()` may return null" 
 
 Requiring verification and citation of evidence turns assumptions into checked claims: if the definition shows `getUser()` throws, the finding is not reported.
 
-A misses real bugs from interactions with other code. B does not add verification. C relies on learning between runs that does not happen.
+Reporting only problems inside the modified lines misses real bugs from interactions with other code. Lower temperature does not add verification. Developer replies rely on learning between runs that does not happen.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -801,7 +801,7 @@ An MCP tool `fetch_internal_doc` returns full HTML pages from the internal docum
 
 Tool output should be processed before entering the context: returning only the main content in a clean format reduces tokens by an order of magnitude without losing information.
 
-A arbitrarily cuts the useful content. C moves the problem without solving it, reading the same noise later. D limits usefulness.
+Reading only the first half of each page arbitrarily cuts useful content. Saving pages to disk and reading them later moves the problem without solving it, reading the same noise later. One page per session limits usefulness.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -820,7 +820,7 @@ Logs show the agent often calls `lookup_order` with an email address as the para
 
 Descriptions that specify inputs (format), outputs, and when to use each tool give the model the information it lacks to choose and invoke correctly.
 
-A hides the confusion by enlarging the tool's scope. C imposes an unnecessary call even when the customer gives an order number. D is an awkward name that still does not describe outputs and use cases.
+Making `lookup_order` accept emails hides the confusion by enlarging the tool's scope. Always calling `get_customer` first imposes an unnecessary call even when the customer gives an order number. A name like `lookup_order_by_id_not_email` is awkward and still does not describe outputs and use cases.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -839,7 +839,7 @@ A developer created a personal skill `explain-like-senior` that explains code in
 
 User-level skills (`~/.claude/skills/`) are available in all of the user's projects and are not part of any repository: right for personal preferences.
 
-A requires repetition and `.gitignore` changes in every repository. B affects the whole team and loads in every session. D shares it with the team.
+A gitignored project skill requires repetition and `.gitignore` changes in every repository. A section in the project `CLAUDE.md` affects the whole team and loads in every session. A command in the team repository shares it with the team.
 
 ## Scenario: Multi-Agent Research System
 
@@ -858,7 +858,7 @@ The coordinator has an iterative refinement loop: after each round it evaluates 
 
 Iterative loops need explicit stopping conditions (coverage goals, round limit, budget) and transparency about remaining gaps: this balances quality and cost.
 
-A gives up refinement where it is useful. C uses a harmful criterion. D moves the decision without defining criteria.
+Removing the loop gives up refinement where it is useful. Running until the context is full uses a harmful criterion. Letting synthesis decide moves the decision without defining criteria.
 
 ## Scenario: Structured Data Extraction
 
@@ -877,7 +877,7 @@ The team wants to route extractions to human review based on the model's self-re
 
 Self-reported confidence is not reliable on its own: it must be calibrated against labeled data, checking the real error rate for each band and segment, before using it for routing.
 
-A is an arbitrary threshold not validated against real data. B gives up savings without trying calibration. C does not produce calibrated numbers.
+A fixed 0.95 threshold is arbitrary and not validated against real data. Abandoning confidence entirely gives up savings without trying calibration. Asking the model to be "more honest" does not produce calibrated numbers.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -896,7 +896,7 @@ The team wants to improve the automated reviewer over time. Currently they have 
 
 Improving with data means measuring outcomes per category: you find out where precision is low and act in a targeted way (refining criteria, adding examples, or disabling the category).
 
-B acts on impressions without data. C increases noise. D is too infrequent and generic to guide specific changes.
+Disabling the "performance" category acts on impressions without data. More categories increase noise. A yearly survey is too infrequent and generic to guide specific changes.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -915,7 +915,7 @@ The platform team wants to stop engineers' agents from running `git push --force
 
 Permission deny rules in managed (organization-level) settings take precedence over user and project settings and cannot be overridden by individuals: they enforce the policy deterministically and uniformly.
 
-A is a probabilistic instruction. B can be modified by the engineer. D detects afterwards.
+A line in each `CLAUDE.md` is a probabilistic instruction. Rules in personal `~/.claude/settings.json` can be modified by the engineer. A weekly audit detects afterwards.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -934,7 +934,7 @@ A customer claims a package was never delivered and asks for a refund of $89. `l
 
 Inconsistent behavior comes from the lack of explicit guidance for a recurring case. Defining the procedure (steps, conditions, escalation) with examples makes responses consistent and policy-compliant.
 
-A and B are rigid policies invented by the developer, not derived from company policy. C asks for impossible proof (one cannot photograph something absent).
+Always trusting carrier data or always refunding under $100 are rigid policies invented by the developer, not derived from company policy. Asking for a photo of a non-delivery requests impossible proof (one cannot photograph something absent).
 
 ## Scenario: Code Generation with Claude Code
 
@@ -953,7 +953,7 @@ The team keeps two kinds of guidance for Claude Code: (1) conventions that apply
 
 `CLAUDE.md` is for guidance always relevant; specific, occasional procedures fit skills, which load on demand and keep the base context lean.
 
-A loads the procedure in every session unnecessarily. C makes universal conventions optional. D takes the procedure away from Claude Code.
+Keeping everything in `CLAUDE.md` loads the procedure in every session unnecessarily. Moving both kinds of guidance to skills makes universal conventions optional. A wiki page outside the repository takes the procedure away from Claude Code.
 
 ## Scenario: Multi-Agent Research System
 
@@ -972,7 +972,7 @@ The final report for "trends in electric vehicle battery costs" mixes 2016, 2019
 
 Temporal metadata is part of provenance: without dates, values from different periods look contradictory. Carrying dates through the whole pipeline allows a correct interpretation (a trend over time).
 
-B loses the historical data needed to describe a trend. C removes key information. D averages values from different periods, producing a meaningless number.
+Only sources from the last 12 months lose the historical data needed to describe a trend. Removing all figures removes key information. Averaging values from different periods produces a meaningless number.
 
 ## Scenario: Structured Data Extraction
 
@@ -991,7 +991,7 @@ A monthly report job extracts data from 120,000 documents with the Message Batch
 
 The Message Batches API does not guarantee latency below 24 hours: you must plan the submission with enough margin and have a fallback for incomplete requests.
 
-A: running 120,000 synchronous calls in three hours runs into rate limits and costs double. C: such guarantees are not part of the service. D: smaller batches do not get guaranteed completion times.
+120,000 synchronous calls in three hours run into rate limits and cost double. Guaranteed one-hour processing is not part of the service. Smaller batches do not get guaranteed completion times either.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -1010,7 +1010,7 @@ The CI reviewer runs in ephemeral runners, and each job starts with no memory. R
 
 In stateless environments, state between runs must be persisted explicitly in a structured form and passed back as context. That is more robust and transparent than depending on session history.
 
-A: sessions are local to the machine they were created on and do not exist on new ephemeral runners. B changes the infrastructure and accumulates growing, noisy history. D relies on manual updates.
+`--resume` does not help: sessions are local to the machine they were created on and do not exist on new ephemeral runners. A persistent server changes the infrastructure and accumulates growing, noisy history. A list kept by developers in the PR description relies on manual updates.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -1029,7 +1029,7 @@ Engineers ask the agent to generate boilerplate for new microservices: Dockerfil
 
 Concrete reference examples are the most effective way to communicate conventions: one or two representative services give the model a precise template to replicate.
 
-B shifts the work and keeps inconsistency. C deliberately diverges from the existing standard. D fills the context with 30 services when one or two references suffice.
+Manual fixes after generation shift the work and keep inconsistency. The most modern libraries deliberately diverge from the existing standard. Reading all 30 services every time fills the context when one or two references suffice.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -1048,7 +1048,7 @@ Product leadership asks to deploy a new model version for the support agent. The
 
 Decisions about models should be based on systematic evaluation on representative, stratified data, measuring the metrics that matter (including risky errors such as wrong refunds), before production rollout.
 
-A assumes an improvement without data. C relies on self-evaluation. D uses customers as a test and detects problems late and only through complaints.
+Switching immediately assumes an improvement without data. Self-evaluation by the new model is not evidence. Switching and watching complaints uses customers as a test and detects problems late.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -1067,7 +1067,7 @@ A team wants a `/review-pr` slash command that is invoked with a PR number, e.g.
 
 Custom slash commands support `$ARGUMENTS` (and positional arguments) to insert what the user types after the command name.
 
-B adds an unnecessary round trip. C requires manual setup outside the command. D relies on guessing.
+Asking the user to type the number again adds an unnecessary round trip. An environment variable requires manual setup outside the command. Guessing from the branch name is unreliable.
 
 ## Scenario: Multi-Agent Research System
 
@@ -1086,7 +1086,7 @@ A reviewer finds that the report states "Remote work reduced commercial rents by
 
 Comparing each claim with the stored excerpt of its source catches generalizations and lost qualifiers ("some," "up to"): it is a fidelity check made possible by preserved provenance.
 
-A removes valuable information. B is a generic disclaimer that does not fix errors. D discards sources that use proper qualifiers.
+Removing all percentages discards valuable information. A generic disclaimer does not fix errors. Collecting only unqualified figures discards sources that use proper qualifiers.
 
 ## Scenario: Structured Data Extraction
 
@@ -1105,7 +1105,7 @@ The schema defines `effective_date` as a string with the description "The effect
 
 A precise schema (format, pattern, nullable) and a field for non-date cases, plus examples for ambiguous formats like `01/03/2024`, produce normalized, valid output for downstream use.
 
-A cannot resolve ambiguities like day/month and fails on "upon signature." C passes the problem downstream. D discards almost all documents.
+Trying 30 date formats downstream cannot resolve ambiguities like day/month and fails on "upon signature." Returning the date as written passes the problem downstream. Rejecting non-ISO documents discards almost all of them.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -1124,7 +1124,7 @@ When running locally, Claude Code follows the team's conventions defined in the 
 
 The project `CLAUDE.md` is loaded by Claude Code whenever it runs in the repository, including non-interactive mode (`-p`) in CI. The CI prompt can focus on the task-specific instructions.
 
-A rests on a false premise and creates duplication. B and C describe mechanisms that do not exist.
+Duplicating every convention in the CI prompt rests on the false premise that `claude -p` ignores `CLAUDE.md`. A `--memory` flag and a `CLAUDE.ci.md` file are mechanisms that do not exist.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -1143,4 +1143,4 @@ An engineer asks the agent: "Is it safe to delete the `LegacyTaxCalculator` clas
 
 A single static search cannot exclude dynamic usage. The agent should look for typical indirect references, declare the method's limits, and calibrate its certainty, suggesting verifications (e.g., tests or runtime logs).
 
-A gives up being useful. B does not catch names built from concatenated strings. C is a useless answer that gives the engineer no information.
+Never answering gives up being useful. A case-insensitive Grep does not catch names built from concatenated strings. Always answering "not safe" gives the engineer no information.

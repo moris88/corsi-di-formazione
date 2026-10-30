@@ -22,7 +22,7 @@ A customer asks the agent to delete their account and all personal data. No tool
 
 The agent must not claim actions it did not perform. Requests outside its tools go through the correct process with honest communication.
 
-B creates a dangerous capability without controls. C still misinforms. D violates the customer's rights.
+A freely callable `delete_everything` tool creates a dangerous capability without controls. Promising deletion in 30 days still misinforms. Ignoring the request violates the customer's rights.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -41,7 +41,7 @@ A developer wants Claude Code to consider two specific files immediately without
 
 File references in the prompt bring specific files into context directly.
 
-A wastes turns. C pollutes memory permanently. D does nothing.
+Describing the files vaguely wastes turns searching. Copying them into CLAUDE.md pollutes memory permanently. A `claude_` prefix does nothing.
 
 ## Scenario: Multi-Agent Research System
 
@@ -60,7 +60,7 @@ The coordinator passes its full internal reasoning (thousands of tokens of delib
 
 Delegation should be concise and decisive. Deliberation includes rejected options that can mislead subagents.
 
-B worsens the problem. C leaves subagents uninformed. D has the same issue as B.
+Passing even more reasoning worsens the problem. Sending only the task title leaves subagents uninformed. Letting them read the full logs has the same issue as passing more reasoning.
 
 ## Scenario: Structured Data Extraction
 
@@ -79,7 +79,7 @@ Invoice amounts appear as "1.234,56" (European) and "1,234.56" (US). The model s
 
 Locale-aware deterministic parsing plus consistency checks removes ambiguity errors.
 
-B remains probabilistic. C breaks European invoices. D loses precision.
+Asking the model to pay attention to separators remains probabilistic. Assuming US formatting breaks European invoices. Rounding to integers loses precision.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -98,7 +98,7 @@ The CI review runs on every push to draft PRs, which change frequently and are n
 
 Triggers should match when feedback is useful. Drafts change too often for full reviews.
 
-A wastes more. B removes value. D lacks content.
+Reviewing drafts more aggressively wastes more. Disabling reviews removes value. Reviewing only the title and description lacks content.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -117,7 +117,7 @@ An engineer asks: "Why does this function retry exactly 7 times?" The code has n
 
 Version control history often explains design decisions; distinguishing evidence from inference keeps the answer honest.
 
-A fabricates. B makes an unrequested change. D gives up too early.
+Presenting the most plausible reason as intent fabricates it. Changing the value to 3 is an unrequested change. Declaring it impossible to know gives up too early.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -136,7 +136,7 @@ A customer sends a photo of a damaged product. The agent says it cannot view ima
 
 The model sees an image only if it is sent as image content. The instructions should explain how to use it.
 
-B is false. C loses useful evidence. D pastes encoded text, not an image block.
+Claiming images are never supported is false. Text-only descriptions lose useful evidence. Base64 text inside the message is encoded text, not an image block.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -155,7 +155,7 @@ A new repository has no CLAUDE.md. What is a good starting point?
 
 `/init` bootstraps memory from the code; human curation keeps it accurate and concise.
 
-A is excessive. B brings wrong conventions. D misses the benefits.
+A 3,000-line file from scratch is excessive. Copying another team's file brings wrong conventions. Leaving it empty misses the benefits.
 
 ## Scenario: Multi-Agent Research System
 
@@ -174,7 +174,7 @@ In the Agent SDK, your coordinator never spawns subagents, even though subagent 
 
 Delegation happens through a tool; if the coordinator cannot use it, it cannot spawn subagents.
 
-B, C, and D are not the cause.
+A per-subagent API key, a Python-only limitation or a low coordinator temperature are not the cause.
 
 ## Scenario: Structured Data Extraction
 
@@ -193,7 +193,7 @@ An unknown document arrives and could be any of 6 types. The extraction always u
 
 Classify-then-extract keeps schemas precise; an explicit unknown path avoids forced misclassification.
 
-A weakens validation. C loses documents. D produces unpredictable output.
+One huge all-optional schema weakens validation. Rejecting non-invoices loses documents. Free JSON with whatever fields the model chooses produces unpredictable output.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -212,7 +212,7 @@ Claude-generated PR descriptions sometimes describe changes that are not in the 
 
 Grounding in the diff and human review prevents inaccurate descriptions.
 
-A loses a useful aid. C has too little information. D does not fix accuracy.
+Abandoning generated descriptions loses a useful aid. Branch name and ticket title alone give too little information. Two-sentence descriptions do not fix accuracy.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -231,7 +231,7 @@ An engineer wants to upgrade a major dependency. The agent bumps the version and
 
 A migration guide anticipates breaking changes, including behavior changes that do not cause compile errors.
 
-A multiplies risk. C hides errors. D avoids necessary upgrades.
+Upgrading everything at once multiplies risk. Disabling type checking hides errors. Pinning the old version forever avoids necessary upgrades.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -250,7 +250,7 @@ When customers complain, the agent offers a 20% coupon, although no coupon polic
 
 Remedies must be authorized and controlled. Tools with limits enforce what can be offered.
 
-A creates financial exposure. B still invents policy. D is easily bypassed.
+Letting the agent keep offering coupons creates financial exposure. Smaller coupons still invent policy. A banned-word filter is easily bypassed.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -269,7 +269,7 @@ You want a code-review subagent in Claude Code that can read the code but never 
 
 Restricting the subagent's tools guarantees it cannot modify files.
 
-A and B are probabilistic. D is excessive and impractical.
+A prompt rule in the subagent or a reminder to the main agent is probabilistic. A read-only container mount is excessive and impractical.
 
 ## Scenario: Multi-Agent Research System
 
@@ -288,7 +288,7 @@ Search queries generated by the coordinator are phrased to confirm the user's hy
 
 Balanced search strategies reduce confirmation bias; synthesis should reflect the weight of evidence.
 
-A depends on the user. C may lose the research focus. B amplifies bias.
+Asking the user to rephrase depends on them. Removing the hypothesis may lose the research focus. More sources of the same type amplify the bias.
 
 ## Scenario: Structured Data Extraction
 
@@ -307,7 +307,7 @@ The same contract extracted 5 times yields 2 different `termination_notice_days`
 
 Variance often indicates ambiguity in the rules. Clarifying them and measuring agreement improves consistency.
 
-A ignores the issue. C hides it. B produces an unsupported value.
+Accepting the variance ignores the issue. Running only once hides it. Averaging five runs produces an unsupported value.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -326,7 +326,7 @@ Claude-generated tests cover only the happy path. What is the best prompt improv
 
 Explicit edge-case enumeration produces better test design than asking for more tests.
 
-A increases quantity, not coverage. C can be met without meaningful assertions. D is irrelevant.
+More tests per function increase quantity, not coverage. 100% coverage can be met without meaningful assertions. Shorter tests are irrelevant to the problem.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -345,7 +345,7 @@ The agent must read 12 independent configuration files. It reads them one per tu
 
 Independent reads can run in parallel, reducing latency.
 
-A loses information. B is less structured. D pushes work back.
+Reading only 3 files loses information. Concatenating everything in one Bash output is less structured. Asking the engineer to paste the files pushes work back.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -364,7 +364,7 @@ The agent calls `lookup_order` for the same order 6 times in one conversation, e
 
 Reusing known results reduces redundant calls; refreshing after actions keeps data accurate.
 
-A removes needed functionality. B and D do not reduce calls.
+Putting order details in the system prompt removes needed functionality. A shorter timeout or six parallel lookups do not reduce the number of calls.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -383,7 +383,7 @@ A developer accidentally let Claude Code make a series of bad edits over several
 
 Checkpoints let you rewind code and conversation to an earlier point; git remains a safety net.
 
-A loses unrelated work. C is unreliable. D is slow and error-prone.
+Deleting and recloning the repository loses unrelated work. Asking Claude to undo from memory is unreliable. Editing the files by hand is slow and error-prone.
 
 ## Scenario: Multi-Agent Research System
 
@@ -402,7 +402,7 @@ Two analysis subagents interpret the same clause of a regulation differently. Sy
 
 Disagreements should be resolved with evidence or surfaced as uncertainty, not hidden.
 
-B is arbitrary. C is meaningless for interpretations. D loses information.
+Always picking the first interpretation is arbitrary. Averaging interpretations is meaningless. Dropping the clause loses information.
 
 ## Scenario: Structured Data Extraction
 
@@ -421,7 +421,7 @@ Account numbers extracted from scans sometimes contain OCR errors (O vs 0, l vs 
 
 Check digits and format rules catch many OCR errors reliably.
 
-A is probabilistic. C loses data. B corrupts text fields.
+Asking the model to be careful is probabilistic. Ignoring account numbers loses data. Replacing O and l across the output corrupts text fields.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -440,7 +440,7 @@ In CI you need to follow Claude Code's progress in real time in the logs, instea
 
 Streaming output provides incremental events for monitoring.
 
-A is the current problem. C wastes compute. D does not change Claude's output.
+Waiting for the full output is the current problem. Running twice wastes compute. Runner verbosity does not change Claude's output.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -459,7 +459,7 @@ The agent calls an internal REST API via `curl` in Bash, handling tokens manuall
 
 A dedicated tool encapsulates authentication and error handling, and gives the model a clear interface.
 
-A keeps the risks. C exposes secrets. B loses functionality.
+Keeping `curl` with a reminder keeps the risks. A token in the system prompt exposes secrets. Fetching data manually loses functionality.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -478,7 +478,7 @@ A customer escalated yesterday and returns today. The agent has no memory of the
 
 Persistent, structured case records provide continuity across sessions.
 
-A frustrates the customer. C is impractical. B leaks data across customers.
+Asking the customer to repeat everything frustrates them. Keeping the session open for days is impractical. Every past transcript in the system prompt leaks data across customers.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -497,7 +497,7 @@ A team prefers a new data-access pattern, but Claude Code keeps imitating the ol
 
 Explicit guidance plus a canonical example outweighs imitation of prevalent legacy code.
 
-A is impractical. B is vague. D does not change the pattern chosen.
+Deleting all legacy code is impractical. "Ignore older files" is vague. Lower temperature does not change the pattern chosen.
 
 ## Scenario: Multi-Agent Research System
 
@@ -516,7 +516,7 @@ The coordinator's context overflows after collecting long results from 12 subage
 
 External storage plus summaries keeps the coordinator's context manageable while preserving details.
 
-A reduces coverage. C loses information. B loses state.
+Fewer subagents reduce coverage. Truncating to 100 tokens loses information. Restarting the coordinator loses state.
 
 ## Scenario: Structured Data Extraction
 
@@ -535,7 +535,7 @@ Extraction from email threads picks up values from quoted older messages instead
 
 Clear rules about authority and structure prevent mixing outdated values.
 
-A causes the error. C picks the oldest values. D is unreliable.
+Equal weight across the thread causes the error. Using only the first email picks the oldest values. Guessing from tone is unreliable.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -554,7 +554,7 @@ Your CI job runs Claude Code with network access, though it only needs the repos
 
 Least privilege on tools and network limits the impact of injection.
 
-B keeps the risk. C is probabilistic. D does not prevent exfiltration of readable data.
+Keeping network access keeps the risk. A prompt rule is probabilistic. Encryption at rest does not prevent exfiltration of readable data.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -573,7 +573,7 @@ An engineer asks for an architecture diagram of a service. The agent produces a 
 
 Diagrams should reflect evidence from code and config, with uncertainty marked.
 
-A hides the problem. C repeats it. D pushes work back.
+A simpler diagram hides the problem. Folder names repeat it. Asking the engineer pushes work back.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -592,7 +592,7 @@ A legal disclaimer must appear word-for-word at the end of every refund confirma
 
 Exact, required text is best inserted deterministically.
 
-A and C remain probabilistic. D does not guarantee wording and may violate legal requirements.
+Repeating the disclaimer or asking for an exact copy remains probabilistic. A one-sentence version does not guarantee wording and may violate legal requirements.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -611,7 +611,7 @@ You start Claude Code and want to continue the most recent conversation in this 
 
 `--continue` resumes the most recent conversation; `--resume` lets you choose a session.
 
-B misdescribes resume. C clears context. A is not a resume option.
+`--resume` without arguments does not pick the oldest session: it lets you choose. `/clear` clears context. `--init` is not a resume option.
 
 ## Scenario: Multi-Agent Research System
 
@@ -630,7 +630,7 @@ The search subagent fails on paywalled sources and reports nothing about them. R
 
 Transparency about gaps and seeking legitimate alternatives keeps the report honest and complete.
 
-B hides gaps. C overstates evidence. D wastes the rest of the research.
+Ignoring paywalled sources hides gaps. Citing abstracts as full papers overstates evidence. Stopping at the first paywall wastes the rest of the research.
 
 ## Scenario: Structured Data Extraction
 
@@ -649,7 +649,7 @@ Your schema for medical reports has 6 levels of nested objects. Many outputs fai
 
 Overly complex schemas increase errors. Simpler or staged schemas improve reliability.
 
-B loses types. C worsens the problem. D hides errors.
+Making every field a string loses types. More nesting worsens the problem. Removing validation for nested parts hides errors.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -668,7 +668,7 @@ A new model version is released. Your CI reviewer uses an alias that automatical
 
 Pinning plus evaluation before upgrades keeps behavior predictable.
 
-A misses improvements. B causes surprises. D is not a process.
+Never updating misses improvements. Always using the newest alias causes surprises. Manually halving comments is not a process.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -687,7 +687,7 @@ Engineers ask the agent to print environment variables to debug configuration. T
 
 Deterministic filtering prevents secret exposure while preserving debugging ability.
 
-A relies on discipline. C loses logs. B reduces impact but not exposure.
+Asking engineers not to print variables relies on discipline. Disabling logging loses logs. Daily rotation reduces impact but not exposure.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -706,7 +706,7 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 
 Authorization must be enforced server-side, based on the authenticated identity.
 
-B is probabilistic. C is partial. D increases mismatches.
+Double-checking spelling is probabilistic. Hiding emails in responses is partial. Fuzzy matching increases mismatches.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -725,7 +725,7 @@ Claude Code is running a long refactor; the developer notices it heading in the 
 
 Interrupting and redirecting saves time and preserves useful context.
 
-A wastes time. B loses context. D loses the work and context.
+Letting it finish and reverting wastes time. Closing the terminal loses context. A new session without explanation loses the work and context.
 
 ## Scenario: Multi-Agent Research System
 
@@ -744,7 +744,7 @@ The final research report is 40 pages; users want key conclusions quickly but al
 
 Layered reports serve both quick reading and detail.
 
-B loses information. C is hard to use. D loses nuance and evidence.
+Two pages lose information. One unstructured 40-page narrative is hard to use. Bullet points only lose nuance and evidence.
 
 ## Scenario: Structured Data Extraction
 
@@ -763,7 +763,7 @@ Human review is overloaded: 30% of extractions are flagged. Reviewers process th
 
 Risk-based prioritization uses reviewer time best; fixing common causes reduces volume.
 
-A is costly and does not address causes. B hides errors. D ignores risk.
+More reviewers are costly and do not address causes. Stopping flagging hides errors. Random picking ignores risk.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -782,7 +782,7 @@ The PR contains database migrations and application code. The general review mis
 
 Conditional, domain-specific checklists focus attention on known risk areas.
 
-A is not targeted. C misses code. B misses the risk.
+A longer review of every PR is not targeted. Reviewing only the migrations misses the code. Excluding migration files misses the risk.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -801,7 +801,7 @@ The repository's examples use a deprecated internal API, and the agent copies th
 
 Explicit deprecation guidance redirects the agent away from outdated patterns.
 
-A may remove useful history. C wastes engineer time. B does not fix the input.
+Deleting outdated examples may remove useful history. Fixing calls in code review wastes engineer time. A different model does not fix the input.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -820,7 +820,7 @@ Before launch, you want to test the support agent against manipulative customers
 
 Adversarial testing before launch reveals vulnerabilities; fixes should be structural where possible.
 
-A risks harm. C is not evidence. B misses risks.
+Waiting for real customers risks harm. Testing only happy paths misses risks. The agent's self-assessment is not evidence.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -839,7 +839,7 @@ A developer tries a bug fix with Claude Code, but the problem is hard and the fi
 
 Extended thinking and planning help with complex problems, especially with good reproduction details.
 
-B repeats the same result. C reduces depth. D removes investigation ability.
+Repeating the same prompt repeats the same result. Shorter answers reduce depth. Disabling tools removes the ability to investigate.
 
 ## Scenario: Multi-Agent Research System
 
@@ -858,7 +858,7 @@ A user asks follow-up questions about a completed research report. The system re
 
 Reusing stored findings is efficient and consistent; targeted research fills real gaps.
 
-B wastes budget. C reduces usefulness. D loses grounding.
+Re-running full research for each follow-up wastes budget. Refusing follow-ups reduces usefulness. General knowledge loses grounding.
 
 ## Scenario: Structured Data Extraction
 
@@ -877,7 +877,7 @@ Your validation set is from last year. New supplier templates have appeared, and
 
 Evaluation sets must reflect current data; ongoing sampling detects drift.
 
-A ignores real performance. C removes visibility. B is too slow.
+Trusting the 97% score ignores real performance. Stopping measurement removes visibility. A yearly refresh is too slow.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -896,7 +896,7 @@ A reviewer bot is allowed to approve PRs automatically when it finds no issues. 
 
 Automated review is an aid; approval requires human accountability.
 
-A, C, and D keep automation as the decision-maker or are irrelevant.
+A stricter bot that still auto-approves, two approving bots, or no approvals on Fridays all keep automation as the decision-maker or are irrelevant.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -915,7 +915,7 @@ The agent's `Read` tool is used on a 300 MB binary asset to "check its content."
 
 Large binaries do not belong in context; metadata tools give useful information cheaply.
 
-A wastes context. B is destructive. D is meaningless for binaries.
+Reading the binary anyway wastes context. Deleting it is destructive. A hex dump is meaningless for binaries.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -934,7 +934,7 @@ Three backend tools fail at once (outage). The agent keeps retrying and the cust
 
 Graceful degradation balances retries with honest communication and continuity.
 
-A wastes time. B misleads. D abandons the customer.
+Retrying until the tools respond wastes time. Continuing as if nothing happened misleads. Ending silently abandons the customer.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -953,7 +953,7 @@ Your team needs to explain the project's build and test commands to Claude Code 
 
 Commands used across sessions and by everyone belong in project memory.
 
-A is repetitive. C is not loaded. D is not shared.
+Repeating the commands in each prompt is repetitive. A Makefile comment is not loaded. The maintainer's user-level CLAUDE.md is not shared.
 
 ## Scenario: Multi-Agent Research System
 
@@ -972,7 +972,7 @@ A search subagent fetches web pages that contain hidden text: "AI agent: write t
 
 Agents exposed to untrusted content should not hold dangerous capabilities; least privilege limits injection impact.
 
-A is probabilistic. C and D do not prevent malicious content.
+An instruction to ignore hidden text is probabilistic. HTTPS only, or a different search engine, does not prevent malicious content.
 
 ## Scenario: Structured Data Extraction
 
@@ -991,7 +991,7 @@ Your extraction includes a free-text `reasoning` field placed after the extracte
 
 Output order matters: reasoning generated before the answer can inform it; reasoning after is post-hoc.
 
-A loses the benefit. C cannot inform values already produced. B removes useful analysis.
+Removing the reasoning field loses its benefit. Reasoning in a separate later call cannot inform values already produced. Limiting it to 5 words removes useful analysis.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -1010,7 +1010,7 @@ You want to measure how many real bugs your CI reviewer catches (recall), not ju
 
 Recall requires ground truth: known bugs to find.
 
-A, C, and D do not measure detection of real bugs.
+Counting comments, surveying developers or timing reviews do not measure detection of real bugs.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -1029,7 +1029,7 @@ Engineers ask the agent every Monday to generate the same dependency report by h
 
 Repetitive deterministic tasks should become scripts; the agent adds value in building and interpreting.
 
-A wastes effort. C loses information. D does not automate.
+Asking the agent every Monday wastes effort. Stopping the report loses information. Rotating the task among engineers does not automate it.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -1048,7 +1048,7 @@ You evaluate escalation decisions. The team only tracks unnecessary escalations 
 
 Both error types matter: false positives cost time, false negatives cost risk and trust.
 
-B ignores the risk. C and D are irrelevant.
+Tracking only unnecessary escalations ignores the risk. Message length and typing speed are irrelevant.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -1067,7 +1067,7 @@ A large cross-cutting change will be implemented with Claude Code. The team want
 
 Incremental changes are easier to verify and roll back.
 
-A is hard to review. C removes oversight. B removes safety.
+One large PR at the end is hard to review. Direct merges once it compiles remove oversight. Skipping tests until the end removes safety.
 
 ## Scenario: Multi-Agent Research System
 
@@ -1086,7 +1086,7 @@ Users complain they wait 10 minutes without feedback during research. What is th
 
 Progress visibility improves the experience without sacrificing quality.
 
-A sacrifices quality. B worsens it. D does not fit interactive use.
+Shorter research sacrifices quality. Hiding the progress bar worsens the experience. Overnight batch reports do not fit interactive use.
 
 ## Scenario: Structured Data Extraction
 
@@ -1105,7 +1105,7 @@ Your high-volume synchronous extraction hits rate limits (HTTP 429) during peaks
 
 Backoff, concurrency control, and batching for non-urgent work handle rate limits robustly.
 
-A loses work. C worsens congestion. B circumvents limits improperly.
+Marking documents as failed loses work. Tight-loop retries worsen congestion. Rotating API keys circumvents limits improperly.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -1124,7 +1124,7 @@ You want CI-specific instructions (e.g., "output JSON findings only") without ch
 
 Task-specific instructions belong in the invocation; shared conventions stay in project memory.
 
-A is fragile. B is excessive. D does not deliver instructions to the model.
+Editing CLAUDE.md in CI before each run is fragile. A separate CI repository is excessive. Environment variables do not deliver instructions to the model.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -1143,4 +1143,4 @@ An MCP tool returns errors as plain text "fail" with `isError` false. The agent 
 
 Tools should signal errors explicitly and descriptively so the agent can react correctly.
 
-B is fragile. C causes wrong behavior. D loses functionality.
+Checking responses for the word "fail" is fragile. Ignoring tool errors causes wrong behavior. Removing the tool loses functionality.

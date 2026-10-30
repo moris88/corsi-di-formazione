@@ -5,7 +5,7 @@ duration_minutes: 120
 
 # Questions and Answers: Practice Test 2 – Claude Certified Architect
 
-## Scenario: 1 – Customer support agent
+## Scenario: Customer Support Resolution Agent
 
 ### Question 1
 
@@ -124,7 +124,7 @@ The coordinator delegates to a subagent the verification of an order, writing on
 
 Subagents start from zero. Everything they need must be written into their prompt.
 
-## Scenario: 2 – Code generation with Claude Code
+## Scenario: Code Generation with Claude Code
 
 ### Question 10
 
@@ -191,6 +191,8 @@ The team wants its test conventions to apply to all `*.test.ts` files, scattered
 
 A single rule with `paths:` covers all files, including those created in the future.
 
+## Scenario: Developer Productivity with Claude
+
 ### Question 15
 
 A developer must understand the architecture of a forty-file codebase, without filling the main conversation with raw file contents. Which solution is most suitable?
@@ -217,6 +219,8 @@ Claude Code must find where a function is defined in an unfamiliar codebase. Whi
 
 Targeted exploration avoids consuming context with irrelevant files.
 
+## Scenario: Code Generation with Claude Code
+
 ### Question 17
 
 A session was interrupted, and the next day the user resumes it with `--resume`. In the meantime, some files in the codebase were modified. What is the correct approach?
@@ -229,6 +233,8 @@ A session was interrupted, and the next day the user resumes it with `--resume`.
 #### Correct answer to question 17: C
 
 Claude does not realize on its own that previous results are outdated: this must be stated explicitly.
+
+## Scenario: Developer Productivity with Claude
 
 ### Question 18
 
@@ -243,7 +249,7 @@ The `Edit` tool returns an error because the text to replace appears twice in th
 
 `Edit` requires unique text. More context around the fragment resolves the ambiguity.
 
-## Scenario: 3 – Multi-agent research system
+## Scenario: Multi-Agent Research System
 
 ### Question 19
 
@@ -362,7 +368,7 @@ Subagent A produces data that subagent B must use for its analysis. How should t
 
 Subagents do not communicate with each other: everything goes through the coordinator.
 
-## Scenario: 4 – Productivity tools for developers
+## Scenario: Developer Productivity with Claude
 
 ### Question 28
 
@@ -416,6 +422,8 @@ In an MCP configuration file, an entry has a `url` field but no `type` field. Wh
 
 An entry with `url` but without `type` is a configuration error and is ignored.
 
+## Scenario: Claude Code for Continuous Integration
+
 ### Question 32
 
 A pipeline runs `claude -p` and loads an MCP server defined in the project. The team does not want that server used in CI. What is the correct action?
@@ -428,6 +436,8 @@ A pipeline runs `claude -p` and loads an MCP server defined in the project. The 
 #### Correct answer to question 32: C
 
 In non-interactive sessions there is no one to approve, so the server must be excluded explicitly.
+
+## Scenario: Developer Productivity with Claude
 
 ### Question 33
 
@@ -481,7 +491,7 @@ An agent has eighteen tools and often picks the wrong one. Which architecture is
 
 Splitting the tools among specialized subagents reduces confusion when choosing.
 
-## Scenario: 5 – Claude Code in Continuous Integration
+## Scenario: Claude Code for Continuous Integration
 
 ### Question 37
 
@@ -600,7 +610,7 @@ In the pipeline there is no user who can respond to confirmation requests. Which
 
 `--permission-prompts none` automatically denies operations that would require confirmation.
 
-## Scenario: 6 – Structured data extraction
+## Scenario: Structured Data Extraction
 
 ### Question 46
 
@@ -719,7 +729,7 @@ An application's system prompt contains the current date and time at the beginni
 
 The timestamp changes on every request and invalidates the prefix. It must be moved after the stable content.
 
-## Scenario: 7 – Architecture patterns for conversational AI
+## Scenario: Conversational AI Architecture Patterns
 
 ### Question 55
 

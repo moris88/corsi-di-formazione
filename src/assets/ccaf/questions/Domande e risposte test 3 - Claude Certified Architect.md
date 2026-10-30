@@ -20,7 +20,7 @@ A Claude Agent SDK productivity assistant is configured with two MCP servers: `s
 
 #### Correct answer to question 1: C
 
-All configured MCP servers are connected when the session starts, and their tools are discovered up front. The agent sees one combined tool list, so it can mix `symbols-index` and `GitHub-review` tools in the same workflow. It doesn't pick a single server, probe at runtime, or need the user to label each step. (The source file marked D, which is wrong: routing is done by the model from the tool descriptions, not by labels on the prompt.)
+All configured MCP servers are connected when the session starts, and their tools are discovered up front. The agent sees one combined tool list, so it can mix `symbols-index` and `GitHub-review` tools in the same workflow. It doesn't pick a single server, probe at runtime, or need the user to label each step. (Labeling prompt segments is not needed: routing is done by the model from the tool descriptions, not by labels on the prompt.)
 
 ## Scenario: Code Generation with Claude Code
 
@@ -257,7 +257,7 @@ During a test of a support resolution agent, the cancel_subscription and lookup_
 
 #### Correct answer to question 14: D
 
-Same principle as question 3: a generic 400 with plain text doesn't let the agent tell a bad order number from an expired token, or a temporary error from a permanent one (subscription already terminated). Structured fields such as `error_category`, `retryable`, and `recommended_recovery` support deterministic recovery decisions.
+A generic 400 with plain text doesn't let the agent tell a bad order number from an expired token, or a temporary error from a permanent one (subscription already terminated). Structured fields such as `error_category`, `retryable`, and `recommended_recovery` support deterministic recovery decisions.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -608,7 +608,7 @@ A platform team is creating a Claude Agent SDK tool called RouteProbe to improve
 
 #### Correct answer to question 33: D
 
-Same principle as question 31: an iterative test-driven loop, one behavior at a time with immediate execution of the relevant test, so each failure can be traced to a specific change. Waiting for nightly CI or generating everything in one pass delays the feedback and mixes the causes of failures together.
+The right approach is an iterative test-driven loop, one behavior at a time with immediate execution of the relevant test, so each failure can be traced to a specific change. Waiting for nightly CI or generating everything in one pass delays the feedback and mixes the causes of failures together.
 
 ## Scenario: Structured Data Extraction
 
@@ -709,7 +709,7 @@ Several other changed specs have not been analyzed yet. What should the workflow
 
 #### Correct answer to question 38: B
 
-Like question 30: the error is structured, not retryable, and of type `analysis_limit_exceeded`. Calling the tool again on that file is pointless. Mark it for manual review with the category, then continue with the other specs. Aborting everything or leaving the file in the retry queue ignores the error's semantics.
+The error is structured, not retryable, and of type `analysis_limit_exceeded`. Calling the tool again on that file is pointless. Mark it for manual review with the category, then continue with the other specs. Aborting everything or leaving the file in the retry queue ignores the error's semantics.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -828,7 +828,7 @@ A platform team is adding Claude Code to a release-gating workflow for a service
 
 #### Correct answer to question 45: B
 
-Same pattern as question 44: independent checks with different rubrics mean parallel subagents with isolated prompts and contexts, coordinated by an agent that merges the findings into one summary. Shared conversations, chains that edit earlier conclusions, or a single general-purpose reviewer lose the independence and focus.
+Independent checks with different rubrics mean parallel subagents with isolated prompts and contexts, coordinated by an agent that merges the findings into one summary. Shared conversations, chains that edit earlier conclusions, or a single general-purpose reviewer lose the independence and focus.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -879,7 +879,7 @@ A grants-management platform uses Claude to extract applicant details from scann
 
 #### Correct answer to question 48: D
 
-Like question 34: inconsistent mapping to an enum from varied phrasings is solved with few-shot examples showing excerpt-to-JSON mappings with the approved enum values. Temperature 0 only makes the error deterministic, a newer model doesn't define the mapping, and a required field can push the model toward invented values.
+Inconsistent mapping to an enum from varied phrasings is solved with few-shot examples showing excerpt-to-JSON mappings with the approved enum values. Temperature 0 only makes the error deterministic, a newer model doesn't define the mapping, and a required field can push the model toward invented values.
 
 ## Scenario: Multi-Agent Research System
 
@@ -1083,5 +1083,5 @@ The report-generation subagent calls two MCP tools: `fetchCitationMetadata`, whi
 
 #### Correct answer to question 60: D
 
-Like question 49: classify errors. Transient errors (connection resets) get internal retries with bounded backoff. Validation errors (empty rows, nonexistent field, malformed DOI) get immediate structured errors with `invalid_parameter`, `expected_format`, and `suggested_fix`. One uniform retry, generic errors, or asking the agent to infer the cause don't allow correct recovery.
+Classify the errors. Transient errors (connection resets) get internal retries with bounded backoff. Validation errors (empty rows, nonexistent field, malformed DOI) get immediate structured errors with `invalid_parameter`, `expected_format`, and `suggested_fix`. One uniform retry, generic errors, or asking the agent to infer the cause don't allow correct recovery.
 
