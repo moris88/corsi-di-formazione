@@ -73,8 +73,8 @@
     button.after(feedback);
 
     // Link "Home": nelle pagine di una certificazione porta alla sua home
-    // (data-home sul body); nella home della certificazione porta al portale
-    // (href del logo). Assente nel portale.
+    // (data-home sul body); nella home della certificazione si chiama "Corsi"
+    // e porta al portale (href del logo). Assente nel portale.
     if (!document.body.classList.contains("page-portal")) {
       const brand = document.querySelector(".topbar .brand");
       const certHome = document.body.dataset.home;
@@ -82,9 +82,10 @@
       const home = document.createElement("a");
       home.className = "home-link";
       home.href = certHome && !onCertHome ? certHome : brand ? brand.getAttribute("href") : "../index.html";
-      home.title = certHome && !onCertHome ? "Torna alla home della certificazione" : "Torna a tutte le certificazioni";
+      const toPortal = !(certHome && !onCertHome);
+      home.title = toPortal ? "Torna a tutti i corsi" : "Torna alla home della certificazione";
       home.setAttribute("aria-label", home.title);
-      home.innerHTML = '<span class="home-icon" aria-hidden="true">⌂</span><span class="home-text">Home</span>';
+      home.innerHTML = `<span class="home-icon" aria-hidden="true">⌂</span><span class="home-text">${toPortal ? "Corsi" : "Home"}</span>`;
       button.before(home);
     }
   });
