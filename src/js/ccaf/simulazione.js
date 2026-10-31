@@ -1,3 +1,5 @@
+import { confirmDialog } from "../dialog.js";
+
 const DEFAULT_DURATION_MINUTES = 120;
 let TOTAL_QUESTIONS = 0;
 let _DURATION_MS = DEFAULT_DURATION_MINUTES * 60 * 1000;
@@ -974,12 +976,18 @@ function renderExam() {
   startTimer();
 }
 
-function confirmFinish() {
+async function confirmFinish() {
   const unanswered = exam.order.filter((item) => !item.answer).length;
   const message = unanswered
     ? `Hai ${unanswered} domande senza risposta. Vuoi consegnare comunque la prova?`
     : "Vuoi consegnare la prova e vedere i risultati?";
-  if (window.confirm(message)) finishExam(false);
+  const ok = await confirmDialog({
+    title: "Consegnare la prova?",
+    message,
+    confirmLabel: "Consegna",
+    cancelLabel: "Continua la prova",
+  });
+  if (ok && exam) finishExam(false);
 }
 
 function finishExam(automatic) {
@@ -1102,19 +1110,34 @@ function renderResults(automatic = false) {
   </section>`;
 }
 
-app.addEventListener("click", (event) => {
+app.addEventListener("click", async (event) => {
   const control = event.target.closest("[data-action]");
   if (!control) return;
   const action = control.dataset.action;
   if (action === "choose-source") {
     app.querySelector("#source-file")?.click();
   } else if (action === "clear-history") {
-    if (window.confirm("Vuoi cancellare lo storico degli esiti?")) {
+    const ok = await confirmDialog({
+      title: "Cancellare lo storico?",
+      message: "Tutti gli esiti delle simulazioni salvati in questo browser verranno eliminati.",
+      confirmLabel: "Cancella storico",
+      danger: true,
+    });
+    if (ok) {
       saveHistory([]);
       renderIntro();
     }
   } else if (action === "show-guide" || action === "restart") {
-    if (exam && !window.confirm("La simulazione in corso verrà eliminata. Vuoi iniziarne una nuova?")) return;
+    if (
+      exam &&
+      !(await confirmDialog({
+        title: "Iniziare una nuova simulazione?",
+        message: "La simulazione in corso verrà eliminata. Vuoi iniziarne una nuova?",
+        confirmLabel: "Nuova simulazione",
+        danger: true,
+      }))
+    )
+      return;
     renderExamGuide();
   } else if (action === "back-to-intro") {
     renderIntro();

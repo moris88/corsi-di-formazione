@@ -1,3 +1,5 @@
+import { confirmDialog } from "../dialog.js";
+
 // I test vengono scoperti automaticamente: "questions/Domande e risposte test N - ..."
 // finché non si incontrano due numeri consecutivi mancanti.
 const FILE_PATTERN = (n) => `../../assets/ccaf/questions/Domande e risposte test ${n} - Claude Certified Architect.md`;
@@ -817,7 +819,7 @@ function setupTrendTooltip(sessions) {
 
 /* ---------- Eventi ---------- */
 
-app.addEventListener("click", (event) => {
+app.addEventListener("click", async (event) => {
   const control = event.target.closest("[data-action]");
   if (!control) return;
   const action = control.dataset.action;
@@ -837,7 +839,13 @@ app.addEventListener("click", (event) => {
   else if (action === "retry-wrong") retryWrong();
   else if (action === "stats") renderStats();
   else if (action === "reset-stats") {
-    if (window.confirm("Vuoi cancellare tutte le risposte salvate dell’allenamento?")) {
+    const ok = await confirmDialog({
+      title: "Azzerare le statistiche?",
+      message: "Tutte le risposte salvate dell’allenamento verranno cancellate da questo browser.",
+      confirmLabel: "Azzera",
+      danger: true,
+    });
+    if (ok) {
       saveAnswers([]);
       renderStats();
     }

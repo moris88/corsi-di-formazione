@@ -1,3 +1,5 @@
+import { alertDialog } from "../dialog.js";
+
 const documents = [
   {
     id: "guide",
@@ -833,7 +835,7 @@ document.querySelector("#next-doc").addEventListener("click", () => {
   if (currentDocumentIndex < list.length - 1) loadDocument(list[currentDocumentIndex + 1].id);
 });
 // Condivide il link al documento aperto (con la sezione nell'hash): menu di condivisione del sistema
-// dove disponibile (mobile), altrimenti copia negli appunti con conferma sul pulsante
+// dove disponibile (mobile), altrimenti copia negli appunti e lo conferma con una finestra di dialogo
 document.querySelector("#share-doc").addEventListener("click", async (event) => {
   const button = event.currentTarget;
   const url = window.location.href;
@@ -845,20 +847,22 @@ document.querySelector("#share-doc").addEventListener("click", async (event) => 
     }
     return;
   }
-  const label = "Condividi il link";
   try {
     await navigator.clipboard.writeText(url);
-    button.title = "Link copiato";
     button.classList.add("is-done");
+    await alertDialog({
+      title: "Link copiato",
+      message: "Il link a questa pagina (con la sezione aperta) è negli appunti: incollalo dove vuoi condividerlo.",
+      detail: url,
+    });
   } catch {
-    button.title = "Impossibile copiare il link";
+    await alertDialog({
+      title: "Copia non riuscita",
+      message: "Il browser non ha permesso di copiare il link. Selezionalo qui sotto e copialo a mano.",
+      detail: url,
+    });
   }
-  button.setAttribute("aria-label", button.title);
-  setTimeout(() => {
-    button.title = label;
-    button.setAttribute("aria-label", label);
-    button.classList.remove("is-done");
-  }, 1800);
+  button.classList.remove("is-done");
 });
 // Link tra documenti del portale (./studio.html?doc=<id>#<sezione>): si aprono senza ricaricare
 contentNode.addEventListener("click", (event) => {

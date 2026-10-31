@@ -238,12 +238,20 @@
   font-size: 12px;
   line-height: 1.6;
 }
+/* Azioni prima dell'avvio sempre visibili in fondo allo schermo (come nel riepilogo) */
 .guide-actions {
+  position: sticky;
+  z-index: 5;
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
   margin-top: 24px;
+  padding: 14px 0 max(14px, env(safe-area-inset-bottom));
+  background: var(--paper);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -12px 20px -14px rgba(30, 30, 30, 0.25);
 }
 .file-input {
   position: absolute;
@@ -717,6 +725,7 @@
   border-top: 1px solid var(--line);
   box-shadow: 0 -12px 20px -14px rgba(30, 30, 30, 0.25);
 }
+:root[data-theme="dark"] .guide-actions,
 :root[data-theme="dark"] .results-actions {
   box-shadow: 0 -12px 20px -14px rgba(0, 0, 0, 0.7);
 }
