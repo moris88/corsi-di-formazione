@@ -294,6 +294,8 @@ const documents = [
     description: "Apri una issue su GitHub per segnalare errori o proporre miglioramenti.",
     index: "!",
     external: true,
+    // Mostrato come la pillola "Segnala / Feedback" dell'header (.feedback-link)
+    variant: "feedback",
   },
 ];
 
@@ -655,6 +657,8 @@ function renderCatalog(filter = "") {
             const extra = matches
               ? `<span class="doc-hits">${matches.count} ${matches.count === 1 ? "risultato" : "risultati"}</span><span class="doc-snippet">${matches.snippet}</span>`
               : "";
+            if (item.variant === "feedback")
+              return `<a class="feedback-link nav-feedback" href="${escapeHtml(item.path)}" target="_blank" rel="noopener" title="${escapeHtml(item.title)}"><span class="feedback-icon" aria-hidden="true">!</span><span class="feedback-text">Segnala / Feedback</span></a>`;
             return item.external
               ? `<a class="doc-link" href="${escapeHtml(item.path)}" target="_blank" rel="noopener"><span class="doc-index">${item.index}</span><span class="doc-title">${escapeHtml(item.title)}</span></a>`
               : `<button class="doc-link" type="button" data-doc="${escapeHtml(item.id)}" aria-current="${activeDocumentId === item.id ? "page" : "false"}"><span class="doc-index">${item.index}</span><span class="doc-title">${escapeHtml(item.title)}${extra}</span></button>`;
@@ -863,6 +867,10 @@ document.querySelector("#share-doc").addEventListener("click", async (event) => 
     });
   }
   button.classList.remove("is-done");
+});
+// "Torna su" in fondo all'articolo: riporta all'inizio della pagina
+document.querySelector("#back-to-top").addEventListener("click", () => {
+  window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 });
 // Link tra documenti del portale (./studio.html?doc=<id>#<sezione>): si aprono senza ricaricare
 contentNode.addEventListener("click", (event) => {

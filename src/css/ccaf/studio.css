@@ -107,7 +107,7 @@
 .nav-group-title {
   margin: 0 0 7px;
   padding: 0 8px;
-  color: #888888;
+  color: var(--primary);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.13em;
@@ -159,13 +159,20 @@
   min-width: 0;
   padding: 34px clamp(20px, 4vw, 64px) 80px;
 }
+/* Categoria + pulsanti precedente/successivo/condividi: restano agganciati sotto l'header mentre si scorre */
 .article-topline {
+  position: sticky;
+  z-index: 4;
+  top: calc(var(--topbar-height) + 2px);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 19px;
+  margin: -10px 0 9px;
+  padding: 10px 0;
   color: var(--muted);
+  background: var(--paper);
+  border-bottom: 1px solid transparent;
   font-size: 10px;
 }
 .article-category {
@@ -262,7 +269,7 @@
 .article-content h4,
 .article-content h5,
 .article-content h6 {
-  scroll-margin-top: 88px;
+  scroll-margin-top: calc(var(--topbar-height) + 72px); /* header + barra fissa dei pulsanti */
   color: var(--ink);
   font-family: var(--serif);
   font-weight: 400;
@@ -526,7 +533,7 @@
     padding: 23px 16px 55px;
   }
   .article-topline {
-    margin-bottom: 13px;
+    margin-bottom: 3px;
   }
   .article-title {
     font-size: 34px;
@@ -560,7 +567,6 @@
 :root[data-theme="dark"] .mobile-catalog {
   background: rgba(30, 30, 30, 0.95);
 }
-:root[data-theme="dark"] .nav-group-title,
 :root[data-theme="dark"] .doc-index,
 :root[data-theme="dark"] .toc-title,
 :root[data-theme="dark"] .icon-button:disabled {
@@ -599,5 +605,36 @@ mark.search-hit {
     max-width: none;
     margin: 0;
     padding: 0;
+  }
+}
+
+/* Voce "Segnala / Feedback" nei Riferimenti: stessa pillola dell'header, testo sempre visibile */
+.nav-feedback {
+  margin: 8px 0 4px 10px;
+}
+@media (max-width: 760px) {
+  .nav-feedback {
+    width: auto;
+    padding: 0 14px 0 8px;
+  }
+  .nav-feedback .feedback-text {
+    display: inline;
+  }
+}
+
+/* Pulsante "Torna su" in fondo all'articolo (nascosto finché il documento non è caricato) */
+.article-end {
+  display: flex;
+  justify-content: center;
+  margin-top: 44px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.article-content[hidden] + .article-end {
+  display: none;
+}
+@media print {
+  .article-end {
+    display: none;
   }
 }

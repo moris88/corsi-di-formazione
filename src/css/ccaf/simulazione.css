@@ -758,7 +758,9 @@
     display: block;
     min-height: 0;
   }
+  /* In colonna la griglia non c'è più: distacca la card dal pulsante "Inizia la simulazione" */
   .exam-panel {
+    margin-top: 32px;
     padding: 21px 19px;
   }
   .exam-progress {
@@ -793,9 +795,13 @@
     aspect-ratio: auto;
   }
   .rail-legend,
-  .rail-submit,
   .keyboard-hint {
     display: none;
+  }
+  /* Su mobile "Consegna esame" resta sotto la fila dei numeri delle domande */
+  .rail-submit {
+    margin-top: 10px;
+    padding-top: 10px;
   }
   .question-area {
     order: 1;
