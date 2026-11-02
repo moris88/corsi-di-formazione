@@ -821,6 +821,24 @@ h1 {
   font-size: 13px;
   font-weight: 400;
 }
+/* Descrizione dello scenario, separata dal testo della domanda */
+.scenario-context {
+  max-width: 920px;
+  margin: 0 0 22px;
+  padding: 14px 18px;
+  border-left: 4px solid var(--primary);
+  background: var(--primary-pale);
+  color: var(--muted);
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.65;
+}
+.scenario-context p {
+  margin: 0;
+}
+.review-body .scenario-context {
+  margin: 8px 0 12px;
+}
 .question-prompt {
   max-width: 920px;
   margin-bottom: 29px;

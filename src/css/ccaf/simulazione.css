@@ -1131,3 +1131,19 @@ body.exam-focus .topbar {
     animation: none;
   }
 }
+
+/* Tema scuro: indice delle domande e legenda con gli stessi colori */
+:root[data-theme="dark"] .question-number.answered,
+:root[data-theme="dark"] .legend-chip.done {
+  background: var(--primary-pale);
+  border-color: var(--primary);
+}
+:root[data-theme="dark"] .question-number.current,
+:root[data-theme="dark"] .legend-chip.marked {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+:root[data-theme="dark"] .legend-chip.flagged {
+  background: var(--coral-dark);
+}

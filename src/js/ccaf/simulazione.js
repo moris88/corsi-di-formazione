@@ -496,6 +496,21 @@ function parseQuestionBank(markdown) {
   }
   finishQuestion();
   if (parsed.length === 0) throw new Error("Nel file non è stata trovata alcuna domanda.");
+  // Il primo paragrafo ripetuto in più domande dello stesso scenario è la sua descrizione: va mostrato a parte
+  const firstParagraph = (question) => question.prompt.split(/\n\s*\n/)[0].trim();
+  const intros = new Map();
+  for (const question of parsed) {
+    const key = `${question.scenario}\n${firstParagraph(question)}`;
+    intros.set(key, (intros.get(key) || 0) + 1);
+  }
+  for (const question of parsed) {
+    const intro = firstParagraph(question);
+    const rest = question.prompt.slice(question.prompt.indexOf(intro) + intro.length).trim();
+    if (rest && intros.get(`${question.scenario}\n${intro}`) > 1) {
+      question.context = intro;
+      question.prompt = rest;
+    }
+  }
   const ids = new Set(parsed.map((question) => question.id));
   if (ids.size !== parsed.length) throw new Error("Il file contiene numeri di domanda duplicati.");
   return { questions: parsed, title, durationMinutes };
@@ -960,7 +975,7 @@ function renderExam() {
           <button class="flag-button" type="button" data-action="flag" aria-pressed="${item.flagged}" title="Contrassegna per la revisione"><span class="flag-symbol" aria-hidden="true">⚑</span><span>${item.flagged ? "Segnata" : "Segna"}</span></button>
         </div>
         <h1 class="question-heading" id="question-title">Domanda ${exam.index + 1}<span>di ${TOTAL_QUESTIONS}</span></h1>
-        <div class="question-prompt">${markdownToHtml(question.prompt)}</div>
+        ${question.context ? `<div class="scenario-context">${markdownToHtml(question.context)}</div>` : ""}<div class="question-prompt">${markdownToHtml(question.prompt)}</div>
         <div class="answer-label">Seleziona una risposta</div>
         <div class="answer-list" role="radiogroup" aria-label="Opzioni di risposta">
           ${presentedOptions.map((option) => `<label class="answer-option"><input type="radio" name="answer" value="${option.letter}" ${item.answer === option.letter ? "checked" : ""}><span class="answer-letter">${option.displayLetter}</span><span class="answer-text">${inlineMarkdown(option.text)}</span></label>`).join("")}
@@ -1041,6 +1056,7 @@ function renderReviewEntry(item, index) {
   <summary><span class="review-status ${status}">Domanda ${index + 1} · ${statusLabel}</span><span class="review-summary-text">${escapeHtml(abbreviated(question.prompt))}</span></summary>
   <div class="review-body">
     <div class="scenario-chip">${escapeHtml(question.scenario)}</div>
+    ${question.context ? `<div class="scenario-context">${markdownToHtml(question.context)}</div>` : ""}
     <div class="review-question">${markdownToHtml(question.prompt)}</div>
     <div class="answer-label">Risposte</div>
     ${displayed

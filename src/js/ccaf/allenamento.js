@@ -182,6 +182,21 @@ function parseQuestionBank(markdown, testNumber) {
     if (phase === "explanation") current.explanationLines.push(line);
   }
   finish();
+  // Il primo paragrafo ripetuto in più domande dello stesso scenario è la sua descrizione: va mostrato a parte
+  const firstParagraph = (question) => question.prompt.split(/\n\s*\n/)[0].trim();
+  const intros = new Map();
+  for (const question of parsed) {
+    const key = `${question.scenario}\n${firstParagraph(question)}`;
+    intros.set(key, (intros.get(key) || 0) + 1);
+  }
+  for (const question of parsed) {
+    const intro = firstParagraph(question);
+    const rest = question.prompt.slice(question.prompt.indexOf(intro) + intro.length).trim();
+    if (rest && intros.get(`${question.scenario}\n${intro}`) > 1) {
+      question.context = intro;
+      question.prompt = rest;
+    }
+  }
   return parsed;
 }
 
@@ -428,7 +443,7 @@ function renderQuestion() {
       <span class="source-tag">Test ${q.test} · domanda ${q.id}${q.difficulty ? ` · ${DIFFICULTY_LABELS[q.difficulty]}` : ""}</span>
     </div>
     <h1 class="question-heading" id="question-title">Domanda ${session.index + 1}<span>di ${total}</span></h1>
-    <div class="question-prompt">${markdownToHtml(q.prompt)}</div>
+    ${q.context ? `<div class="scenario-context">${markdownToHtml(q.context)}</div>` : ""}<div class="question-prompt">${markdownToHtml(q.prompt)}</div>
     <div class="answer-label">${done ? "Correzione" : "Seleziona una risposta e conferma"}</div>
     <div class="answer-list" role="radiogroup" aria-label="Opzioni di risposta">
       ${displayed
@@ -549,7 +564,7 @@ function renderSummary() {
             .map((it) => {
               const q = it.question;
               const right = q.options.find((o) => o.letter === q.correctLetter);
-              return `<details class="review-entry"><summary><span class="review-status wrong">T${q.test} · Q${q.id}</span><span class="review-summary-text">${escapeHtml(q.prompt.replace(/[`*_>#]/g, "").slice(0, 160))}…</span></summary><div class="review-body"><div class="scenario-chip">${escapeHtml(q.scenario)}</div><div class="review-question">${markdownToHtml(q.prompt)}</div><div class="review-choice correct"><strong>Corretta:</strong> ${inlineMarkdown(right.text)}</div></div></details>`;
+              return `<details class="review-entry"><summary><span class="review-status wrong">T${q.test} · Q${q.id}</span><span class="review-summary-text">${escapeHtml(q.prompt.replace(/[`*_>#]/g, "").slice(0, 160))}…</span></summary><div class="review-body"><div class="scenario-chip">${escapeHtml(q.scenario)}</div>${q.context ? `<div class="scenario-context">${markdownToHtml(q.context)}</div>` : ""}<div class="review-question">${markdownToHtml(q.prompt)}</div><div class="review-choice correct"><strong>Corretta:</strong> ${inlineMarkdown(right.text)}</div></div></details>`;
             })
             .join("")}</div>`
         : ""

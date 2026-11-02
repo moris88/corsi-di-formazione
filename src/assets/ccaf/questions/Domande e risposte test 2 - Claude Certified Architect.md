@@ -9,6 +9,8 @@ duration_minutes: 120
 
 ### Question 1
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 A support agent ends its loop when the response text contains the phrase "Can I help you with anything else?". In production, it sometimes stops before the customer receives the refund, and other times it keeps calling tools endlessly. What is the most correct fix?
 
 - **A.** Increase `max_tokens` to give Claude more room to conclude the refund before writing the closing phrase.
@@ -23,6 +25,8 @@ The loop must end on `stop_reason`, not on the text content. An iteration limit 
 ## Scenario: Customer Support Resolution Agent
 
 ### Question 2
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
 For a customer requesting a refund, the agent must always call `get_customer` as its first tool, before any other action. Which `tool_choice` value guarantees this in the first turn?
 
@@ -39,6 +43,8 @@ The named `tool` form is the only one that forces a specific tool. `any` guarant
 
 ### Question 3
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 The team wants to prevent `process_refund` from running if the customer has not been verified. What is the most reliable solution?
 
 - **A.** A `PreToolUse` hook on `process_refund` that blocks execution until `get_customer` has returned a verified ID.
@@ -53,6 +59,8 @@ Financial rules should be enforced deterministically, with a hook before executi
 ## Scenario: Customer Support Resolution Agent
 
 ### Question 4
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
 `process_refund` returns a business error: the requested refund ($180) exceeds the automatic approval limit of $100. How should the agent react?
 
@@ -69,6 +77,8 @@ Business errors are not solved by retrying: they must be explained or passed to 
 
 ### Question 5
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 A customer writes in capital letters, "I'M FURIOUS!!!", about a duplicate $5 charge that is clearly visible in the history. What is the correct action?
 
 - **A.** Escalate immediately to a human agent, because writing in capital letters signals urgency and distress.
@@ -83,6 +93,8 @@ Emotion and tone are not the same as complexity. The case is simple and the agen
 ## Scenario: Customer Support Resolution Agent
 
 ### Question 6
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
 After the conversation was compacted, the agent refers to order number 67890 as "a recent order" and can no longer confirm the exact amount of $149.99. Which solution would have prevented this?
 
@@ -99,6 +111,8 @@ A summary turns exact numbers into paraphrases. The fact block keeps them verbat
 
 ### Question 7
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 The agent calls `lookup_order` and receives a 503 error (service unreachable). It tells the customer: "There is no order with this number." What is the problem and the fix?
 
 - **A.** There is no problem: the agent should always answer the customer with confidence, even when tools fail.
@@ -113,6 +127,8 @@ A service error is not an empty result. Saying "it does not exist" when the sear
 ## Scenario: Customer Support Resolution Agent
 
 ### Question 8
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
 From customer messages, the agent must extract the order number, but customers often do not provide it. The schema requires an `order_number` string field, mandatory. What happens, and what is the fix?
 
@@ -129,6 +145,8 @@ If information can be missing and everything is mandatory, the model tends to in
 
 ### Question 9
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 The coordinator delegates to a subagent the verification of an order, writing only "analyze the customer's problem" in the prompt. The subagent returns a generic analysis. What is the cause and the fix?
 
 - **A.** The subagent inherits the coordinator's history, so raising its temperature is enough to get specifics.
@@ -143,6 +161,8 @@ Subagents start from zero. Everything they need must be written into their promp
 ## Scenario: Code Generation with Claude Code
 
 ### Question 10
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
 A developer wants their personal working preferences (for example, detailed explanations) to apply to all projects they work on, without sharing them with the team. Where should they be written?
 
@@ -159,6 +179,8 @@ The user file applies to all projects and stays personal. `CLAUDE.local.md` appl
 
 ### Question 11
 
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
 A team must rewrite the authentication system, which involves fifteen files and has several valid approaches. Which mode should they use to start?
 
 - **A.** Plan mode: explore, design, and wait for approval before modifying anything in the codebase at all.
@@ -173,6 +195,8 @@ Changes across several files with architectural decisions require a plan before 
 ## Scenario: Code Generation with Claude Code
 
 ### Question 12
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
 A skill deploys to production. The team wants Claude never to trigger it on its own: it must be run only by the user with `/deploy`. Which frontmatter field is needed?
 
@@ -189,6 +213,8 @@ A skill deploys to production. The team wants Claude never to trigger it on its 
 
 ### Question 13
 
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
 A skill with the steps "1. Analyze, 2. Verify, 3. Summarize" is invoked at the start of the session. Ten turns later, Claude seems to have forgotten step 2. What is the most likely cause and the fix?
 
 - **A.** The context window is too small for the session: a model with a bigger context window is needed.
@@ -203,6 +229,8 @@ The skill body is not reread in later turns. Rules that must hold for the whole 
 ## Scenario: Code Generation with Claude Code
 
 ### Question 14
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
 The team wants its test conventions to apply to all `*.test.ts` files, scattered across many folders. What is the most maintainable approach?
 
@@ -219,6 +247,8 @@ A single rule with `paths:` covers all files, including those created in the fut
 
 ### Question 15
 
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+
 A developer must understand the architecture of a forty-file codebase, without filling the main conversation with raw file contents. Which solution is most suitable?
 
 - **A.** The built-in `Explore` subagent, with a summary.
@@ -233,6 +263,8 @@ A developer must understand the architecture of a forty-file codebase, without f
 ## Scenario: Developer Productivity with Claude
 
 ### Question 16
+
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
 Claude Code must find where a function is defined in an unfamiliar codebase. Which sequence of tools is most efficient?
 
@@ -249,6 +281,8 @@ Targeted exploration avoids consuming context with irrelevant files.
 
 ### Question 17
 
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
 A session was interrupted, and the next day the user resumes it with `--resume`. In the meantime, some files in the codebase were modified. What is the correct approach?
 
 - **A.** Resume without saying anything, since the session context updates automatically with the files.
@@ -263,6 +297,8 @@ Claude does not realize on its own that previous results are outdated: this must
 ## Scenario: Developer Productivity with Claude
 
 ### Question 18
+
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
 The `Edit` tool returns an error because the text to replace appears twice in the file. What is the right fix?
 
@@ -279,6 +315,8 @@ The `Edit` tool returns an error because the text to replace appears twice in th
 
 ### Question 19
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 A coordinator must launch three subagents that work in parallel: one searches the web, one analyzes documents, one collects financial data. How should this be done?
 
 - **A.** Three `Agent` calls emitted in the same coordinator response.
@@ -293,6 +331,8 @@ Parallelism is obtained by sending multiple `Agent` calls in the same response.
 ## Scenario: Multi-Agent Research System
 
 ### Question 20
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
 A synthesis subagent returns a discursive text in which it is unclear which claim comes from which source, or when. Which output format is most useful to the coordinator?
 
@@ -309,6 +349,8 @@ Separating content from metadata lets the coordinator evaluate the reliability o
 
 ### Question 21
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 Two subagents report different values for the same metric: a press release says $2.3B, an SEC filing says $2.28B. What is the coordinator's best behavior?
 
 - **A.** Compute the average of the two values and report it as the best estimate for the metric.
@@ -323,6 +365,8 @@ Conflicting data must be annotated, not silently resolved.
 ## Scenario: Multi-Agent Research System
 
 ### Question 22
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
 A synthesis states "the unemployment rate is 3.7%" without dates. A reader compares it with another value from the following month and concludes the two data points contradict each other. What is the fix?
 
@@ -339,6 +383,8 @@ Without dates, two values that are each correct for different periods look contr
 
 ### Question 23
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 The coordinator must research "creative industries", but the subtasks only cover visual arts. The final report is incomplete. What is the fix?
 
 - **A.** Accept the result as it is, since visual arts are a legitimate and central part of the topic.
@@ -353,6 +399,8 @@ The coordinator must evaluate the quality of the synthesis and relaunch the work
 ## Scenario: Multi-Agent Research System
 
 ### Question 24
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
 Only one source mentions a planned acquisition. Which phrasing in the synthesis correctly communicates the level of certainty?
 
@@ -369,6 +417,8 @@ Syntheses must distinguish levels of certainty and state when a single source su
 
 ### Question 25
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 A researcher wants to test two analysis strategies starting from the same base, without one overwriting the other. Which command or approach is most suitable?
 
 - **A.** `--resume` on both strategies, one after the other, starting each from the same session ID.
@@ -383,6 +433,8 @@ A researcher wants to test two analysis strategies starting from the same base, 
 ## Scenario: Multi-Agent Research System
 
 ### Question 26
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
 A research conversation has become long. The team wants to summarize it in a controlled way, keeping the last turns verbatim, and to keep working while the summary is written. Which approach fits best?
 
@@ -399,6 +451,8 @@ On-request compaction lets you control which turns are summarized and continue w
 
 ### Question 27
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 Subagent A produces data that subagent B must use for its analysis. How should the information pass between them?
 
 - **A.** Subagent A writes its output directly into subagent B's context window when it finishes.
@@ -413,6 +467,8 @@ Subagents do not communicate with each other: everything goes through the coordi
 ## Scenario: Developer Productivity with Claude
 
 ### Question 28
+
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
 A developer registers an MCP server that must be available only in their own work on a specific project, without ending up in the shared repository. Where should it be registered?
 
@@ -429,6 +485,8 @@ The local scope is the default and is not shared. `.mcp.json` would be shared wi
 
 ### Question 29
 
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+
 An MCP server requires a database password, and the `.mcp.json` file is shared via Git with the team. How should the credential be handled?
 
 - **A.** Write `${DATABASE_URL}` in the file and keep the real value in the environment.
@@ -443,6 +501,8 @@ The shared file contains only the placeholder, while the secret stays in the env
 ## Scenario: Developer Productivity with Claude
 
 ### Question 30
+
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
 A team wants to connect Claude to a remote MCP server on the internet that requires OAuth authentication. Which transport should be used?
 
@@ -459,6 +519,8 @@ Among remote transports, `http` (streamable-http) is the only one that supports 
 
 ### Question 31
 
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+
 In an MCP configuration file, an entry has a `url` field but no `type` field. What happens, and what is the fix?
 
 - **A.** No fix is needed: Claude infers the transport from the URL and still uses the server.
@@ -473,6 +535,8 @@ An entry with `url` but without `type` is a configuration error and is ignored.
 ## Scenario: Claude Code for Continuous Integration
 
 ### Question 32
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
 A pipeline runs `claude -p` and loads an MCP server defined in the project. The team does not want that server used in CI. What is the correct action?
 
@@ -489,6 +553,8 @@ In non-interactive sessions there is no one to approve, so the server must be ex
 
 ### Question 33
 
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+
 A custom subagent has `permissionMode: plan` in its frontmatter. The parent session is started with `bypassPermissions`. What happens?
 
 - **A.** The subagent cannot change its parent's mode, so it stays in `bypassPermissions`.
@@ -503,6 +569,8 @@ Permission modes propagate downward and cannot be loosened or changed by the sub
 ## Scenario: Developer Productivity with Claude
 
 ### Question 34
+
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
 A very long session on a large codebase shows signs of degradation: Claude makes assumptions instead of verifying, and forgets earlier findings. What is the most effective mitigation?
 
@@ -519,6 +587,8 @@ A notes file keeps findings outside the conversation, so compression does not er
 
 ### Question 35
 
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+
 An agent sent some orders to the warehouse before payment was confirmed, even though the rule was written in the system prompt. What is the most robust solution?
 
 - **A.** Rewrite the rule with stronger wording and repeat it twice in the system prompt, at start and end.
@@ -533,6 +603,8 @@ A critical rule must be enforced programmatically, not left to instructions alon
 ## Scenario: Developer Productivity with Claude
 
 ### Question 36
+
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
 An agent has eighteen tools and often picks the wrong one. Which architecture is consistent with the principle of four or five tools per agent?
 
@@ -549,6 +621,8 @@ Splitting the tools among specialized subagents reduces confusion when choosing.
 
 ### Question 37
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 A CI pipeline that runs Claude Code for automatic pull request review hangs, waiting for input. Which flag is missing?
 
 - **A.** `-p` / `--print`
@@ -563,6 +637,8 @@ A CI pipeline that runs Claude Code for automatic pull request review hangs, wai
 ## Scenario: Claude Code for Continuous Integration
 
 ### Question 38
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
 The pipeline must produce a final result readable by a program and verify that it matches a schema. Which combination of flags is correct?
 
@@ -579,6 +655,8 @@ The pipeline must produce a final result readable by a program and verify that i
 
 ### Question 39
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 The team wants two checks: a blocking review before merge, which the developer waits for, and a technical-debt report generated overnight. The manager proposes the Batch API for both, to save 50%. What is the correct choice?
 
 - **A.** Both on the Batch API.
@@ -593,6 +671,8 @@ The Batch API can take up to 24 hours: it suits what is not urgent, not a check 
 ## Scenario: Claude Code for Continuous Integration
 
 ### Question 40
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
 A batch of requests finishes, and the results arrive in random order. How is each response matched to the correct request?
 
@@ -609,6 +689,8 @@ Order is not guaranteed: `custom_id` is the correlation key.
 
 ### Question 41
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 A developer asks the same Claude Code session that has just written a feature to review it. What is the problem and the solution?
 
 - **A.** There is no problem: the same session is faster and has the most context about the feature.
@@ -623,6 +705,8 @@ Whoever wrote the code is less critical of their own choices. The review should 
 ## Scenario: Claude Code for Continuous Integration
 
 ### Question 42
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
 The automatic review system generates too many false positives: it flags problems that developers consider irrelevant. What is the most effective fix?
 
@@ -639,6 +723,8 @@ Explicit criteria with exclusions and borderline examples reduce false positives
 
 ### Question 43
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 The team wants to limit the spending of the CI pipeline, which uses Claude Code to generate tests. Which flag is suitable?
 
 - **A.** `--max-turns`
@@ -653,6 +739,8 @@ The team wants to limit the spending of the CI pipeline, which uses Claude Code 
 ## Scenario: Claude Code for Continuous Integration
 
 ### Question 44
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
 A PR modifies forty files, and a single review pass misses problems across different files. Which strategy is most suitable?
 
@@ -669,6 +757,8 @@ Multi-pass review avoids losing attention and also checks integration between fi
 
 ### Question 45
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 In the pipeline there is no user who can respond to confirmation requests. Which setting prevents the pipeline from hanging or executing unapproved operations?
 
 - **A.** `--output-format json`
@@ -683,6 +773,8 @@ In the pipeline there is no user who can respond to confirmation requests. Which
 ## Scenario: Structured Data Extraction
 
 ### Question 46
+
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
 An extraction from invoices uses `strict: true`. Which schema requirement must be met?
 
@@ -699,6 +791,8 @@ These two requirements are needed to enable strict mode.
 
 ### Question 47
 
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
+
 An invoice extraction returns a `total_amount` that does not match the sum of the line items, although it is a valid number that conforms to the schema. What is the explanation and the fix?
 
 - **A.** Strict mode guarantees form, not correctness: validate semantics in code.
@@ -713,6 +807,8 @@ The schema guarantees conformance, not the correctness of the values.
 ## Scenario: Structured Data Extraction
 
 ### Question 48
+
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
 An extraction from ambiguous documents must classify the invoice type, but the document often does not allow a decision. What is the most suitable schema design?
 
@@ -729,6 +825,8 @@ The `"unclear"` option prevents the model from inventing a classification.
 
 ### Question 49
 
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
+
 The schema of an extraction in strict mode contains `"quantity": {"type": "integer", "minimum": 1}`. What should be done?
 
 - **A.** Nothing needs to change, since `minimum` is always supported in every JSON schema mode.
@@ -743,6 +841,8 @@ Strict mode does not support some constraints such as `minimum`, `maximum` and `
 ## Scenario: Structured Data Extraction
 
 ### Question 50
+
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
 On Fable 5.1, a call with a forced `tool_choice` on an extraction tool returns a `400` error. What is the correct approach to get JSON that conforms to the schema?
 
@@ -759,6 +859,8 @@ On recent models the forced form is not accepted: direct structured output is th
 
 ### Question 51
 
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
+
 An extraction system reports an overall accuracy of 96%. A manager asks whether it is ready for production. What analysis is needed before answering?
 
 - **A.** None: 96% is a sufficient value.
@@ -773,6 +875,8 @@ An aggregate figure can hide very poor performance on specific document types.
 ## Scenario: Structured Data Extraction
 
 ### Question 52
+
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
 An extraction system assigns a confidence score to each field. A manager asks whether the scores can be trusted. Which statement is correct?
 
@@ -789,6 +893,8 @@ Without calibration on labeled data, the score has no meaning.
 
 ### Question 53
 
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
+
 An extraction from unstructured documents often fails in ambiguous cases. How many examples should be included in the prompt, and how should they be designed?
 
 - **A.** Ten or more examples of simple, typical cases, with no explanations, to show the format.
@@ -803,6 +909,8 @@ A few targeted examples, with the reasoning behind the choices, teach the criter
 ## Scenario: Structured Data Extraction
 
 ### Question 54
+
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
 An application's system prompt contains the current date and time at the beginning, followed by fixed tools and rules. The prompt cache has a very low hit rate. What is the fix?
 
@@ -819,6 +927,8 @@ The timestamp changes on every request and invalidates the prefix. It must be mo
 
 ### Question 55
 
+You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
+
 A conversational application uses server-side compaction, but on every turn it adds only `response.content[0].text` to the history. What is wrong?
 
 - **A.** Nothing is wrong, since the API only needs the text of each response to rebuild the history.
@@ -833,6 +943,8 @@ Extracting only the text silently destroys the compaction state, and the problem
 ## Scenario: Conversational AI Architecture Patterns
 
 ### Question 56
+
+You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
 
 An application uses on-request compaction. In the next request it places the `compaction` block at the beginning, but leaves after it the messages that the block summarizes. What is the correct rule?
 
@@ -849,6 +961,8 @@ Leaving the summarized messages after the block sends them twice. Leaving them b
 
 ### Question 57
 
+You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
+
 In a conversation with Opus 5.5 and thinking enabled, a rule must be added to the system prompt midway through. Which approach does not invalidate the thinking blocks of earlier turns?
 
 - **A.** Rebuild the system prompt on every request, including the new rule from that point on.
@@ -863,6 +977,8 @@ A system message appended at the end does not modify the prefix already used for
 ## Scenario: Conversational AI Architecture Patterns
 
 ### Question 58
+
+You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
 
 A harness uses both `clear_tool_uses` and `clear_thinking` in the same context-management request. Which statement is correct?
 
@@ -879,6 +995,8 @@ When the two edits are used together, `clear_thinking` must come first.
 
 ### Question 59
 
+You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
+
 An application reads `response.content` without checking `stop_reason`. Occasionally it receives an HTTP `200` response with `stop_reason: "refusal"`. What is the most appropriate fix?
 
 - **A.** Increase `max_tokens`, so that the model has enough room to answer instead of refusing.
@@ -893,6 +1011,8 @@ A refusal arrives with status 200: it must be recognized through `stop_reason`, 
 ## Scenario: Conversational AI Architecture Patterns
 
 ### Question 60
+
+You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
 
 An agentic workflow is cut off midway through a task when it reaches `max_tokens`. Which mechanism lets the model pace itself so it can conclude in an orderly way?
 

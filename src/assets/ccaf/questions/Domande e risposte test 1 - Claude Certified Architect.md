@@ -28,6 +28,8 @@ The other options introduce automatic filters or priorities, but the scenario sa
 
 ### Question 2
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 Automated reviews identify valid issues, but developers say the feedback is not actionable enough. Findings say things like "complex ticket assignment logic" or "possible null pointer," without specifying what to change. Even when you add detailed instructions such as "always include specific fix suggestions," the model produces inconsistent results: sometimes detailed, sometimes vague. Which prompting technique would produce actionable, consistent feedback most reliably?
 
 - **A.** Add 3–4 few-shot examples showing the exact desired format: the identified issue, the code location, and a specific fix.
@@ -52,6 +54,8 @@ Suggested fix: Add a null check before accessing .getId(), or use Optional.
 
 ### Question 3
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 The CI pipeline uses two Claude-based code review modes: a check that blocks pull request merging until it is complete, and an in-depth analysis that runs overnight, periodically checks whether the batch has completed, and then posts detailed suggestions on the pull request. You want to reduce API costs by using the Message Batches API, which saves 50% but requires periodic checks and can take up to 24 hours. Which mode should use batch processing?
 
 - **A.** Both modes.
@@ -69,6 +73,8 @@ The Message Batches API is suitable for asynchronous, non-urgent processes: it c
 ## Scenario: Claude Code for Continuous Integration
 
 ### Question 4
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
 The code review component works iteratively: Claude analyzes a modified file and may then request related files (imports, base classes, tests) through tool calls to understand the context before providing final feedback. Your application defines a tool that lets Claude request file contents; Claude invokes it, receives the results, and continues its analysis. You are considering batch processing to reduce API costs.
 
@@ -94,6 +100,8 @@ With batch processing, requests are handled asynchronously, without this real-ti
 
 ### Question 5
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 Automated code review generates test-case suggestions for every pull request. A pull request adds course-completion tracking; Claude suggests 10 test cases, but developers report that 6 duplicate scenarios already covered by the existing suite. Which change would most effectively reduce duplicate suggestions?
 
 - **A.** Reduce the number of requested suggestions from 10 to 5, assuming Claude will prioritize the most useful cases.
@@ -112,6 +120,8 @@ Claude proposes tests that are valid in the abstract, but it does not know which
 ## Scenario: Claude Code for Continuous Integration
 
 ### Question 6
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
 Automated review analyzes comments and docstrings. The current prompt asks Claude to "verify that comments are accurate and up to date." Findings often flag acceptable patterns, such as TODO markers or simple descriptions, but fail to detect comments that describe behavior no longer implemented by the code. Which change addresses the root cause of this inconsistent analysis?
 
@@ -132,6 +142,8 @@ The problem is a vague instruction: "verify that comments are accurate and up to
 
 ### Question 7
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 The CI/CD system runs three types of Claude-based analysis: (1) quick style checks on every pull request that block merging until they finish; (2) full security scans of the entire codebase, run weekly; and (3) nightly test-case generation for recently modified modules. The Message Batches API saves 50% but can take up to 24 hours. You want to optimize API costs while maintaining an acceptable developer experience. Which combination correctly maps each task to an API type?
 
 - **A.** Use synchronous calls for pull request style checks and nightly test generation; use the Message Batches API only for weekly security scans.
@@ -148,6 +160,8 @@ The CI/CD system runs three types of Claude-based analysis: (1) quick style chec
 ## Scenario: Claude Code for Continuous Integration
 
 ### Question 8
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
 Automated code review analysis shows very different false-positive rates across categories: 8% for security and correctness, 18% for performance, 52% for style and naming, and 48% for documentation.
 
@@ -168,6 +182,8 @@ The other options keep the noise in front of developers and do not solve the mai
 
 ### Question 9
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 After an initial automated review generates 12 findings, a developer submits new commits to fix the issues. The next review produces 8 findings, but developers report that 5 duplicate earlier comments about code already fixed in the new commits. What is the most effective way to eliminate this redundant feedback while maintaining a complete analysis?
 
 - **A.** Limit the review to files changed in the most recent submission, excluding those changed in earlier commits.
@@ -187,6 +203,8 @@ Claude runs a new review without knowing about earlier comments, so it may repos
 
 ### Question 10
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 The automated review system assigns inconsistent severity levels: similar issues, such as null-pointer risks, are classified as "critical" in some pull requests and "medium" in others. Developer trust is declining because teams cannot predict which findings require immediate attention. What is the most effective method for making severity assessments consistent?
 
 - **A.** Add a `CLAUDE.md` file listing issue types and their default severity, and ask Claude to consult this mapping.
@@ -204,6 +222,8 @@ A default-severity mapping in `CLAUDE.md` may be useful, but it risks being too 
 
 ### Question 11
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 Your team uses Claude Code to generate code suggestions, but you notice a pattern: subtle issues—such as performance optimizations that break edge cases or cleanup operations that unexpectedly change behavior—surface only when another team member reviews the pull request. Claude's reasoning during generation shows that it considered these cases but concluded the approach was correct. Which approach directly addresses the root cause of this self-review limitation?
 
 - **A.** Add explicit self-review instructions to the generation prompt, asking Claude to critique its own suggestions before finalizing them.
@@ -218,6 +238,8 @@ This is a typical limitation of **self-review**: the model that generated a solu
 ## Scenario: Claude Code for Continuous Integration
 
 ### Question 12
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
 A pull request modifies 14 files in the inventory tracking module. A single-pass review produces inconsistent results: detailed feedback on some files and shallow feedback on others, obvious bugs go undetected, and comments contradict one another, with the same pattern flagged as problematic in one file and approved in another. How should you restructure the review?
 
@@ -234,6 +256,8 @@ Splitting the review into focused passes addresses the root cause: attention bec
 
 ### Question 13
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 The pipeline script runs `claude "Analyze this pull request for security issues"`, but the job hangs. The logs indicate Claude Code is waiting for interactive input. What is the correct way to run Claude Code in an automated pipeline?
 
 - **A.** Add the `--batch` flag: `claude --batch "Analyze this pull request for security issues"`.
@@ -249,6 +273,8 @@ The `-p` (or `--print`) flag runs Claude Code in non-interactive mode: it proces
 
 ### Question 14
 
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
 The CI pipeline runs the Claude Code CLI in `--print` mode and uses `CLAUDE.md` to provide project context for reviews. Developers find the reviews useful, but integrating them into the workflow is difficult: Claude produces prose paragraphs that must be manually copied into pull request comments. The team wants to automatically publish each finding as an inline comment at the relevant code location, so structured data is required with file path, line number, severity, and suggested fix. What is the most effective approach?
 
 - **A.** Keep the prose format and add a summary step in which Claude generates a structured JSON summary of the findings.
@@ -263,6 +289,8 @@ Automated inline comments require a **structured, validated format**, with field
 ## Scenario: Claude Code for Continuous Integration
 
 ### Question 15
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
 The team wants to reduce API costs for automated analysis. Currently, real-time Claude calls power two workflows: (1) a blocking pre-merge check that must finish before developers can merge, and (2) a technical-debt report generated overnight and reviewed the next morning. The manager proposes moving both to the Message Batches API, which reduces costs by 50%. How do you assess the proposal?
 
@@ -296,6 +324,8 @@ The data is **partial but usable**. The best strategy is neither to stop everyth
 
 ### Question 17
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 The web research and document analysis agents have completed their respective tasks and returned their results to the coordinator. What is the appropriate next step for producing an integrated research result?
 
 - **A.** The document analysis agent requests the web research results and integrates them on its own.
@@ -310,6 +340,8 @@ In a well-structured multi-agent system, specialized agents produce partial resu
 ## Scenario: Multi-Agent Research System
 
 ### Question 18
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
 The document analysis agent discovers that two credible sources report directly conflicting statistics for an important metric: a government report indicates 40% growth, while an industry analysis reports 12%. Both sources seem legitimate, and the discrepancy could significantly affect the research conclusions. How should the document analysis agent handle the situation?
 
@@ -326,6 +358,8 @@ The document analysis agent should not arbitrarily choose which data to use when
 
 ### Question 19
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 The web research subagent times out while investigating a complex topic. You need to design how it should communicate the problem to the coordinating agent. Which error-propagation strategy enables the most effective recovery?
 
 - **A.** Propagate the timeout exception directly to a higher-level handler that stops the entire research workflow.
@@ -340,6 +374,8 @@ The coordinator needs to decide whether to retry, use alternative sources, narro
 ## Scenario: Multi-Agent Research System
 
 ### Question 20
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
 During testing, the combined output from the web research agent (85,000 tokens, including page contents) and the document analysis agent (70,000 tokens, including reasoning chains) reaches 155,000 tokens. The synthesis agent performs best with inputs under 50,000 tokens. What is the most effective solution?
 
@@ -358,6 +394,8 @@ The other options may help, but are less direct: an intermediate agent adds a st
 
 ### Question 21
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 A colleague suggests that the document analysis agent send its output directly to the synthesis agent instead of routing it through the coordinator. What is the main advantage of keeping the coordinator as the central node for all communication between subagents?
 
 - **A.** The coordinator batches multiple subagent requests, reducing the total number of API calls and overall latency.
@@ -372,6 +410,8 @@ The coordinator's main advantage is **centralized orchestration**: it can observ
 ## Scenario: Multi-Agent Research System
 
 ### Question 22
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
 The document analysis subagent encounters a corrupted PDF that it cannot analyze. What is the most effective way to handle this error in the system?
 
@@ -388,6 +428,8 @@ The subagent should neither stop everything nor hide the problem. It should retu
 
 ### Question 23
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 Production monitoring reveals inconsistent synthesis quality. When aggregated results reach about 75,000 tokens, the synthesis agent reliably cites information in the first 15,000 tokens (web research titles and snippets) and the last 10,000 tokens (document analysis conclusions), but often omits important findings in the middle 50,000 tokens, even when they are directly relevant to the research question. How should you reorganize the aggregated input?
 
 - **A.** Place a summary of the key findings at the beginning of the input, and organize the details into clearly separated sections with explicit headings.
@@ -402,6 +444,8 @@ The problem is a classic **context-position effect**: the model uses information
 ## Scenario: Multi-Agent Research System
 
 ### Question 24
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
 During research on materials, the web research subagent queries three source categories with different results: academic databases return 15 relevant papers, industry reports return "no results," and patent databases time out. How should you communicate the results to the coordinator so it can choose the best recovery strategy?
 
@@ -418,6 +462,8 @@ It is important to distinguish the three outcomes: the academic databases return
 
 ### Question 25
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 The document analysis subagent frequently encounters PDF problems: some have corrupted sections that cause parsing errors, others are password-protected, and occasionally the parsing library times out on larger files. Currently, any exception stops the subagent and returns an error to the coordinator, which must decide whether to retry, skip the document, or stop the entire search. This involves the coordinator too heavily in handling routine problems. What is the most effective architectural improvement?
 
 - **A.** Have the subagent recover locally from transient errors and send only unresolvable errors to the coordinator, specifying the attempts made, the error type, and any partial results it obtained.
@@ -432,6 +478,8 @@ The coordinator is involved too often in routine errors. The document analysis s
 ## Scenario: Multi-Agent Research System
 
 ### Question 26
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
 Production monitoring shows that requests like "analyze the quarterly report I uploaded" are routed to the web research agent instead of the document analysis agent 45% of the time. Looking at the tool definitions, you notice that the web research agent has `analyze_content`, described as "analyzes content and extracts key information," while the document analysis agent has `analyze_document`, described as "analyzes documents and extracts key information." How should you fix the misrouting?
 
@@ -448,6 +496,8 @@ The root cause is **semantic similarity between the tools**: `analyze_content` a
 
 ### Question 27
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 The multi-agent research system is run on the topic "AI's impact on creative industries." Each subagent completes its task correctly: the web research agent finds relevant articles, the document analysis agent accurately summarizes studies, and the synthesis agent produces coherent findings. However, the final reports cover only visual arts, ignoring music, writing, and film production. The coordinator logs show that the topic was split into three tasks: "AI in digital art creation," "AI in graphic design," and "AI in photography." What is the most likely root cause?
 
 - **A.** The web research agent's queries are not comprehensive enough and should include more creative sectors.
@@ -462,6 +512,8 @@ The logs show that the coordinator decomposed "creative industries" into tasks c
 ## Scenario: Multi-Agent Research System
 
 ### Question 28
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
 During system design, you gave the document analysis agent a generic `fetch_url` tool for loading documents from URLs. Production logs show that the agent now often retrieves search-engine results pages to conduct ad hoc web searches, a task that should be assigned to the web research agent. This produces inconsistent results. What is the most effective fix?
 
@@ -478,6 +530,8 @@ The document analysis agent has a tool that is too generic: `fetch_url` lets it 
 
 ### Question 29
 
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
 While researching a broad topic, the web research and document analysis agents both investigate the same subtopics. Their results overlap substantially, and token usage is nearly doubled without a proportional increase in research breadth or depth. What is the most effective way to address the problem?
 
 - **A.** Implement shared state in which agents register the areas they are working on so others can dynamically avoid duplication.
@@ -492,6 +546,8 @@ The problem originates in **orchestration**: agents work in parallel without a c
 ## Scenario: Multi-Agent Research System
 
 ### Question 30
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
 During testing, the synthesis agent often needs to verify specific claims while combining results. Currently, when verification is needed, it hands control back to the coordinator, which invokes the web research agent and then calls the synthesis agent again with the results. This adds 2–3 steps per task and increases latency by 40%. Evaluation shows that 85% of verifications are simple fact checks (dates, names, statistics), while 15% require deeper investigation. What is the most effective approach to reduce overhead while maintaining reliability?
 
@@ -525,6 +581,8 @@ The gaps vary from case to case: sometimes the applicable policy is missing; oth
 
 ### Question 32
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 Production logs show that the agent often calls `get_customer` when users ask about an order's status, even though `lookup_order` is more appropriate. Both tools have minimal descriptions ("retrieves customer information" and "retrieves order details") and accept similar identifier formats. What is the most effective first intervention to improve selection reliability?
 
 - **A.** Expand each tool's description with supported input formats, example requests, edge cases, and when to prefer it over others.
@@ -539,6 +597,8 @@ The problem is ambiguity in the descriptions. They are the main signal the model
 ## Scenario: Customer Support Resolution Agent
 
 ### Question 33
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
 Production metrics show that the agent averages more than four API steps to resolve a request. Analysis reveals that Claude often requests `get_customer` and `lookup_order` in separate sequential turns, even when both are needed from the start. What is the most effective way to reduce the number of steps?
 
@@ -555,6 +615,8 @@ Asking Claude to group related calls in a single turn and return their results t
 
 ### Question 34
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 Production data shows that in 12% of cases the agent skips `get_customer` and calls `lookup_order` using only the name provided by the customer, sometimes identifying the wrong account and issuing incorrect refunds. Which change addresses the problem most effectively?
 
 - **A.** Add few-shot examples showing the agent always calling `get_customer` first, even when the customer provides order details.
@@ -569,6 +631,8 @@ A programmatic constraint is necessary to guarantee a tool-call sequence require
 ## Scenario: Customer Support Resolution Agent
 
 ### Question 35
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
 The agent resolves 55% of requests on first contact, well below the 80% target. Logs show that it escalates simple cases, such as standard replacements for damaged products accompanied by photos, while attempting to handle complex situations requiring policy exceptions on its own. What is the most effective way to improve escalation calibration?
 
@@ -585,6 +649,8 @@ The problem is decision calibration. Explicit criteria and few-shot examples cla
 
 ### Question 36
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 The agent handles single-issue requests with 94% accuracy, for example, "I'd like a refund for order #1234." When the customer includes multiple issues in the same message, such as "I'd like a refund for order #1234 and also update the shipping address for order #5678," tool-selection accuracy drops to 58%. The agent tends to handle only one issue or mix up parameters between requests. What is the most effective approach to improve reliability with multi-issue requests?
 
 - **A.** Consolidate related tools into a smaller number of more generic tools.
@@ -599,6 +665,8 @@ The agent already handles individual issues well: it needs examples showing how 
 ## Scenario: Customer Support Resolution Agent
 
 ### Question 37
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
 You are implementing the agent loop for the support agent. After every API call to Claude, you must decide whether to continue the loop by running the requested tools and calling Claude again, or stop and show the customer the final response. What information determines this decision?
 
@@ -618,6 +686,8 @@ The agent loop should rely on the API's structured signal, not natural-language 
 
 ### Question 38
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 Production logs show that the agent sometimes chooses `get_customer` when `lookup_order` would be more appropriate, especially for ambiguous requests like "I need help with my recent purchase." You decide to add few-shot examples to the system prompt to improve tool selection. Which approach would solve the problem most effectively?
 
 - **A.** Add 4–6 examples of ambiguous scenarios, explaining why one tool beats the others.
@@ -633,6 +703,8 @@ The problem occurs in ambiguous cases. The examples should therefore show how to
 
 ### Question 39
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 The `get_customer` tool returns all matches found when searching by name. When it receives multiple results, Claude chooses the customer with the most recent order; production data shows that this selects the wrong customer in 15% of cases with multiple matches. How should you address the problem?
 
 - **A.** Have Claude ask for another identifier (email, phone, order) when `get_customer` returns several matches.
@@ -647,6 +719,8 @@ The problem is ambiguity about the customer's identity. Choosing the account wit
 ## Scenario: Customer Support Resolution Agent
 
 ### Question 40
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
 The agent uses progressive summarization: when the context reaches 70% of capacity, it summarizes older turns and keeps recent ones verbatim. Customers cite specific amounts, such as "the 15% discount I mentioned," but the agent responds with incorrect values. Investigation shows that these details were shared more than 20 turns earlier and summarized in vague phrases like "promotional pricing was discussed." What is the most effective fix?
 
@@ -673,6 +747,8 @@ Asking the summary to preserve numbers verbatim may help, but it is still fragil
 
 ### Question 41
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 Production logs show that the agent misinterprets data returned by MCP tools: Unix timestamps from `get_customer`, ISO 8601 dates from `lookup_order`, and numeric status codes (1 = pending, 2 = shipped). Some tools belong to third-party MCP servers that you cannot modify. What is the most maintainable method for normalizing data formats?
 
 - **A.** Modify the tools you control to return readable formats and create wrappers for third-party tools.
@@ -687,6 +763,8 @@ The data arrives in different formats, and some third-party MCP tools cannot be 
 ## Scenario: Customer Support Resolution Agent
 
 ### Question 42
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
 During testing, you notice that the agent often calls `get_customer` when users ask about an order's status, even though `lookup_order` would be more appropriate. What should you examine first?
 
@@ -703,6 +781,8 @@ When Claude often chooses the wrong tool, the first thing to check is the descri
 
 ### Question 43
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 For simple cases, such as "refund order #1234," the agent resolves 91% of requests with 3–4 tool calls. For complex cases, such as "you charged me twice, the discount wasn't applied, and I want to cancel the order," it averages more than 12 calls and resolves only 54% of requests. It often investigates issues sequentially and retrieves the same customer data again for each one. What is the most effective change?
 
 - **A.** Reduce the number of tools by consolidating `get_customer`, `lookup_order`, and billing lookups into one `investigate_issue` tool.
@@ -718,6 +798,8 @@ The agent treats a composite request as a linear sequence, repeats lookups, and 
 
 ### Question 44
 
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
 Production logs show a pattern: when customers include the word "account" in their messages, for example, "I want to check my account for the order I placed yesterday," the agent calls `get_customer` first in 78% of cases. For similar requests without the word "account," for example, "I want to check the order I placed yesterday," it calls `lookup_order` first in 93% of cases. The tool descriptions are clear and unambiguous. What is the most likely cause of the discrepancy?
 
 - **A.** The model needs more training data on multi-concept messages and should be fine-tuned with examples that include both account and order references.
@@ -732,6 +814,8 @@ The decisive detail is that the tool descriptions are already clear and unambigu
 ## Scenario: Customer Support Resolution Agent
 
 ### Question 45
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
 After calling `get_customer` and `lookup_order`, the agent has retrieved all available data but does not know how to proceed. Which situation is the most appropriate reason to call `escalate_to_human`?
 
@@ -767,6 +851,8 @@ Conventions depend on file type or path. Rules in `.claude/rules/` with glob pat
 
 ### Question 47
 
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
 The team has used Claude Code for several months. Recently, three developers reported that Claude correctly follows the instruction "always include comprehensive error handling," while a fourth developer, who just joined the team, says Claude does not follow it. Everyone works in the same repository and has downloaded the latest version. What is the most likely cause and the appropriate fix?
 
 - **A.** Claude Code caches `CLAUDE.md` content; the long-time developers use cached versions, while the new member loaded the file after a change. Ask everyone to clear the cache.
@@ -781,6 +867,8 @@ Everyone works in the same up-to-date repository, but only three people get the 
 ## Scenario: Code Generation with Claude Code
 
 ### Question 48
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
 You have noticed that including 2–3 complete endpoint implementations as examples in the context significantly improves consistency when Claude generates new API endpoints. However, these examples are useful only for creating endpoints, not for fixing bugs, reviewing code, or other tasks in the API directory. What is the most efficient configuration?
 
@@ -797,6 +885,8 @@ The example context is needed only when creating new endpoints. It is not useful
 
 ### Question 49
 
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
 You need to add Slack as a new notification channel. The existing codebase follows clear, consistent patterns for email, SMS, and push notifications. However, Slack's API offers different integration approaches: incoming webhooks (simple, one-way), bot tokens (allow delivery confirmation and programmatic control), or a Slack App (two-way events, requiring workspace approval). The ticket only says "add Slack support," without specifying the integration method or need for advanced features such as delivery tracking. How should you proceed?
 
 - **A.** Use Plan mode to explore the options and their architectural implications, then present a recommendation before coding.
@@ -811,6 +901,8 @@ The requirement is ambiguous and involves important architectural decisions: web
 ## Scenario: Code Generation with Claude Code
 
 ### Question 50
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
 The team wants to add a GitHub MCP server to look up pull requests and check CI status through Claude Code. Each of the six developers has their own GitHub personal access token. You want to configure the tools consistently for the whole team without putting credentials in version control. What is the most effective approach?
 
@@ -828,6 +920,8 @@ In the project's `.mcp.json`, the GitHub server configuration should read the cr
 ## Scenario: Code Generation with Claude Code
 
 ### Question 51
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
 The team created a `/migration` skill that generates database migration files. The skill receives the migration name through `$ARGUMENTS`. Three problems occur in production: (1) developers often invoke the skill without arguments, producing poorly named files; (2) sometimes the skill incorporates database schema details from unrelated previous conversations; (3) a developer accidentally triggered destructive test cleanup while the skill had overly broad tool access. Which configuration solves all three problems?
 
@@ -850,6 +944,8 @@ Validation instructions in `SKILL.md` rely only on the model and are therefore m
 
 ### Question 52
 
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
 You need to add error-handling wrappers to external API calls in a 120-file codebase. The work has three phases: (1) identify all call sites and patterns for API calls; (2) design the error-handling strategy together; (3) implement the wrappers consistently. During the first phase, Claude produces very verbose output, listing hundreds of call sites with their context. The context window is filling quickly before exploration is finished.
 
 What is the most effective approach for completing the work while maintaining implementation consistency?
@@ -867,6 +963,8 @@ The exploration phase produces a lot of material: hundreds of call sites, contex
 
 ### Question 53
 
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
 You want to create a custom `/review` slash command that runs the team's standard code review checklist. The command must be available to every developer who clones or updates the repository. Where should you create the command file?
 
 - **A.** In the project's root `CLAUDE.md` file.
@@ -881,6 +979,8 @@ Because the command must be available to all developers who clone or update the 
 ## Scenario: Code Generation with Claude Code
 
 ### Question 54
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
 You have been assigned to restructure the team's monolithic application into microservices. This will require changes across dozens of files and decisions about service boundaries and dependencies between modules. What approach should you take?
 
@@ -897,6 +997,8 @@ Transforming a monolith into microservices involves extensive changes, architect
 
 ### Question 55
 
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
 The team created an `/analyze-codebase` skill that performs a comprehensive code analysis: dependency scanning, test coverage calculation, and quality metrics. After running it, team members report that Claude responds more slowly and loses track of the original task. What is the most effective way to solve the problem while retaining all analysis capabilities?
 
 - **A.** Ask the skill to condense all results into a brief summary before displaying them.
@@ -911,6 +1013,8 @@ The skill produces a lot of context and burdens the main session, making Claude 
 ## Scenario: Code Generation with Claude Code
 
 ### Question 56
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
 The team's `CLAUDE.md` has grown to more than 500 lines and mixes TypeScript conventions, testing guidelines, API patterns, and deployment procedures. Developers struggle to find and update the relevant sections. Which approach does Claude Code support for organizing project instructions into focused thematic modules?
 
@@ -927,6 +1031,8 @@ Separate files in `.claude/rules/` make it possible to split an oversized `CLAUD
 
 ### Question 57
 
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
 You are creating the custom `/explore-alternatives` skill, which the team uses to develop and evaluate different implementation approaches before choosing one. Developers report that after running the skill, Claude's later responses are influenced by the exploration: they sometimes refer to discarded approaches or retain exploratory context that confuses implementation. How should you configure the skill?
 
 - **A.** Add `context: fork` to the skill's frontmatter, so it runs isolated.
@@ -941,6 +1047,8 @@ The skill produces speculative context, such as discarded approaches, tradeoffs,
 ## Scenario: Code Generation with Claude Code
 
 ### Question 58
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
 The team's `CLAUDE.md` is over 400 lines and contains coding standards, testing conventions, a detailed pull request review checklist, deployment instructions, and database migration procedures. You want Claude to always follow the coding standards and testing conventions, but apply review, deployment, and migration guidance only when performing those tasks. What is the most effective way to reorganize the instructions?
 
@@ -957,6 +1065,8 @@ Always-applicable guidance, such as coding standards and testing conventions, sh
 
 ### Question 59
 
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
 You created the `/commit` skill in `.claude/skills/commit/SKILL.md` for the team. A developer wants to customize it for their own workflow, using a different commit message format and adding checks, without affecting colleagues. What should you recommend?
 
 - **A.** Add conditional logic to the project skill based on the username in the frontmatter.
@@ -971,6 +1081,8 @@ Project skills take precedence over personal skills with the same name. To make 
 ## Scenario: Code Generation with Claude Code
 
 ### Question 60
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
 You asked Claude Code to implement a function that transforms API responses into a normalized internal format. After two iterations, the produced structure still does not match expectations: some fields are nested differently and timestamps are not formatted correctly. You described the requirements in prose, but Claude seems to interpret them differently in each iteration. What is the most effective approach for the next attempt?
 
