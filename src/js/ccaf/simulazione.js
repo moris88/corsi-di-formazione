@@ -1,5 +1,6 @@
 import { confirmDialog } from "../dialog.js";
 import { bankLoaderHtml } from "../loader.js";
+import { applyStatsBars, classifyQuestion, renderStats } from "./simulazione-stats.js";
 
 const DEFAULT_DURATION_MINUTES = 120;
 let TOTAL_QUESTIONS = 0;
@@ -9,47 +10,57 @@ const HISTORY_KEY = "ccaf-simulation-history-v1";
 const HISTORY_LIMIT = 30;
 const BUILTIN_TESTS = [
   {
-    file: "../../assets/ccaf/questions/Domande e risposte test 10 - Claude Certified Architect.md",
-    label: "Test 10 EN · Difficile",
-  },
-  {
-    file: "../../assets/ccaf/questions/Domande e risposte test 9 - Claude Certified Architect.md",
-    label: "Test 9 EN · Difficile",
-  },
-  {
-    file: "../../assets/ccaf/questions/Domande e risposte test 8 - Claude Certified Architect.md",
-    label: "Test 8 EN · Difficile",
-  },
-  {
-    file: "../../assets/ccaf/questions/Domande e risposte test 7 - Claude Certified Architect.md",
-    label: "Test 7 EN · Difficile",
-  },
-  {
-    file: "../../assets/ccaf/questions/Domande e risposte test 6 - Claude Certified Architect.md",
-    label: "Test 6 EN · Medio",
-  },
-  {
-    file: "../../assets/ccaf/questions/Domande e risposte test 5 - Claude Certified Architect.md",
-    label: "Test 5 EN · Difficile",
-  },
-  {
-    file: "../../assets/ccaf/questions/Domande e risposte test 4 - Claude Certified Architect.md",
-    label: "Test 4 EN · Difficile",
-  },
-  {
-    file: "../../assets/ccaf/questions/Domande e risposte test 3 - Claude Certified Architect.md",
-    label: "Test 3 EN · Difficile",
+    file: "../../assets/ccaf/questions/Domande e risposte test 1 - Claude Certified Architect.md",
+    label: "Test 1 EN · Medio",
   },
   {
     file: "../../assets/ccaf/questions/Domande e risposte test 2 - Claude Certified Architect.md",
     label: "Test 2 EN · Facile",
   },
   {
-    file: "../../assets/ccaf/questions/Domande e risposte test 1 - Claude Certified Architect.md",
-    label: "Test 1 EN · Medio",
+    file: "../../assets/ccaf/questions/Domande e risposte test 3 - Claude Certified Architect.md",
+    label: "Test 3 EN · Difficile",
+  },
+  {
+    file: "../../assets/ccaf/questions/Domande e risposte test 4 - Claude Certified Architect.md",
+    label: "Test 4 EN · Difficile",
+  },
+  {
+    file: "../../assets/ccaf/questions/Domande e risposte test 5 - Claude Certified Architect.md",
+    label: "Test 5 EN · Difficile",
+  },
+  {
+    file: "../../assets/ccaf/questions/Domande e risposte test 6 - Claude Certified Architect.md",
+    label: "Test 6 EN · Medio",
+  },
+  {
+    file: "../../assets/ccaf/questions/Domande e risposte test 7 - Claude Certified Architect.md",
+    label: "Test 7 EN · Difficile",
+  },
+  {
+    file: "../../assets/ccaf/questions/Domande e risposte test 8 - Claude Certified Architect.md",
+    label: "Test 8 EN · Difficile",
+  },
+  {
+    file: "../../assets/ccaf/questions/Domande e risposte test 9 - Claude Certified Architect.md",
+    label: "Test 9 EN · Difficile",
+  },
+  {
+    file: "../../assets/ccaf/questions/Domande e risposte test 10 - Claude Certified Architect.md",
+    label: "Test 10 EN · Difficile",
+  },
+  {
+    file: "../../assets/ccaf/questions/Domande e risposte test 11 - Claude Certified Architect.md",
+    label: "Test 11 EN · Avanzato",
+  },
+  {
+    file: "../../assets/ccaf/questions/Domande e risposte test 12 - Claude Certified Architect.md",
+    label: "Test 12 EN · Avanzato",
   },
 ];
 let selectedPreset = BUILTIN_TESTS[0].file;
+// Test importati dall'utente in questa sessione della pagina: compaiono nel select come "Test importato n.X"
+const importedTests = [];
 const app = document.querySelector("#app");
 const topStatus = document.querySelector("#top-status");
 const announcer = document.querySelector("#announcer");
@@ -57,6 +68,7 @@ const announcer = document.querySelector("#announcer");
 let questionBank = [];
 let testTitle = "Simulazione CCA-F";
 let testDurationMinutes = DEFAULT_DURATION_MINUTES;
+let testDifficulty = "";
 const timedMode = true;
 let sourceFingerprint = "";
 let sourceReady = false;
@@ -410,6 +422,7 @@ function parseQuestionBank(markdown) {
       }
     }
   }
+  const difficulty = frontmatterMatch?.[1].match(/^difficulty:\s*["']?(\w+)["']?\s*$/im)?.[1].toLowerCase() || "";
   if (!title) title = body.match(/^#\s+(.+)$/m)?.[1].trim() || "Simulazione personalizzata";
 
   const lines = body.split("\n");
@@ -514,7 +527,7 @@ function parseQuestionBank(markdown) {
   }
   const ids = new Set(parsed.map((question) => question.id));
   if (ids.size !== parsed.length) throw new Error("Il file contiene numeri di domanda duplicati.");
-  return { questions: parsed, title, durationMinutes };
+  return { questions: parsed, title, durationMinutes, difficulty };
 }
 
 function hashSource(source) {
@@ -576,6 +589,16 @@ function recordResult(automatic) {
     total: TOTAL_QUESTIONS,
     passed: counts.correct >= Math.ceil(TOTAL_QUESTIONS * 0.72),
     automatic,
+    difficulty: testDifficulty,
+    durationMs: completedExam.startedAt ? Date.now() - completedExam.startedAt : null,
+    timeLimitMs: completedExam.deadline ? completedExam.deadline - completedExam.startedAt : null,
+    // Dettaglio per domanda (scenario, argomenti, domini, esito, segnata) per la schermata Statistiche
+    items: completedExam.order.map((item) => {
+      const question = questionBank.find((candidate) => candidate.id === Number(item.id));
+      // Solo domanda, opzioni e spiegazione: il paragrafo introduttivo dello scenario è uguale per tutte
+      const { topics, domains } = classifyQuestion(question);
+      return { s: question.scenario, t: topics, d: domains, r: statusFor(item, question), f: item.flagged };
+    }),
   });
   saveHistory(history.slice(0, HISTORY_LIMIT));
 }
@@ -593,8 +616,21 @@ function renderHistory() {
   return `<section class="history-box" aria-labelledby="history-title">
         <h3 id="history-title">Esiti precedenti</h3>
         <ul class="history-list">${rows}</ul>
-        <button class="history-clear" type="button" data-action="clear-history">Cancella lo storico</button>
+        <div class="history-actions">
+          <button class="button secondary" type="button" data-action="show-stats">Statistiche di studio</button>
+          <button class="history-clear" type="button" data-action="clear-history">Cancella lo storico</button>
+        </div>
       </section>`;
+}
+
+function renderStatsScreen() {
+  const history = loadHistory();
+  if (!history.length) return;
+  setFocusMode(false);
+  if (topStatus) topStatus.textContent = "Statistiche";
+  app.innerHTML = renderStats(history);
+  applyStatsBars(app);
+  window.scrollTo({ top: 0 });
 }
 
 function announce(message) {
@@ -605,6 +641,9 @@ function setSource(raw, label) {
   const parsed = parseQuestionBank(raw);
   questionBank = parsed.questions;
   testTitle = parsed.title;
+  testDifficulty =
+    parsed.difficulty ||
+    (BUILTIN_TESTS.find((test) => test.file === selectedPreset)?.label.split("· ")[1] || "").toLowerCase();
   testDurationMinutes = parsed.durationMinutes;
   TOTAL_QUESTIONS = questionBank.length;
   _DURATION_MS = testDurationMinutes * 60 * 1000;
@@ -715,7 +754,15 @@ function renderIntro() {
       </div>
       ${sourceError ? `<p class="source-error">${escapeHtml(sourceError)}</p>` : ""}
       <div class="source-actions">
-        <label class="preset-select-label"><span>Test nel workspace</span><select id="preset-test" aria-label="Seleziona un test già presente nel workspace">${BUILTIN_TESTS.map((test) => `<option value="${escapeHtml(test.file)}" ${selectedPreset === test.file ? "selected" : ""}>${escapeHtml(test.label)}</option>`).join("")}</select></label>
+        <label class="preset-select-label"><span>Test nel workspace</span><select id="preset-test" aria-label="Seleziona un test già presente nel workspace">${[
+          ...BUILTIN_TESTS,
+          ...importedTests,
+        ]
+          .map(
+            (test) =>
+              `<option value="${escapeHtml(test.file)}" ${selectedPreset === test.file ? "selected" : ""}>${escapeHtml(test.label)}</option>`,
+          )
+          .join("")}</select></label>
         <button class="settings-button" type="button" data-action="open-tools" aria-label="Importa, esporta e formato dei test" title="Importa, esporta e formato dei test">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
@@ -1122,7 +1169,7 @@ function renderResults(automatic = false) {
     </section>
     <div class="review-head"><h2>Esito domanda per domanda</h2><div class="filter-group" role="group" aria-label="Filtra risultati">${filters.map((filter) => `<button type="button" class="filter-button ${reviewFilter === filter ? "active" : ""}" data-action="filter" data-filter="${filter}" aria-pressed="${reviewFilter === filter}">${labels[filter]} <span>${filter === "all" ? TOTAL_QUESTIONS : counts[filter]}</span></button>`).join("")}</div></div>
     <div class="review-list">${visible.length ? visible.map(({ item, index }) => renderReviewEntry(item, index)).join("") : '<p class="empty-review">Nessuna domanda in questa categoria.</p>'}</div>
-    <div class="results-actions"><button class="button secondary" type="button" data-action="change-source">Cambia test</button><button class="button" type="button" data-action="restart">Nuova simulazione <span aria-hidden="true">↻</span></button></div>
+    <div class="results-actions"><button class="button secondary" type="button" data-action="show-stats">Statistiche di studio</button><button class="button secondary" type="button" data-action="change-source">Cambia test</button><button class="button" type="button" data-action="restart">Nuova simulazione <span aria-hidden="true">↻</span></button></div>
   </section>`;
 }
 
@@ -1156,7 +1203,9 @@ function openToolsDialog() {
       }
     });
   }
-  const exportFile = selectedPreset || BUILTIN_TESTS[0].file;
+  const exportFile = BUILTIN_TESTS.some((test) => test.file === selectedPreset)
+    ? selectedPreset
+    : BUILTIN_TESTS[0].file;
   toolsDialog.innerHTML = `
     <div class="site-dialog-body">
       <h2 class="site-dialog-title" id="tools-dialog-title">Gestione dei test</h2>
@@ -1174,6 +1223,15 @@ function openToolsDialog() {
           <a class="button" id="export-link" href="${escapeHtml(exportFile)}" download="${escapeHtml(testFileName(exportFile))}">Esporta (.md)</a>
         </div>
       </section>
+      <section class="tools-section">
+        <h3>Livelli di difficoltà</h3>
+        <dl class="difficulty-legend">
+          <div><dt><span class="difficulty-tag" data-level="facile">Facile</span></dt><dd>Concetti di base, una risposta chiaramente migliore delle altre.</dd></div>
+          <div><dt><span class="difficulty-tag" data-level="medio">Medio</span></dt><dd>Scenari realistici con distrattori plausibili su un singolo concetto.</dd></div>
+          <div><dt><span class="difficulty-tag" data-level="difficile">Difficile</span></dt><dd>Più concetti insieme, trappole tipiche d’esame, opzioni simili tra loro.</dd></div>
+          <div><dt><span class="difficulty-tag" data-level="avanzato">Avanzato</span></dt><dd>Vicino all’esame reale: più vincoli da combinare, un dettaglio decisivo, risposte lunghe e tutte credibili.</dd></div>
+        </dl>
+      </section>
       <details class="format-help">
         <summary>Formato per creare un altro test</summary>
         <p>Usa un titolo, scenari facoltativi, quesiti numerati, quattro opzioni A–D e la riga della risposta corretta.</p>
@@ -1187,9 +1245,18 @@ function openToolsDialog() {
 
 async function importSourceFile(file) {
   if (!file) return;
-  selectedPreset = "";
   try {
-    setSource(await file.text(), file.name);
+    const raw = await file.text();
+    parseQuestionBank(raw);
+    const test = {
+      file: `imported-${importedTests.length + 1}`,
+      label: `Test importato n.${importedTests.length + 1}`,
+      name: file.name,
+      raw,
+    };
+    importedTests.push(test);
+    selectedPreset = test.file;
+    setSource(raw, file.name);
   } catch (error) {
     sourceReady = false;
     sourceMessage = "Banca quesiti non caricata";
@@ -1229,6 +1296,11 @@ app.addEventListener("click", async (event) => {
     renderExamGuide();
   } else if (action === "back-to-intro") {
     renderIntro();
+  } else if (action === "stats-back") {
+    if (completedExam) renderResults();
+    else renderIntro();
+  } else if (action === "show-stats") {
+    renderStatsScreen();
   } else if (action === "start") {
     // Il tutto schermo va chiesto subito, dentro il clic dell'utente
     requestFullscreen();
@@ -1262,7 +1334,11 @@ app.addEventListener("click", async (event) => {
 
 app.addEventListener("change", async (event) => {
   if (event.target.matches("#preset-test")) {
-    if (event.target.value) loadPreset(event.target.value);
+    const imported = importedTests.find((test) => test.file === event.target.value);
+    if (imported) {
+      selectedPreset = imported.file;
+      setSource(imported.raw, imported.name);
+    } else if (event.target.value) loadPreset(event.target.value);
     return;
   }
   if (event.target.matches('input[name="answer"]') && exam) {
