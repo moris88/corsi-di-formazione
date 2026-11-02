@@ -672,7 +672,7 @@
 }
 .result-stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   margin: 25px 0 28px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -1654,4 +1654,245 @@ body.exam-focus .topbar {
   font-style: italic;
   line-height: 1.4;
   color: var(--ink);
+}
+/* Blocco note unico per tutta la prova: terza colonna sticky, sempre visibile */
+@media (min-width: 1200px) {
+  .exam-layout {
+    grid-template-columns: 266px minmax(0, 1fr) 280px;
+  }
+  .exam-notes {
+    position: sticky;
+    top: calc(var(--topbar-height) + 16px);
+  }
+}
+@media (max-width: 1199px) {
+  .exam-notes {
+    grid-column: 2;
+  }
+}
+@media (max-width: 760px) {
+  .exam-notes {
+    order: 2;
+  }
+}
+.exam-notes {
+  padding: 18px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.exam-notes label {
+  display: block;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+.exam-notes-hint {
+  margin: 4px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.exam-notes textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 320px;
+  padding: 10px 12px;
+  resize: vertical;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.exam-notes textarea:focus {
+  outline: none;
+  background: var(--white);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(184, 90, 67, 0.16);
+}
+.review-note {
+  margin: 20px 0;
+  padding: 16px 18px;
+  background: var(--paper);
+  border-left: 3px solid var(--primary);
+  border-radius: 4px;
+  font-size: 14px;
+}
+.review-note h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.review-note p {
+  margin: 6px 0 0;
+  white-space: pre-wrap;
+}
+/* Barra del tempo trascorso, sotto quella delle risposte; ambra e coral negli ultimi 10 e 5 minuti come il timer */
+.time-copy {
+  margin-top: 10px;
+}
+.time-track::-webkit-progress-value {
+  background: var(--ink);
+  transition: width 1s linear;
+}
+.time-track::-moz-progress-bar {
+  background: var(--ink);
+}
+.time-track {
+  color: var(--ink);
+}
+.time-track.warning::-webkit-progress-value {
+  background: var(--amber-text);
+}
+.time-track.warning::-moz-progress-bar {
+  background: var(--amber-text);
+}
+.time-track.critical::-webkit-progress-value {
+  background: var(--coral);
+}
+.time-track.critical::-moz-progress-bar {
+  background: var(--coral);
+}
+/* Copertura della prova quando si esce dallo schermo intero (o alla ripresa): si prosegue solo tornando a schermo intero */
+.exam-lock {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(20, 20, 20, 0.92);
+  backdrop-filter: blur(12px);
+}
+.exam-lock[hidden] {
+  display: none;
+}
+.exam-lock-box {
+  width: min(460px, 100%);
+  padding: 28px 26px 24px;
+  text-align: center;
+  color: var(--ink);
+  background: var(--white);
+  border-top: 4px solid var(--primary);
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+.exam-lock-icon {
+  font-size: 34px;
+  line-height: 1;
+  color: var(--primary);
+}
+.exam-lock-box h2 {
+  margin: 12px 0 8px;
+  font-size: 22px;
+}
+.exam-lock-box p {
+  margin: 0 0 20px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.55;
+}
+@media (max-width: 760px) {
+  .result-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ========== Stampa del risultato (Stampa risultato → Salva come PDF) ========== */
+.print-summary {
+  display: none;
+}
+@media print {
+  @page {
+    margin: 14mm 12mm;
+  }
+  :root {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  body.page-exam {
+    padding: 0;
+    background: #fff;
+  }
+  .results-actions,
+  .filter-group,
+  .outcome-retry,
+  .exam-lock,
+  .exam-launch,
+  .site-dialog,
+  .review-entry summary::marker {
+    display: none !important;
+  }
+  .results-screen {
+    padding: 0;
+  }
+  .print-summary {
+    display: block;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--primary);
+  }
+  .print-brand {
+    color: var(--primary-dark);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .print-summary h1 {
+    margin: 4px 0 12px;
+    font-size: 24px;
+  }
+  .print-summary dl {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 24px;
+    margin: 0;
+    font-size: 12px;
+  }
+  .print-summary dl div {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 8px;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .print-summary dt {
+    color: var(--muted);
+  }
+  .print-summary dd {
+    margin: 0;
+    font-weight: 700;
+  }
+  .print-disclaimer {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    font-style: italic;
+  }
+  /* L'intestazione a schermo è ridondante con il riepilogo di stampa */
+  .results-head {
+    display: none;
+  }
+  .result-outcome,
+  .score-domains,
+  .review-note,
+  .result-stats {
+    break-inside: avoid;
+  }
+  .review-entry {
+    break-inside: avoid-page;
+    margin-bottom: 8px;
+  }
+  .review-entry summary {
+    list-style: none;
+  }
+  .review-head h2 {
+    break-before: page;
+  }
+  a[href]::after {
+    content: none;
+  }
 }

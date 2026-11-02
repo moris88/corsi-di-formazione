@@ -76,6 +76,8 @@ let questionBank = [];
 let testTitle = "Simulazione CCA-F";
 let testDurationMinutes = DEFAULT_DURATION_MINUTES;
 let testDifficulty = "";
+// Testo e nome della banca caricata: salvati nella sessione se è un test importato, per poterla riprendere
+let currentSource = { raw: "", name: "" };
 const timedMode = true;
 let sourceFingerprint = "";
 let sourceReady = false;
@@ -611,6 +613,8 @@ function recordResult(automatic) {
     durationMs: completedExam.startedAt ? Date.now() - completedExam.startedAt : null,
     timeLimitMs: completedExam.deadline ? completedExam.deadline - completedExam.startedAt : null,
     score: scaledScore(items).score,
+    fullscreenExits: completedExam.fullscreenExits || 0,
+    tabSwitches: completedExam.tabSwitches || 0,
     items,
   });
   saveHistory(history.slice(0, HISTORY_LIMIT));
@@ -652,6 +656,7 @@ function announce(message) {
 
 function setSource(raw, label) {
   const parsed = parseQuestionBank(raw);
+  currentSource = { raw, name: label };
   questionBank = parsed.questions;
   testTitle = parsed.title;
   testDifficulty =
@@ -682,10 +687,14 @@ function setSource(raw, label) {
         finishExam(true);
       } else {
         renderExam();
+        resumeFullscreen();
       }
       return;
     }
   }
+  // Prova salvata non riprendibile (banca cambiata o assente): va eliminata, altrimenti
+  // theme.js continuerebbe a riportare su questa pagina
+  if (!exam && saved?.status === "active") safeStorageRemove();
   renderIntro();
 }
 
@@ -713,7 +722,25 @@ async function loadPreset(filename) {
   }
 }
 
+// All'avvio: se c'è una prova in corso si ricarica la sua banca e setSource la riprende
+// (il timer usa una scadenza assoluta, quindi il tempo trascorso fuori dal sito è già scalato).
 function loadFromWorkspace() {
+  const saved = safeStorageGet();
+  if (saved?.status === "active" && saved.source?.file && BUILTIN_TESTS.some((t) => t.file === saved.source.file)) {
+    loadPreset(saved.source.file);
+    return;
+  }
+  if (saved?.status === "active" && saved.source?.raw) {
+    try {
+      const test = { file: "imported-1", label: "Test importato n.1", name: saved.source.name, raw: saved.source.raw };
+      importedTests.push(test);
+      selectedPreset = test.file;
+      setSource(test.raw, test.name);
+      return;
+    } catch {
+      /* banca salvata non più valida: si riparte dal test predefinito */
+    }
+  }
   loadPreset(BUILTIN_TESTS[0].file);
 }
 
@@ -861,12 +888,94 @@ function shuffle(items) {
 // Modalità concentrazione: durante la prova l'header è nascosto e la pagina occupa tutto lo schermo
 function setFocusMode(on) {
   document.body.classList.toggle("exam-focus", on);
+  if (!on) {
+    hideExamLock();
+    navigator.keyboard?.unlock?.();
+  }
   if (!on && document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
 }
 
+// ---- Blocco dello schermo durante la prova ----
+// Il browser non permette di impedire del tutto l'uscita dallo schermo intero (Esc è una garanzia
+// di sicurezza), quindi: Keyboard Lock su Esc dove supportato (Chrome/Edge: va tenuto premuto),
+// copertura della prova finché non si torna a schermo intero, conteggio di uscite e cambi di scheda,
+// avviso alla chiusura della pagina, niente menu contestuale né copia del testo delle domande.
 function requestFullscreen() {
   const root = document.documentElement;
-  if (!document.fullscreenElement && root.requestFullscreen) root.requestFullscreen().catch(() => {});
+  if (!root.requestFullscreen) return;
+  const lockEscape = () => navigator.keyboard?.lock?.(["Escape"]).catch(() => {});
+  if (document.fullscreenElement) lockEscape();
+  else root.requestFullscreen({ navigationUI: "hide" }).then(lockEscape, () => {});
+}
+
+function examInProgress() {
+  return exam?.status === "active" && document.body.classList.contains("exam-focus");
+}
+
+function showExamLock(resuming = false) {
+  if (!document.documentElement.requestFullscreen) return;
+  let lock = document.querySelector(".exam-lock");
+  if (!lock) {
+    lock = document.createElement("div");
+    lock.className = "exam-lock";
+    lock.setAttribute("role", "alertdialog");
+    lock.setAttribute("aria-modal", "true");
+    lock.setAttribute("aria-labelledby", "exam-lock-title");
+    lock.addEventListener("click", (event) => {
+      if (event.target.closest("[data-lock-resume]")) requestFullscreen();
+    });
+    document.body.append(lock);
+  }
+  lock.innerHTML = `<div class="exam-lock-box">
+      <div class="exam-lock-icon" aria-hidden="true">⛶</div>
+      <h2 id="exam-lock-title">${resuming ? "Bentornato nella prova" : "Sei uscito dallo schermo intero"}</h2>
+      <p>${resuming ? `La simulazione è ancora in corso${exam.deadline ? " e il tempo ha continuato a scorrere" : ""}.` : "La prova resta nascosta finché non torni a schermo intero. Come all’esame vero, ogni uscita viene registrata e riportata nei risultati."}${exam.deadline ? " Il timer non si ferma." : ""}</p>
+      <button class="button" type="button" data-lock-resume>Torna a schermo intero</button>
+    </div>`;
+  lock.hidden = false;
+  lock.querySelector("[data-lock-resume]").focus();
+}
+
+function hideExamLock() {
+  const lock = document.querySelector(".exam-lock");
+  if (lock) lock.hidden = true;
+}
+
+// Ripresa di una prova (ricarica o ritorno sul sito): lo schermo intero va richiesto con un clic
+function resumeFullscreen() {
+  if (!document.fullscreenElement) showExamLock(true);
+}
+
+document.addEventListener("fullscreenchange", () => {
+  if (document.fullscreenElement) {
+    hideExamLock();
+    return;
+  }
+  if (!examInProgress()) return;
+  exam.fullscreenExits = (exam.fullscreenExits || 0) + 1;
+  saveExam();
+  showExamLock();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && examInProgress()) {
+    exam.tabSwitches = (exam.tabSwitches || 0) + 1;
+    saveExam();
+  }
+});
+
+window.addEventListener("beforeunload", (event) => {
+  if (examInProgress()) event.preventDefault();
+});
+
+document.addEventListener("contextmenu", (event) => {
+  if (examInProgress()) event.preventDefault();
+});
+
+for (const type of ["copy", "cut"]) {
+  document.addEventListener(type, (event) => {
+    if (examInProgress() && !event.target.closest?.("textarea")) event.preventDefault();
+  });
 }
 
 // Animazione di preparazione mostrata dopo "Inizia la prova": al termine avvia l'esame dietro l'overlay e lo dissolve
@@ -931,9 +1040,14 @@ function beginExam() {
   exam = {
     status: "active",
     sourceFingerprint,
+    // Da dove ricaricare le domande alla riapertura della pagina (anche se nel frattempo è selezionato un altro test)
+    source: BUILTIN_TESTS.some((test) => test.file === selectedPreset)
+      ? { file: selectedPreset }
+      : { raw: currentSource.raw, name: currentSource.name },
     startedAt: Date.now(),
     deadline: timedMode ? Date.now() + testDurationMinutes * 60 * 1000 : null,
     index: 0,
+    notes: "",
     order: shuffledQuestions.map((question) => ({
       id: question.id,
       optionOrder: shuffle(question.options.map((option) => option.letter)),
@@ -981,6 +1095,17 @@ function updateTimer() {
     return;
   }
   const remaining = Math.max(0, exam.deadline - Date.now());
+  // Barra del tempo sotto quella delle risposte: si riempie man mano che il tempo passa
+  const track = document.querySelector("#time-track");
+  if (track) {
+    const total = exam.deadline - exam.startedAt;
+    track.value = total - remaining;
+    track.classList.toggle("warning", remaining <= 10 * 60 * 1000 && remaining > 5 * 60 * 1000);
+    track.classList.toggle("critical", remaining <= 5 * 60 * 1000);
+    const percent = document.querySelector("#time-percent");
+    if (percent)
+      percent.textContent = `${Math.round(((total - remaining) / total) * 100)}% · restano ${timerText(remaining)}`;
+  }
   if (timer) {
     timer.textContent = timerText(remaining);
     timer.classList.toggle("warning", remaining <= 10 * 60 * 1000 && remaining > 5 * 60 * 1000);
@@ -1033,6 +1158,12 @@ function renderExam() {
       <div>
         <div class="progress-copy"><strong>${answered} di ${TOTAL_QUESTIONS} risposte</strong><span>Completamento ${Math.round(percent)}%</span></div>
         <progress class="progress-track" value="${answered}" max="${TOTAL_QUESTIONS}" aria-label="Domande con risposta">${percent}%</progress>
+        ${
+          exam.deadline
+            ? `<div class="progress-copy time-copy"><strong>Tempo trascorso</strong><span id="time-percent"></span></div>
+        <progress class="progress-track time-track" id="time-track" max="${exam.deadline - exam.startedAt}" aria-label="Tempo trascorso della prova"></progress>`
+            : ""
+        }
       </div>
       <div class="timer" id="timer" role="timer" aria-live="off">--:--</div>
     </div>
@@ -1063,6 +1194,11 @@ function renderExam() {
           <span class="keyboard-hint">La risposta si salva automaticamente</span>
         </div>
       </section>
+      <aside class="exam-notes" aria-label="Note della prova">
+        <label for="exam-notes">Blocco note</label>
+        <p class="exam-notes-hint" id="exam-notes-hint">Uno spazio unico per tutta la prova, sempre visibile mentre cambi domanda: annota dubbi, numeri delle domande da rivedere o concetti da ripassare. Si salva automaticamente, non influisce sul punteggio e lo ritrovi nella revisione finale.</p>
+        <textarea id="exam-notes" rows="16" maxlength="10000" aria-describedby="exam-notes-hint" placeholder="Es. D12 indeciso tra B e C (hook o prompt?) · ripassare Batches API">${escapeHtml(exam.notes || "")}</textarea>
+      </aside>
     </div>
   </section>`;
   saveExam();
@@ -1092,6 +1228,8 @@ function finishExam(automatic) {
   }
   completedExam = {
     ...exam,
+    finishedAt: Date.now(),
+    automatic,
     order: exam.order.map((item) => ({ ...item })),
   };
   exam = null;
@@ -1154,6 +1292,70 @@ function renderReviewEntry(item, index) {
 </details>`;
 }
 
+// Riepilogo visibile solo in stampa (Stampa risultato → Salva come PDF): dati della prova
+// che a schermo sono sparsi o assenti (date, durata, modalità, difficoltà, comportamento)
+function renderPrintSummary(counts, estimate, percentage, passed) {
+  const when = (time) => new Date(time).toLocaleString("it-IT", { dateStyle: "long", timeStyle: "short" });
+  const used =
+    completedExam.finishedAt && completedExam.startedAt ? completedExam.finishedAt - completedExam.startedAt : 0;
+  const level = importedTests.some((test) => test.file === selectedPreset)
+    ? "Custom (test importato)"
+    : DIFFICULTY_NAMES[testDifficulty] || "Non indicata";
+  const rows = [
+    ["Test", testTitle],
+    ["Difficoltà", level],
+    ["Iniziata", completedExam.startedAt ? when(completedExam.startedAt) : "—"],
+    [
+      "Consegnata",
+      completedExam.finishedAt
+        ? `${when(completedExam.finishedAt)}${completedExam.automatic ? " (tempo esaurito)" : ""}`
+        : "—",
+    ],
+    [
+      "Tempo impiegato",
+      `${timerText(used)}${completedExam.deadline ? ` su ${testDurationMinutes} minuti disponibili` : " (senza limite di tempo)"}`,
+    ],
+    ["Punteggio stimato", `${estimate.score}/1000 · soglia ${PASS_SCORE} · ${passed ? "superata" : "non superata"}`],
+    [
+      "Risposte",
+      `${counts.correct} corrette, ${counts.wrong} errate, ${counts.unanswered} senza risposta su ${TOTAL_QUESTIONS} (${percentage}%)`,
+    ],
+    ["Domande segnate", String(completedExam.order.filter((item) => item.flagged).length)],
+    ["Uscite dallo schermo intero", String(completedExam.fullscreenExits || 0)],
+    ["Cambi di scheda o finestra", String(completedExam.tabSwitches || 0)],
+  ];
+  return `<header class="print-summary">
+      <div class="print-brand">Claude Certified Architect – Foundations · Simulazione d’esame</div>
+      <h1>Risultato della simulazione</h1>
+      <dl>${rows.map(([label, value]) => `<div><dt>${label}</dt><dd>${escapeHtml(value)}</dd></div>`).join("")}</dl>
+      <p class="print-disclaimer">Documento generato da una simulazione di preparazione: non è l’esame ufficiale e il punteggio stimato non ha valore ai fini della certificazione.</p>
+    </header>`;
+}
+
+function printResults() {
+  // In stampa servono tutte le domande con risposte e spiegazioni, a prescindere dal filtro attivo
+  reviewFilter = "all";
+  renderResults(completedExam.automatic);
+  for (const entry of app.querySelectorAll(".review-entry")) entry.open = true;
+  // Il titolo della pagina diventa il nome proposto per il PDF
+  const title = document.title;
+  const day = new Date(completedExam.finishedAt || Date.now()).toISOString().slice(0, 10);
+  document.title = `Risultato simulazione CCA-F - ${testTitle} - ${day}`;
+  // Il PDF va sempre in tema chiaro, anche se a schermo è attivo quello scuro
+  const root = document.documentElement;
+  const theme = root.dataset.theme;
+  root.dataset.theme = "light";
+  window.addEventListener(
+    "afterprint",
+    () => {
+      document.title = title;
+      root.dataset.theme = theme;
+    },
+    { once: true },
+  );
+  window.print();
+}
+
 function renderResults(automatic = false) {
   if (!completedExam) return;
   setFocusMode(false);
@@ -1181,6 +1383,7 @@ function renderResults(automatic = false) {
     .filter((entry) => reviewFilter === "all" || statusFor(entry.item, entry.question) === reviewFilter);
   app.innerHTML = `
   <section class="screen results-screen" aria-labelledby="results-title">
+    ${renderPrintSummary(counts, estimate, percentage, passed)}
     <div class="results-head">
       <div><div class="eyebrow">Sessione completata${automatic ? " · Tempo esaurito" : ""}</div><h1 id="results-title">Revisione<br><span>dei risultati</span></h1><p>La simulazione è conclusa. Esamina ogni risposta e usa i filtri per concentrarti sui quesiti da ripassare.</p></div>
       <div class="score-block"><strong class="score-number">${counts.correct}<span class="score-small">/${TOTAL_QUESTIONS}</span></strong><span class="score-caption">Risposte corrette · ${percentage}%</span></div>
@@ -1189,6 +1392,8 @@ function renderResults(automatic = false) {
       <div class="result-stat"><strong>${counts.correct}</strong><span>Corrette</span></div>
       <div class="result-stat"><strong>${counts.wrong}</strong><span>Errate</span></div>
       <div class="result-stat"><strong>${counts.unanswered}</strong><span>Senza risposta</span></div>
+      <div class="result-stat"><strong>${completedExam.fullscreenExits || 0}</strong><span>Uscite dallo schermo intero</span></div>
+      <div class="result-stat"><strong>${completedExam.tabSwitches || 0}</strong><span>Cambi di scheda o finestra</span></div>
     </div>
     <section class="result-outcome ${passed ? "passed" : "not-passed"}" aria-live="polite" aria-labelledby="outcome-title">
       <div class="outcome-mark" aria-hidden="true">${passed ? "✓" : "!"}</div>
@@ -1209,9 +1414,10 @@ function renderResults(automatic = false) {
       ${estimate.domains.map((d) => `<tr><td><strong>${d.key}</strong> ${escapeHtml(d.name)}</td><td>${d.weight}%</td><td><span class="stats-bar"><span class="stats-bar-fill ${d.rate >= 0.72 ? "good" : ""}" data-value="${Math.round(d.rate * 100)}"></span><span class="stats-bar-mark" aria-hidden="true"></span></span> ${Math.round(d.rate * 100)}%</td><td>${d.total ? `${d.ok}/${d.total}` : "—"}</td><td>${(d.rate * d.weight).toFixed(1)} / ${d.weight}</td></tr>`).join("")}
       </tbody></table>
     </section>
+    ${completedExam.notes?.trim() ? `<section class="review-note" aria-labelledby="notes-title"><h2 id="notes-title">Le tue note</h2><p>${escapeHtml(completedExam.notes.trim())}</p></section>` : ""}
     <div class="review-head"><h2>Esito domanda per domanda</h2><div class="filter-group" role="group" aria-label="Filtra risultati">${filters.map((filter) => `<button type="button" class="filter-button ${reviewFilter === filter ? "active" : ""}" data-action="filter" data-filter="${filter}" aria-pressed="${reviewFilter === filter}">${labels[filter]} <span>${filter === "all" ? TOTAL_QUESTIONS : counts[filter]}</span></button>`).join("")}</div></div>
     <div class="review-list">${visible.length ? visible.map(({ item, index }) => renderReviewEntry(item, index)).join("") : '<p class="empty-review">Nessuna domanda in questa categoria.</p>'}</div>
-    <div class="results-actions"><button class="button secondary" type="button" data-action="show-stats">Statistiche di studio</button><button class="button secondary" type="button" data-action="change-source">Cambia test</button><button class="button" type="button" data-action="restart">Nuova simulazione <span aria-hidden="true">↻</span></button></div>
+    <div class="results-actions"><button class="button secondary" type="button" data-action="show-stats">Statistiche di studio</button><button class="button secondary" type="button" data-action="print-results">Stampa risultato</button><button class="button secondary" type="button" data-action="change-source">Cambia test</button><button class="button" type="button" data-action="restart">Nuova simulazione <span aria-hidden="true">↻</span></button></div>
   </section>`;
   applyStatsBars(app);
 }
@@ -1343,10 +1549,21 @@ app.addEventListener("click", async (event) => {
   } else if (action === "stats-back") {
     if (completedExam) renderResults();
     else renderIntro();
+  } else if (action === "print-results" && completedExam) {
+    printResults();
   } else if (action === "show-stats") {
     renderStatsScreen();
   } else if (action === "start") {
-    // Il tutto schermo va chiesto subito, dentro il clic dell'utente
+    const ok = await confirmDialog({
+      title: "Sei pronto a iniziare?",
+      message: timedMode
+        ? `Da questo momento la prova non si può mettere in pausa: il timer di ${testDurationMinutes} minuti continua a scorrere anche se chiudi o ricarichi la pagina, e allo scadere le risposte vengono consegnate automaticamente. Puoi solo consegnare prima del tempo. Mettiti in un posto tranquillo e affrontala come se fosse l’esame vero.`
+        : "Da questo momento la prova è avviata: le domande sono in ordine casuale e non puoi tornare alle istruzioni. Puoi chiudere la pagina e riprendere, ma l’unico modo per terminare è consegnare. Affrontala come se fosse l’esame vero.",
+      confirmLabel: "Inizia ora",
+      cancelLabel: "Non ancora",
+    });
+    if (!ok) return;
+    // Il tutto schermo va chiesto dentro un gesto dell'utente: il clic su "Inizia ora" lo è ancora
     requestFullscreen();
     playLaunch();
   } else if (action === "go" && exam) {
@@ -1373,6 +1590,13 @@ app.addEventListener("click", async (event) => {
   } else if (action === "change-source" && completedExam) {
     completedExam = null;
     renderIntro();
+  }
+});
+
+app.addEventListener("input", (event) => {
+  if (event.target.matches("#exam-notes") && exam) {
+    exam.notes = event.target.value;
+    saveExam();
   }
 });
 

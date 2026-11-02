@@ -3,6 +3,19 @@
  * La scelta viene salvata in localStorage; senza scelta salvata
  * si segue la preferenza del sistema operativo.
  */
+// Simulazione d'esame in corso (salvata da js/ccaf/simulazione.js): qualunque pagina del sito
+// riporta subito alla simulazione, come all'esame vero non si può uscire dalla prova.
+(() => {
+  try {
+    const session = JSON.parse(localStorage.getItem("ccaf-simulation-session-v1") || "null");
+    if (session?.status !== "active" || /\/simulazione(\.html)?$/.test(location.pathname)) return;
+    const script = document.currentScript?.src;
+    if (script) location.replace(new URL("../pages/ccaf/simulazione.html", script));
+  } catch {
+    /* senza archiviazione locale non c'è nessuna prova da riprendere */
+  }
+})();
+
 (() => {
   const STORAGE_KEY = "ccaf-theme";
   const root = document.documentElement;
