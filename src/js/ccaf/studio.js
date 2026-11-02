@@ -315,7 +315,7 @@ const documents = [
     group: "Riferimenti",
     path: "https://forms.gle/FVrJ6skGrEWvtrHE7",
     description:
-      "Apri una issue per segnalare errori o proporre miglioramenti.",
+      "Compila il modulo per segnalare errori o proporre miglioramenti, senza bisogno di account.",
     index: "!",
     external: true,
     // Mostrato come la pillola "Segnala / Feedback" dell'header (.feedback-link)
