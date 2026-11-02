@@ -1,6 +1,13 @@
 import { confirmDialog } from "../dialog.js";
 import { bankLoaderHtml } from "../loader.js";
-import { applyStatsBars, classifyQuestion, renderStats } from "./simulazione-stats.js";
+import {
+  applyStatsBars,
+  classifyQuestion,
+  PASS_SCORE,
+  pickMotivation,
+  renderStats,
+  scaledScore,
+} from "./simulazione-stats.js";
 
 const DEFAULT_DURATION_MINUTES = 120;
 let TOTAL_QUESTIONS = 0;
@@ -579,26 +586,32 @@ function saveHistory(history) {
   }
 }
 
+// Dettaglio per domanda (scenario, argomenti, domini, esito, segnata) per statistiche e punteggio stimato
+function examItems() {
+  return completedExam.order.map((item) => {
+    const question = questionBank.find((candidate) => candidate.id === Number(item.id));
+    // Solo domanda, opzioni e spiegazione: il paragrafo introduttivo dello scenario è uguale per tutte
+    const { topics, domains } = classifyQuestion(question);
+    return { s: question.scenario, t: topics, d: domains, r: statusFor(item, question), f: item.flagged };
+  });
+}
+
 function recordResult(automatic) {
   const counts = resultCounts();
   const history = loadHistory();
+  const items = examItems();
   history.unshift({
     date: Date.now(),
     title: testTitle,
     correct: counts.correct,
     total: TOTAL_QUESTIONS,
-    passed: counts.correct >= Math.ceil(TOTAL_QUESTIONS * 0.72),
+    passed: scaledScore(items).score >= PASS_SCORE,
     automatic,
     difficulty: testDifficulty,
     durationMs: completedExam.startedAt ? Date.now() - completedExam.startedAt : null,
     timeLimitMs: completedExam.deadline ? completedExam.deadline - completedExam.startedAt : null,
-    // Dettaglio per domanda (scenario, argomenti, domini, esito, segnata) per la schermata Statistiche
-    items: completedExam.order.map((item) => {
-      const question = questionBank.find((candidate) => candidate.id === Number(item.id));
-      // Solo domanda, opzioni e spiegazione: il paragrafo introduttivo dello scenario è uguale per tutte
-      const { topics, domains } = classifyQuestion(question);
-      return { s: question.scenario, t: topics, d: domains, r: statusFor(item, question), f: item.flagged };
-    }),
+    score: scaledScore(items).score,
+    items,
   });
   saveHistory(history.slice(0, HISTORY_LIMIT));
 }
@@ -610,7 +623,7 @@ function renderHistory() {
     .map((entry) => {
       const percentage = ((entry.correct / entry.total) * 100).toFixed(1);
       const date = new Date(entry.date).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" });
-      return `<li><span><span class="history-meta">${escapeHtml(date)}</span><br>${escapeHtml(entry.title)}</span><span class="history-score ${entry.passed ? "passed" : "not-passed"}">${entry.correct}/${entry.total} · ${percentage}%</span></li>`;
+      return `<li><span><span class="history-meta">${escapeHtml(date)}</span><br>${escapeHtml(entry.title)}</span><span class="history-score ${entry.passed ? "passed" : "not-passed"}">${entry.score ? `${entry.score}/1000 · ` : ""}${percentage}%</span></li>`;
     })
     .join("");
   return `<section class="history-box" aria-labelledby="history-title">
@@ -1147,8 +1160,11 @@ function renderResults(automatic = false) {
   if (topStatus) topStatus.textContent = "Esame concluso";
   const counts = resultCounts();
   const percentage = ((counts.correct / TOTAL_QUESTIONS) * 100).toFixed(1);
-  const thresholdCorrect = Math.ceil(TOTAL_QUESTIONS * 0.72);
-  const passed = counts.correct >= thresholdCorrect;
+  // Esito sul punteggio stimato 100–1000 (pesi ufficiali dei domini), come all'esame
+  const estimate = scaledScore(examItems());
+  const passed = estimate.score >= PASS_SCORE;
+  // Scelta una volta per prova: cambiare filtro nella revisione non deve cambiare la frase
+  completedExam.motivation ??= pickMotivation(estimate.score);
   const labels = {
     all: "Tutte",
     wrong: "Errate",
@@ -1177,18 +1193,27 @@ function renderResults(automatic = false) {
     <section class="result-outcome ${passed ? "passed" : "not-passed"}" aria-live="polite" aria-labelledby="outcome-title">
       <div class="outcome-mark" aria-hidden="true">${passed ? "✓" : "!"}</div>
       <div class="outcome-copy">
-        <div class="outcome-kicker">Esito indicativo · soglia simulata ${thresholdCorrect}/${TOTAL_QUESTIONS}</div>
+        <div class="outcome-kicker">Esito indicativo · soglia ${PASS_SCORE}/1000</div>
         <h2 id="outcome-title">${passed ? "Simulazione superata" : "Simulazione non superata"}</h2>
-        <p>${passed ? `Hai raggiunto la soglia indicativa del 72% con ${counts.correct} risposte corrette su ${TOTAL_QUESTIONS}.` : `Hai ottenuto ${counts.correct} risposte corrette su ${TOTAL_QUESTIONS}; per raggiungere la soglia indicativa del 72% ne servono almeno ${thresholdCorrect}. Ripassa gli errori e riprova.`}</p>
-        <p class="outcome-caveat">L’esame ufficiale usa un punteggio scalare con soglia 720/1000: questa simulazione non può convertirlo né determinarne l’esito reale.</p>
+        <p class="outcome-motivation" data-band="${completedExam.motivation.band}">${escapeHtml(completedExam.motivation.text)}</p>
+        <p>${passed ? `Punteggio stimato ${estimate.score}/1000, sopra la soglia di ${PASS_SCORE}, con ${counts.correct} risposte corrette su ${TOTAL_QUESTIONS}.` : `Punteggio stimato ${estimate.score}/1000: mancano ${PASS_SCORE - estimate.score} punti alla soglia di ${PASS_SCORE}. Concentrati sui domini con il peso maggiore e la percentuale più bassa, poi riprova.`}</p>
+        <p class="outcome-caveat">Il punteggio stimato pesa le risposte con i pesi ufficiali dei domini ed è calibrato sulla soglia di 720/1000, ma l’esame reale usa una scala propria che questa simulazione non può riprodurre: è un’indicazione, non l’esito ufficiale.</p>
         ${passed ? "" : `<div class="outcome-retry"><button class="button secondary" type="button" data-action="restart">Riprova la simulazione <span aria-hidden="true">↻</span></button></div>`}
       </div>
-      <div class="outcome-score"><strong>${percentage}%</strong><span>risposte corrette</span></div>
+      <div class="outcome-score"><strong>${estimate.score}<small>/1000</small></strong><span>punteggio stimato · ${percentage}% corrette</span></div>
+    </section>
+    <section class="score-domains" aria-labelledby="score-domains-title">
+      <h2 id="score-domains-title">Come è calcolato il punteggio</h2>
+      <p class="stats-note">Percentuale di risposte corrette in ogni dominio, pesata con il peso ufficiale del dominio nell’esame. Scala: 0% → 100, 72% → ${PASS_SCORE}, 100% → 1000.</p>
+      <table class="stats-table"><thead><tr><th>Dominio</th><th>Peso</th><th>Risposte corrette</th><th>Domande</th><th>Contributo</th></tr></thead><tbody>
+      ${estimate.domains.map((d) => `<tr><td><strong>${d.key}</strong> ${escapeHtml(d.name)}</td><td>${d.weight}%</td><td><span class="stats-bar"><span class="stats-bar-fill ${d.rate >= 0.72 ? "good" : ""}" data-value="${Math.round(d.rate * 100)}"></span><span class="stats-bar-mark" aria-hidden="true"></span></span> ${Math.round(d.rate * 100)}%</td><td>${d.total ? `${d.ok}/${d.total}` : "—"}</td><td>${(d.rate * d.weight).toFixed(1)} / ${d.weight}</td></tr>`).join("")}
+      </tbody></table>
     </section>
     <div class="review-head"><h2>Esito domanda per domanda</h2><div class="filter-group" role="group" aria-label="Filtra risultati">${filters.map((filter) => `<button type="button" class="filter-button ${reviewFilter === filter ? "active" : ""}" data-action="filter" data-filter="${filter}" aria-pressed="${reviewFilter === filter}">${labels[filter]} <span>${filter === "all" ? TOTAL_QUESTIONS : counts[filter]}</span></button>`).join("")}</div></div>
     <div class="review-list">${visible.length ? visible.map(({ item, index }) => renderReviewEntry(item, index)).join("") : '<p class="empty-review">Nessuna domanda in questa categoria.</p>'}</div>
     <div class="results-actions"><button class="button secondary" type="button" data-action="show-stats">Statistiche di studio</button><button class="button secondary" type="button" data-action="change-source">Cambia test</button><button class="button" type="button" data-action="restart">Nuova simulazione <span aria-hidden="true">↻</span></button></div>
   </section>`;
+  applyStatsBars(app);
 }
 
 // Popup dell'ingranaggio: importazione di un Markdown, esportazione di un test

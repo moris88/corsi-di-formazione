@@ -246,6 +246,10 @@ export function renderStats(history) {
     ? Math.round(recent.reduce((a, b) => a + b, 0) / recent.length - older.reduce((a, b) => a + b, 0) / older.length)
     : null;
   const timed = history.filter((entry) => entry.durationMs);
+  const scored = history.filter((entry) => entry.score);
+  const avgScore = scored.length
+    ? Math.round(scored.reduce((sum, entry) => sum + entry.score, 0) / scored.length)
+    : null;
 
   // Domini: priorità = peso d'esame × quota di errori, così un dominio pesante e debole sale in cima
   const domainRows = tally(items, (item) => item.d || [])
@@ -315,13 +319,13 @@ export function renderStats(history) {
 
     <div class="stats-kpis">
       <div><strong>${history.length}</strong><span>Simulazioni</span></div>
-      <div><strong>${avg}%</strong><span>Media</span></div>
+      <div><strong>${avgScore ?? "—"}</strong><span>Punteggio stimato medio</span></div>
+      <div><strong>${avg}%</strong><span>Media risposte corrette</span></div>
       <div><strong>${Math.max(...rates)}%</strong><span>Migliore</span></div>
       <div><strong>${rates[0]}%</strong><span>Ultima</span></div>
-      <div><strong>${passed}/${history.length}</strong><span>Sopra soglia 72%</span></div>
+      <div><strong>${passed}/${history.length}</strong><span>Superate</span></div>
       <div><strong>${trend === null ? "—" : `${trend > 0 ? "+" : ""}${trend}`}</strong><span>Tendenza (punti)</span></div>
       <div><strong>${timed.length ? minutes(timed.reduce((s, e) => s + e.durationMs, 0) / timed.length) : "—"}</strong><span>Tempo medio</span></div>
-      <div><strong>${items.length ? `${pct(blank, items.length)}%` : "—"}</strong><span>Senza risposta</span></div>
     </div>
 
     <section class="stats-card stats-advice" aria-labelledby="advice-title">
@@ -395,4 +399,85 @@ export function renderStats(history) {
 // Larghezza/altezza delle barre: impostata da JS per non usare attributi style= nel markup
 export function applyStatsBars(root) {
   for (const el of root.querySelectorAll("[data-value]")) el.style.setProperty("--value", `${el.dataset.value}%`);
+}
+
+// Punteggio stimato su scala 100–1000, come l'esame ufficiale (soglia 720).
+// 1) accuratezza per dominio (una domanda conta in ogni dominio che tocca);
+// 2) media pesata con i pesi ufficiali dei domini (un dominio senza domande usa l'accuratezza complessiva);
+// 3) conversione lineare a tratti: 0% → 100, 72% → 720, 100% → 1000.
+export const PASS_SCORE = 720;
+export function scaledScore(items) {
+  const overall = items.length ? items.filter((item) => item.r === "correct").length / items.length : 0;
+  const domains = Object.entries(DOMAINS).map(([key, domain]) => {
+    const inDomain = items.filter((item) => (item.d || []).includes(key));
+    const ok = inDomain.filter((item) => item.r === "correct").length;
+    return { key, ...domain, total: inDomain.length, ok, rate: inDomain.length ? ok / inDomain.length : overall };
+  });
+  const weighted = domains.reduce((sum, d) => sum + d.rate * d.weight, 0) / 100;
+  const score =
+    weighted <= PASS_RATIO
+      ? 100 + (weighted / PASS_RATIO) * (PASS_SCORE - 100)
+      : PASS_SCORE + ((weighted - PASS_RATIO) / (1 - PASS_RATIO)) * (1000 - PASS_SCORE);
+  return { score: Math.round(score), weighted, domains };
+}
+
+// Messaggio motivazionale a fine simulazione: 10 frasi per fascia di punteggio,
+// scelte a caso evitando di ripetere l'ultima mostrata in quella fascia.
+const MOTIVATION = {
+  low: [
+    "Così non ci siamo: torna sulla teoria e ripassa bene i domini prima di riprovare.",
+    "Il punteggio dice che le basi non sono ancora solide: riparti dagli appunti, non dai test.",
+    "Fermati un attimo: altre simulazioni adesso servono a poco, prima serve studiare i concetti.",
+    "Non scoraggiarti, ma serve un ripasso serio: parti dal dominio con il peso più alto.",
+    "Siamo ancora lontani dalla soglia: dedica qualche giorno alla teoria e alle trappole d’esame.",
+    "Ogni esperto è partito da qui: rileggi la guida d’esame e costruisci le fondamenta.",
+    "Troppi errori per affidarsi all’intuito: studia il perché di ogni risposta corretta.",
+    "Così l’esame sarebbe in salita: riprendi gli appunti dominio per dominio, con calma.",
+    "Prima la teoria, poi i test: è il modo più rapido per alzare davvero il punteggio.",
+    "Non è il momento di fare un’altra simulazione: è il momento di aprire il materiale di studio.",
+  ],
+  close: [
+    "Dai, ce la puoi fare: ripassa ancora un po’ e la soglia è tua.",
+    "Ci sei quasi! Qualche risposta in più e saresti oltre il 720.",
+    "Manca davvero poco: concentrati sugli errori di questa prova e riprova.",
+    "Sei a un passo dalla soglia: ripassa i domini più deboli e torna più forte.",
+    "Peccato, per poco! Rivedi le spiegazioni delle risposte sbagliate: lì c’è il salto che ti manca.",
+    "Il lavoro si vede, ora serve l’ultimo sforzo: ripasso mirato e poi un’altra simulazione.",
+    "Quasi! Spesso basta leggere con più attenzione i vincoli dello scenario.",
+    "Non mollare proprio adesso: sei vicinissimo, ripassa le trappole d’esame.",
+    "Ancora un piccolo passo: guarda quali argomenti ti hanno tradito e sistemali.",
+    "La soglia è lì, a portata di mano: un altro giro di ripasso e ci arrivi.",
+  ],
+  passed: [
+    "Bene, hai superato questa simulazione: non cullarti sugli allori e continua a migliorare.",
+    "Promosso in simulazione! Ora prova un test più difficile per metterti alla prova davvero.",
+    "Ottimo risultato, ma l’esame vero non perdona: ripassa comunque gli errori.",
+    "Sopra la soglia, complimenti! Mantieni il ritmo e punta a un margine più ampio.",
+    "Ce l’hai fatta! Ricorda però che un buon margine sopra il 720 ti mette al sicuro.",
+    "Prova superata: adesso consolida, rivedendo le domande in cui hai esitato.",
+    "Bel lavoro! Non fermarti qui: la costanza è ciò che fa la differenza il giorno dell’esame.",
+    "Simulazione superata: ottimo segnale, ma continua ad allenarti su scenari nuovi.",
+    "Bravo, sei sopra la soglia! Ora alza l’asticella con i test di livello Avanzato.",
+    "Superata! Goditi il risultato, poi torna sui domini dove hai perso più punti.",
+  ],
+};
+const MOTIVATION_KEY = "ccaf-simulation-motivation-last";
+
+export function pickMotivation(score) {
+  const band = score >= PASS_SCORE ? "passed" : score >= 650 ? "close" : "low";
+  const phrases = MOTIVATION[band];
+  let last = {};
+  try {
+    last = JSON.parse(localStorage.getItem(MOTIVATION_KEY) || "{}");
+  } catch {
+    /* senza archiviazione locale si sceglie e basta */
+  }
+  let index = Math.floor(Math.random() * phrases.length);
+  if (index === last[band]) index = (index + 1 + Math.floor(Math.random() * (phrases.length - 1))) % phrases.length;
+  try {
+    localStorage.setItem(MOTIVATION_KEY, JSON.stringify({ ...last, [band]: index }));
+  } catch {
+    /* idem */
+  }
+  return { band, text: phrases[index] };
 }
