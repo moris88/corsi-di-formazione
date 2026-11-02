@@ -133,6 +133,73 @@
   gap: 12px;
   margin-top: 21px;
 }
+.source-actions .preset-select-label {
+  flex: 1;
+}
+/* Ingranaggio accanto alla scelta del test: apre il popup di gestione dei test */
+.settings-button {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  align-self: flex-end;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  color: var(--primary);
+  background: transparent;
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.3s ease;
+}
+.settings-button:hover {
+  background: var(--primary-pale);
+}
+.settings-button:hover svg {
+  transform: rotate(60deg);
+}
+.settings-button svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.3s ease;
+}
+.tools-dialog {
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+}
+.tools-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.tools-section h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+.tools-section .button {
+  margin-top: 12px;
+}
+.tools-export {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.tools-export .preset-select-label {
+  flex: 1 1 240px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-button svg {
+    transition: none;
+  }
+}
 .format-help {
   margin-top: 21px;
   padding-top: 16px;

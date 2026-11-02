@@ -716,15 +716,10 @@ function renderIntro() {
       ${sourceError ? `<p class="source-error">${escapeHtml(sourceError)}</p>` : ""}
       <div class="source-actions">
         <label class="preset-select-label"><span>Test nel workspace</span><select id="preset-test" aria-label="Seleziona un test già presente nel workspace">${BUILTIN_TESTS.map((test) => `<option value="${escapeHtml(test.file)}" ${selectedPreset === test.file ? "selected" : ""}>${escapeHtml(test.label)}</option>`).join("")}</select></label>
-        <button class="button secondary" type="button" data-action="choose-source">Importa un altro Markdown</button>
-        <input class="file-input" type="file" accept=".md,text/markdown,text/plain" id="source-file" aria-label="Seleziona il file Markdown con i quesiti">
+        <button class="settings-button" type="button" data-action="open-tools" aria-label="Importa, esporta e formato dei test" title="Importa, esporta e formato dei test">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
       </div>
-      <details class="format-help">
-        <summary>Formato per creare un altro test</summary>
-        <p>Usa un titolo, scenari facoltativi, quesiti numerati, quattro opzioni A–D e la riga della risposta corretta.</p>
-        <p><a class="button secondary" href="../../assets/ccaf/template-test.md" download="template-test.md">Scarica il template (template-test.md)</a></p>
-        <div class="format-guide">${renderGuideMarkdown(formatGuideSource()).html}</div>
-      </details>
       ${renderHistory()}
     </aside>
   </section>`;
@@ -1131,12 +1126,84 @@ function renderResults(automatic = false) {
   </section>`;
 }
 
+// Popup dell'ingranaggio: importazione di un Markdown, esportazione di un test
+// del workspace e guida al formato. Creato una volta, contenuto rigenerato a ogni apertura.
+let toolsDialog = null;
+
+function testFileName(path) {
+  return decodeURIComponent(path.split("/").pop());
+}
+
+function openToolsDialog() {
+  if (!toolsDialog) {
+    toolsDialog = document.createElement("dialog");
+    toolsDialog.className = "site-dialog tools-dialog";
+    toolsDialog.setAttribute("aria-labelledby", "tools-dialog-title");
+    document.body.append(toolsDialog);
+    toolsDialog.addEventListener("click", (event) => {
+      if (event.target === toolsDialog) toolsDialog.close();
+      else if (event.target.closest('[data-action="choose-source"]'))
+        toolsDialog.querySelector("#source-file")?.click();
+    });
+    toolsDialog.addEventListener("change", (event) => {
+      if (event.target.matches("#source-file")) {
+        toolsDialog.close();
+        importSourceFile(event.target.files?.[0]);
+      } else if (event.target.matches("#export-test")) {
+        const link = toolsDialog.querySelector("#export-link");
+        link.href = event.target.value;
+        link.download = testFileName(event.target.value);
+      }
+    });
+  }
+  const exportFile = selectedPreset || BUILTIN_TESTS[0].file;
+  toolsDialog.innerHTML = `
+    <div class="site-dialog-body">
+      <h2 class="site-dialog-title" id="tools-dialog-title">Gestione dei test</h2>
+      <section class="tools-section">
+        <h3>Importa</h3>
+        <p class="site-dialog-message">Carica una banca quesiti in formato Markdown dal tuo computer.</p>
+        <button class="button secondary" type="button" data-action="choose-source">Importa un altro Markdown</button>
+        <input class="file-input" type="file" accept=".md,text/markdown,text/plain" id="source-file" aria-label="Seleziona il file Markdown con i quesiti">
+      </section>
+      <section class="tools-section">
+        <h3>Esporta</h3>
+        <p class="site-dialog-message">Scarica il file Markdown di un test del workspace.</p>
+        <div class="tools-export">
+          <label class="preset-select-label"><span>Test da esportare</span><select id="export-test">${BUILTIN_TESTS.map((test) => `<option value="${escapeHtml(test.file)}" ${exportFile === test.file ? "selected" : ""}>${escapeHtml(test.label)}</option>`).join("")}</select></label>
+          <a class="button" id="export-link" href="${escapeHtml(exportFile)}" download="${escapeHtml(testFileName(exportFile))}">Esporta (.md)</a>
+        </div>
+      </section>
+      <details class="format-help">
+        <summary>Formato per creare un altro test</summary>
+        <p>Usa un titolo, scenari facoltativi, quesiti numerati, quattro opzioni A–D e la riga della risposta corretta.</p>
+        <p><a class="button secondary" href="../../assets/ccaf/template-test.md" download="template-test.md">Scarica il template (template-test.md)</a></p>
+        <div class="format-guide">${renderGuideMarkdown(formatGuideSource()).html}</div>
+      </details>
+      <form method="dialog" class="site-dialog-actions"><button class="button secondary" type="submit">Chiudi</button></form>
+    </div>`;
+  toolsDialog.showModal();
+}
+
+async function importSourceFile(file) {
+  if (!file) return;
+  selectedPreset = "";
+  try {
+    setSource(await file.text(), file.name);
+  } catch (error) {
+    sourceReady = false;
+    sourceMessage = "Banca quesiti non caricata";
+    sourceError = error instanceof Error ? error.message : "Il file selezionato non è valido.";
+    renderIntro();
+  }
+}
+
 app.addEventListener("click", async (event) => {
   const control = event.target.closest("[data-action]");
   if (!control) return;
   const action = control.dataset.action;
-  if (action === "choose-source") {
-    app.querySelector("#source-file")?.click();
+  if (action === "open-tools") {
+    openToolsDialog();
   } else if (action === "clear-history") {
     const ok = await confirmDialog({
       title: "Cancellare lo storico?",
@@ -1196,20 +1263,6 @@ app.addEventListener("click", async (event) => {
 app.addEventListener("change", async (event) => {
   if (event.target.matches("#preset-test")) {
     if (event.target.value) loadPreset(event.target.value);
-    return;
-  }
-  if (event.target.matches("#source-file")) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    selectedPreset = "";
-    try {
-      setSource(await file.text(), file.name);
-    } catch (error) {
-      sourceReady = false;
-      sourceMessage = "Banca quesiti non caricata";
-      sourceError = error instanceof Error ? error.message : "Il file selezionato non è valido.";
-      renderIntro();
-    }
     return;
   }
   if (event.target.matches('input[name="answer"]') && exam) {
