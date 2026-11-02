@@ -441,6 +441,84 @@ h1 {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+.home-quote {
+  position: relative;
+  margin: 34px 0;
+  padding: 26px 30px 22px 64px;
+  border-left: 4px solid var(--primary);
+  background: var(--primary-pale);
+}
+.home-quote::before {
+  content: "“";
+  position: absolute;
+  top: 6px;
+  left: 16px;
+  color: var(--primary);
+  font: 700 72px / 1 var(--serif);
+  opacity: 0.6;
+}
+.home-quote blockquote {
+  margin: 0;
+}
+.home-quote-text {
+  min-height: 2.7em;
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+.home-quote.is-changing .home-quote-text,
+.home-quote.is-changing figcaption {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.home-quote figcaption {
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+.home-quote::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--primary);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.home-quote.is-running::after {
+  animation: tip-timer 15s linear forwards;
+}
+@keyframes tip-timer {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-quote::after {
+    display: none;
+  }
+}
+.home-quote blockquote > p {
+  margin: 0 0 14px;
+  font: italic 400 clamp(1.25rem, 2.6vw, 1.6rem) / 1.35 var(--serif);
+}
+.home-quote em {
+  color: var(--primary-dark);
+}
+.home-quote figcaption {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.home-quote figcaption a {
+  color: var(--primary);
+  font-weight: 700;
+}
 .paths {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -526,6 +604,13 @@ h1 {
   }
 }
 @media (max-width: 760px) {
+  .home-quote {
+    padding: 20px 18px 18px 46px;
+  }
+  .home-quote::before {
+    left: 10px;
+    font-size: 56px;
+  }
   .page-home main {
     padding-top: 24px;
   }
