@@ -462,7 +462,7 @@
 }
 .question-rail {
   position: sticky;
-  top: calc(var(--topbar-height) + 16px);
+  top: calc(var(--topbar-height) + var(--exam-bar, 0px) + 16px);
   padding: 20px;
   background: var(--white);
   border: 1px solid var(--line);
@@ -1662,7 +1662,7 @@ body.exam-focus .topbar {
   }
   .exam-notes {
     position: sticky;
-    top: calc(var(--topbar-height) + 16px);
+    top: calc(var(--topbar-height) + var(--exam-bar, 0px) + 16px);
   }
 }
 @media (max-width: 1199px) {
@@ -1894,5 +1894,22 @@ body.exam-focus .topbar {
   }
   a[href]::after {
     content: none;
+  }
+}
+/* Risposte date, barra del tempo e timer restano fissi in alto durante la prova;
+   indice e blocco note si fermano sotto (--exam-bar = altezza della barra, misurata da JS) */
+.exam-progress {
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: 15;
+  margin: 0 -16px 24px;
+  padding: 12px 16px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 8px 16px -12px rgba(0, 0, 0, 0.25);
+}
+@media print {
+  .exam-progress {
+    position: static;
   }
 }

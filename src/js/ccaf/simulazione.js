@@ -1201,9 +1201,17 @@ function renderExam() {
       </aside>
     </div>
   </section>`;
+  measureExamBar();
   saveExam();
   startTimer();
 }
+
+// Altezza della barra fissa in alto (risposte, tempo, timer): serve a indice e note per fermarsi sotto
+function measureExamBar() {
+  const bar = app.querySelector(".exam-progress");
+  document.body.style.setProperty("--exam-bar", bar ? `${bar.offsetHeight}px` : "0px");
+}
+window.addEventListener("resize", measureExamBar);
 
 async function confirmFinish() {
   const unanswered = exam.order.filter((item) => !item.answer).length;
