@@ -1574,3 +1574,12 @@ body.exam-focus .topbar {
   flex: none;
   white-space: nowrap;
 }
+/* Test importati: difficoltà non nota a priori */
+.difficulty-tag[data-level="custom"] {
+  color: var(--muted);
+  border-style: dashed;
+  border-color: var(--line-dark);
+}
+.exam-facts .difficulty-tag {
+  min-width: 0;
+}

@@ -721,6 +721,15 @@ function formatGuideSource() {
   return formatGuideText;
 }
 
+// Badge della difficoltà come nella legenda del popup; i test importati sono sempre "Custom"
+const DIFFICULTY_NAMES = { facile: "Facile", medio: "Medio", difficile: "Difficile", avanzato: "Avanzato" };
+function difficultyBadge() {
+  if (!sourceReady) return "—";
+  const level = importedTests.some((test) => test.file === selectedPreset) ? "custom" : testDifficulty;
+  const name = DIFFICULTY_NAMES[level] || "Custom";
+  return `<span class="difficulty-tag" data-level="${DIFFICULTY_NAMES[level] ? level : "custom"}">${name}</span>`;
+}
+
 function renderIntro() {
   setFocusMode(false);
   if (topStatus) topStatus.textContent = "Simulazione d’esame";
@@ -747,6 +756,7 @@ function renderIntro() {
         <li><span>Quesiti</span><strong>${sourceReady ? questionBank.length : "—"}, ordine casuale</strong></li>
         <li><span>Risposte</span><strong>Una scelta per domanda</strong></li>
         <li><span>Correzione</span><strong>Al termine della prova</strong></li>
+        <li><span>Difficoltà</span><strong>${difficultyBadge()}</strong></li>
       </ul>
       <div class="source-line" role="status">
         <span class="source-dot ${sourceReady ? "ready" : sourceError ? "error" : ""}" aria-hidden="true"></span>
@@ -1230,6 +1240,7 @@ function openToolsDialog() {
           <div><dt><span class="difficulty-tag" data-level="medio">Medio</span></dt><dd>Scenari realistici con distrattori plausibili su un singolo concetto.</dd></div>
           <div><dt><span class="difficulty-tag" data-level="difficile">Difficile</span></dt><dd>Più concetti insieme, trappole tipiche d’esame, opzioni simili tra loro.</dd></div>
           <div><dt><span class="difficulty-tag" data-level="avanzato">Avanzato</span></dt><dd>Vicino all’esame reale: più vincoli da combinare, un dettaglio decisivo, risposte lunghe e tutte credibili.</dd></div>
+          <div><dt><span class="difficulty-tag" data-level="custom">Custom</span></dt><dd>Test importato: la difficoltà non è nota a priori.</dd></div>
         </dl>
       </section>
       <details class="format-help">
