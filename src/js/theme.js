@@ -89,4 +89,21 @@
       button.before(home);
     }
   });
+
+  // Barre di scorrimento coral mentre il contenitore scorre: classe "is-scrolling" tolta poco dopo l'ultimo scroll
+  const scrollTimers = new WeakMap();
+  document.addEventListener(
+    "scroll",
+    (event) => {
+      const target = event.target === document ? document.documentElement : event.target;
+      if (!(target instanceof Element)) return;
+      target.classList.add("is-scrolling");
+      clearTimeout(scrollTimers.get(target));
+      scrollTimers.set(
+        target,
+        setTimeout(() => target.classList.remove("is-scrolling"), 700),
+      );
+    },
+    { capture: true, passive: true },
+  );
 })();
