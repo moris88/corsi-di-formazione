@@ -1,6 +1,7 @@
 ---
 title: "Practice Test 9 – Claude Certified Architect"
 duration_minutes: 120
+difficulty: difficile
 ---
 
 # Questions and Answers: Practice Test 9 – Claude Certified Architect

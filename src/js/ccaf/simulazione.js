@@ -11,15 +11,15 @@ const HISTORY_LIMIT = 30;
 const BUILTIN_TESTS = [
   {
     file: "../../assets/ccaf/questions/Domande e risposte test 1 - Claude Certified Architect.md",
-    label: "Test 1 EN · Medio",
+    label: "Test 1 EN · Facile",
   },
   {
     file: "../../assets/ccaf/questions/Domande e risposte test 2 - Claude Certified Architect.md",
-    label: "Test 2 EN · Facile",
+    label: "Test 2 EN · Medio",
   },
   {
     file: "../../assets/ccaf/questions/Domande e risposte test 3 - Claude Certified Architect.md",
-    label: "Test 3 EN · Difficile",
+    label: "Test 3 EN · Medio",
   },
   {
     file: "../../assets/ccaf/questions/Domande e risposte test 4 - Claude Certified Architect.md",
@@ -31,7 +31,7 @@ const BUILTIN_TESTS = [
   },
   {
     file: "../../assets/ccaf/questions/Domande e risposte test 6 - Claude Certified Architect.md",
-    label: "Test 6 EN · Medio",
+    label: "Test 6 EN · Difficile",
   },
   {
     file: "../../assets/ccaf/questions/Domande e risposte test 7 - Claude Certified Architect.md",

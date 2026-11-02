@@ -32,12 +32,12 @@ const DIFFICULTY_LABELS = {
   facile: "Facile",
 };
 const TEST_DIFFICULTY = {
-  1: "medio",
-  2: "facile",
-  3: "difficile",
+  1: "facile",
+  2: "medio",
+  3: "medio",
   4: "difficile",
   5: "difficile",
-  6: "medio",
+  6: "difficile",
   7: "difficile",
   8: "difficile",
   9: "difficile",

@@ -1,137 +1,128 @@
 ---
 title: "Practice Test 4 – Claude Certified Architect"
 duration_minutes: 120
+difficulty: difficile
 ---
 
 # Questions and Answers: Practice Test 4 – Claude Certified Architect
 
-## Scenario: Code Generation with Claude Code
+## Scenario: Developer Productivity with Claude
 
 ### Question 1
 
-You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
-A repository has the following Claude Code configuration:
+A Claude Agent SDK productivity assistant is configured with two MCP servers: `symbols-index`, which exposes tools for locating definitions and call sites across a monorepo, and `GitHub-review`, which exposes tools for reading pull request comments and posting review notes. A developer asks the agent to trace a deprecated helper, update the affected files, and leave a summary on the pull request. Which statement best describes the agent’s MCP tool access in this setup?
 
-- `/CLAUDE.md`: repository-wide guidance for pull requests, error handling, and test coverage
+- **A.** For each request, the agent chooses one active MCP server, so it must finish all code-index work before starting a separate GitHub-review request.
+- **B.** The agent must query the symbols-index server, then the GitHub-review server, and continue probing servers at runtime until it finds a matching tool for each action.
+- **C.** At session start, the agent discovers the tools of both configured MCP servers and can call both sets of tools within the same refactoring workflow.
+- **D.** The engineer must label each prompt segment with either symbols-index or GitHub-review so the agent knows which MCP server should handle that part.
 
-- `/engines/recommendations/CLAUDE.md`: recommendations engine guidance for ranking changes and experiment flags
+#### Correct answer to question 1: C
 
-- `/.claude/rules/python-services.md`: scoped to `engines/**/*.py`
-
-- `/.claude/rules/recs-ranking.md`: scoped to `engines/recommendations/**`
-
-- `/.claude/rules/android-ui.md`: scoped to `clients/android/**/*.kt`
-
-- `/.claude/rules/schema-migrations.md`: scoped to `database/migrations/*.sql`
-
-You ask Claude Code to update `engines/recommendations/src/features/user_vector.py`. Which configuration choice best describes the instructions that should be active for this edit?
-
-- **A.** Use `/CLAUDE.md`, `/engines/recommendations/CLAUDE.md`, `python-services.md`, `recs-ranking.md`, `android-ui.md`, and `schema-migrations.md`, because all rule files are loaded for every edit.
-- **B.** Use `/CLAUDE.md`, `/engines/recommendations/CLAUDE.md`, `python-services.md`, and `recs-ranking.md`, because both rule globs match the Python file under the recommendations engine.
-- **C.** Use only `/CLAUDE.md` and `/engines/recommendations/CLAUDE.md`, because files in `.claude/rules/` are ignored unless they are linked from a CLAUDE.md file.
-- **D.** Use `/CLAUDE.md`, `/engines/recommendations/CLAUDE.md`, and the first matching rule file returned by the filesystem listing of `.claude/rules/`.
-
-#### Correct answer to Question 1: B
-
-Instructions combine: the root `CLAUDE.md` always applies, the `engines/recommendations/CLAUDE.md` is loaded because the edited file lives in that directory, and every `.claude/rules/` file whose `paths` glob matches the file becomes active. Here both `engines/**/*.py` and `engines/recommendations/**` match `user_vector.py`.
-
-Listing every rule file, including the Android and other unrelated ones, is wrong because path-scoped rules load only when their glob matches. Ignoring `.claude/rules/` is wrong because those files are discovered automatically, without links. Taking only the first matching rule file is wrong because there is no "first match wins": all matching rules apply.
-
-## Scenario: Claude Code for Continuous Integration
-
-### Question 2
-
-You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
-
-During a pull request validation run, Claude Code calls an MCP tool named `map_impacted_tests` to decide which regression suites to generate. The tool responds with: `{"code":"CACHE_NODE_UNAVAILABLE","message":"The dependency graph cache could not be reached","metadata":{"isRetryable":true,"retryAfterMs":2000}}`. What should the agent workflow do next?
-
-- **A.** Apply the pipeline’s standard MCP error handler, which marks every tool exception as a failed check regardless of metadata.
-- **B.** Stop the impacted-test step immediately and mark the pull request as needing manual review because the tool returned an error.
-- **C.** Record the cache lookup failure in the job log, skip impacted-test selection, and continue generating the pull request summary.
-- **D.** Pause for the interval indicated in the error, then call `map_impacted_tests` again and use the result if the retry succeeds.
-
-#### Correct answer to Question 2: D
-
-The error is explicitly marked `isRetryable: true` with a `retryAfterMs` hint: it is a transient failure. The correct behavior is to honor the metadata, wait the indicated interval and retry, then continue with the real result.
-
-Applying the standard handler or stopping for manual review treats a retryable error as terminal and needlessly fails the check. Logging the failure and skipping test selection silently drops a step whose output (which tests to generate) the workflow actually needs.
+All configured MCP servers are connected when the session starts, and their tools are discovered up front. The agent sees one combined tool list, so it can mix `symbols-index` and `GitHub-review` tools in the same workflow. It doesn't pick a single server, probe at runtime, or need the user to label each step. (Labeling prompt segments is not needed: routing is done by the model from the tool descriptions, not by labels on the prompt.)
 
 ## Scenario: Code Generation with Claude Code
 
-### Question 3
+### Question 2
 
 You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
-A team wants Claude Code to add offline draft synchronization to a collaborative notes app. The change will touch the local storage adapter, sync queue worker, API client, conflict handling tests, and a short developer guide, and the team is still deciding how to handle simultaneous edits from two devices. What is the best approach before allowing Claude Code to modify the repository?
+A developer adds a custom skill for investigating flaky tests with this frontmatter in its skill directory:
 
-- **A.** Ask Claude Code to implement the change directly, then spend the saved planning time reviewing the resulting diff and reverting any parts that look inconsistent.
-- **B.** Skip plan mode because the real issues with offline behavior will only become visible after Claude Code writes the code and the test suite runs.
-- **C.** Keep Claude Code in planning until the team can predict every function signature, edge-case branch, and test assertion that will appear in the final diff.
-- **D.** Start in plan mode, review Claude Code's proposed architecture, affected files and sequencing, then approve the plan once the conflict-resolution approach is clear.
+```yaml
 
-#### Correct answer to Question 3: D
+---
 
-The change spans several layers and contains an open design decision (conflict resolution for simultaneous edits). This is exactly the case for plan mode: review the architecture, affected files and sequencing, then approve once intent is clear enough.
+name: flaky-test-detective
 
-Implementing directly or skipping plan mode skips planning on a multi-file, ambiguous change and shifts the cost to rework. Planning until every signature and assertion is predictable goes to the opposite extreme: a plan must clarify direction, not predict every detail of the final diff.
+description: Trace intermittent test failures and summarize likely causes
 
-## Scenario: Claude Code for Continuous Integration
+context: fork
 
-### Question 4
+---
 
-You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+```
 
-Claude Code reviews schema migration pull requests in your CI pipeline and often leaves the comment, "This migration looks unsafe for production." Developers report that the warning appears on harmless additive changes but sometimes misses risky rollouts that could break old application versions. What is the best way to redesign the review prompt to make this feedback more actionable and reduce false positives?
+During a long Claude Code session, the developer invokes the skill to inspect logs, test helpers, and recent commits. What does the `context: fork` setting do for this skill invocation?
 
-- **A.** Define "unsafe migration" in the prompt with short examples: flag a column rename without backfill or compatibility layer, but not an additive nullable column with rollback.
-- **B.** Remove the migration-safety check from the CI review prompt because production readiness is too context-dependent for automated feedback.
-- **C.** Change the comment text to say, "This database change may not meet production-readiness expectations," so the feedback sounds less absolute and more professional.
-- **D.** Ask Claude Code to tell authors to consult the data platform team whenever it is uncertain whether a migration is safe for production traffic.
+- **A.** Claude Code lets the skill read and update the active conversation context directly, so its findings reshape the current session as it works.
+- **B.** Claude Code runs the skill in a separate sub-agent context, so its investigation notes and scratch work stay out of the main session history.
+- **C.** Claude Code schedules the skill to run concurrently with the current request, so the developer can continue issuing commands while it completes.
+- **D.** Claude Code creates a temporary fork of the project repository, so the skill can edit files without affecting the developer's current Git branch.
 
-#### Correct answer to Question 4: A
+#### Correct answer to question 2: B
 
-The vague criterion "unsafe" produces both false positives and misses. Defining the criterion explicitly, with short contrasting examples of what to flag (rename without backfill/compatibility layer) and what not to flag (additive nullable column with rollback), makes the review precise and actionable.
-
-Removing the migration-safety check throws away a valuable check. Softening the comment text changes only the wording, not what gets flagged. Sending authors to the data platform team pushes the decision onto another team instead of improving the criterion.
-
-## Scenario: Multi-Agent Research System
-
-### Question 5
-
-You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
-
-A research platform runs a weekly “evidence sweep” for 300 client topics. For each topic, a coordinator agent assigns thousands of retrieved abstracts to document-analysis subagents, later asks a synthesis agent to draft conclusions, and then supports a live reviewer who requests narrower claims and citation changes during a 20-minute review session. Which invocation strategy best balances cost, throughput, and responsiveness?
-
-- **A.** Use only real-time calls in the agent loop, because Batch jobs are incompatible with workflows where a coordinator assigns work to multiple specialized agents.
-- **B.** Use Batch jobs for the large backlog of article extraction and citation scoring that can finish later, while keeping coordination, clarifications, synthesis and report edits on real-time calls.
-- **C.** Keep all search, extraction, analysis, synthesis, and reporting calls synchronous, because mixing invocation modes makes the report pipeline less consistent even when most source review can wait.
-- **D.** Route every coordinator decision and subagent request through Batch, since the research system’s monthly volume is high and lower unit cost should take priority across the whole pipeline.
-
-#### Correct answer to Question 5: B
-
-Large volumes of independent work that can finish later (abstract extraction, citation scoring) are ideal for the Message Batches API: lower cost, high throughput. The coordinator and the live review session need low latency, so they stay on real-time calls.
-
-Claiming that batch jobs are incompatible with a coordinator is false: batch and real-time calls can coexist in the same system. Keeping everything synchronous pays full price for work that can wait. Routing every coordinator decision through Batch breaks interactivity, since a batch can take up to 24 hours.
+`context: fork` runs the skill in an isolated sub-agent context. The exploration (logs, helpers, commits) stays out of the main conversation, and only the final result comes back. This keeps the main context clean. It doesn't fork the Git repo, and it doesn't make the skill run in the background in parallel.
 
 ## Scenario: Customer Support Resolution Agent
 
-### Question 6
+### Question 3
 
 You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
-A support team uses Claude Code to maintain a resolution agent for subscription cancellations and invoice disputes. Several engineers rely on a custom skill named `dispute-triage-checklist` to update prompts and MCP tool examples, but the skill currently lives only in personal laptop directories. After a laptop replacement, one engineer recreates the skill from memory and introduces guidance that sends more account-lock cases to `process_refund` instead of `escalate_to_human`. What is the clearest configuration risk to address?
+A support resolution agent is piloting a new “billing adjustment” flow. During testing, the apply_credit MCP tool sometimes returns free-form messages like “cannot apply credit,” causing the agent to ask customers to re-enter valid account details when the real issue is an expired staff permission, and to escalate immediately when the credit service is briefly unavailable. You want the same recovery logic to work reliably across apply_credit, get_customer, and lookup_order. What is the best approach?
 
-- **A.** Keep the triage skills in each engineer’s Claude Code profile because runtime support configuration should not be part of the application repository.
-- **B.** Let agents overwrite local triage skills after each evaluation run because skills are short-lived aids that should not need rollback history.
-- **C.** Document the triage skills in the repository, but leave the actual skill files local because Claude Code does not support repository-managed skills.
-- **D.** Store the shared triage skills in the repository's `.claude/skills/` directory, and require normal git pull requests for any edits.
+- **A.** Create a new diagnose_tool_failure MCP tool that the agent calls after any failed lookup_order or process_refund result to infer the likely cause before continuing.
+- **B.** Add more few-shot examples to the agent prompt showing how to interpret common error phrases from tool outputs, such as “not found,” “locked,” and “temporarily unavailable.”
+- **C.** Make each MCP tool return a consistent error object (error_code, failure_category, retryable, user_safe_message, suggested_recovery) so the agent can decide how to proceed.
+- **D.** Wrap all MCP calls in the same policy: retry twice with exponential backoff, then escalate the customer to a human if the call still fails.
 
-#### Correct answer to Question 6: D
+#### Correct answer to question 3: C
 
-Skills kept only on personal laptops are not shared, not versioned and cannot be reviewed: that is how the regression in escalation logic slipped in. Placing them in the project's `.claude/skills/` directory and editing them through pull requests gives history, review and rollback.
+The root cause is ambiguous, unstructured errors. A consistent, structured error contract (category, retryable, safe message, suggested recovery) lets the agent tell the cases apart: permission problem, temporary outage, bad input. The same logic then works for every tool. Few-shot examples on phrases are fragile, a single retry-then-escalate policy treats every error the same, and a diagnostic tool adds a step without fixing the bad data.
 
-Keeping the skills in each engineer's profile preserves the drift problem. Letting agents overwrite them removes all control over changes. Documenting them while leaving the files local rests on a false premise: Claude Code supports project-level skills under `.claude/skills/`.
+## Scenario: Multi-Agent Research System
+
+### Question 4
+
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+
+In a multi-agent research system, the document-analysis subagent uses an MCP tool called `archive_scan` to search a licensed historical database for scanned lab notebooks. The credentials are valid, the database query completes normally, and the database returns zero records for the requested date range. Which tool response configuration best lets the coordinator distinguish this outcome from an actual tool failure?
+
+- **A.** Return `isError: true` with metadata such as `{ "category": "SearchFailure", "detail": "zero matching entries" }`.
+- **B.** Return `isError: false` with a structured payload such as `{ "matches": [], "query": "...", "count": 0 }` for the search.
+- **C.** Throw a `NoResultsFound` exception from the MCP tool handler and let the coordinator catch it as a fallback trigger.
+- **D.** Return `isError: false` with a text field saying `ERROR: no archive entries matched this request`.
+
+#### Correct answer to question 4: B
+
+A query that succeeds with zero results is a valid result, not an error. Return `isError: false` with a structured payload (`matches: []`, `count: 0`) so the coordinator can tell "no data" apart from "the tool failed". Marking it as an error or throwing an exception would trigger needless retries or fallbacks, and an "ERROR" string inside a success response is ambiguous.
+
+## Scenario: Code Generation with Claude Code
+
+### Question 5
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
+A team is adding a `warehouse-inventory` MCP server to Claude Code for a monorepo used by contractors and full-time engineers. The server needs a per-user bearer token, but the team also wants to commit the MCP server definition so everyone gets the same tool name and launch command. Which configuration choice best avoids exposing the token while keeping the setup shareable?
+
+- **A.** Commit a `.mcp.json` that references `${INVENTORY_MCP_TOKEN}` in the server environment, and have each developer set that variable in their own shell, keychain profile or other untracked source.
+- **B.** Store the token in `.claude/mcp-secrets.enc`, add a custom decryption step to the server command in `.mcp.json`, and commit both files so the setup works consistently for everyone.
+- **C.** Set `.mcp.json` to load credentials from `./.env.mcp.local`, keep that dotenv file next to the MCP configuration, and rely on Claude Code to pass those values to the server at launch.
+- **D.** Place the vendor token directly in `.mcp.json`, restrict the file to owner-only permissions, and remind developers not to paste the configuration in issue comments or pull requests.
+
+#### Correct answer to question 5: A
+
+The `.mcp.json` file is committed and shared. It supports expanding environment variables like `${VAR}`, so the server definition is shared while each developer's secret stays in their own untracked environment. Putting the token in the file, even with restricted permissions, or committing encrypted secrets exposes the credentials. A local dotenv file is not loaded automatically by Claude Code.
+
+## Scenario: Claude Code for Continuous Integration
+
+### Question 6
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
+A mobile platform team has Claude Code comment on every pull request before merge. For a change touching a Swift view model, a Kotlin API adapter, and shared OpenAPI schema files, the current CI prompt asks for null-safety bugs, missing tests, naming inconsistencies, schema compatibility, and client/server interaction risks in one large review. The team sees confident but irrelevant comments on unchanged helper code, while real mismatches between schema defaults and adapter behavior are sometimes missed. Which rationale best supports restructuring the review into staged Claude Code passes?
+
+- **A.** Use repeated file and integration passes until Claude Code reports no more issues, because staged review can guarantee that the final pull request is defect-free.
+- **B.** Use two passes mainly because smaller prompts finish faster in CI, so the reduced queue time will make the review comments more reliable for developers.
+- **C.** Use a second pass primarily to detect any files, generated artifacts, or test fixtures that the first pass forgot to include in the review scope.
+- **D.** Inspect each modified file in its own pass for bounded local concerns, then run a separate pass on cross-file contracts, dependencies and consistency.
+
+#### Correct answer to question 6: D
+
+Splitting the review into a per-file pass (local problems) and a cross-file integration pass (contracts, schema versus adapter) reduces attention dilution. It cuts false positives on code that wasn't touched and catches inconsistencies between files. No pass guarantees zero defects, and the main reason for staging is quality, not speed or coverage of forgotten files.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -139,189 +130,169 @@ Keeping the skills in each engineer's profile preserves the drift problem. Letti
 
 You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
-A platform team is using a Claude Agent SDK assistant to update 58 TypeScript API route handlers from `audit.logRequest(req)` to a new `policyAudit.record({ actor, route, decision })` pattern. The handlers vary: some compute `actor` from session middleware, some have early returns, and a few already include partial policy audit calls. Which approach should the agent use to make the update most reliably?
+A Claude Agent SDK assistant is being added to an internal developer tool to investigate an intermittent checkout bug: a small percentage of regional users see their cart total become zero after retrying payment, but the order record is still created. The repository includes an API gateway, locale/session middleware, checkout orchestration code, pricing services, Redis-backed cart state, database persistence, and MCP servers exposing logs and distributed traces. Which investigation strategy should the agent use?
 
-- **A.** Run a Bash one-liner that performs a repository-wide regular-expression replacement from the old audit call to the new policy call, then inspect only the files that fail tests afterward.
-- **B.** Send the full candidate file list to a bulk-refactor MCP server and accept its returned patch set as the default path, using the agent only to summarize the generated diff.
-- **C.** Have the agent generate a standalone migration script that rewrites every matching handler, save it in the repository, and ask a developer to run it after reviewing the script comments.
-- **D.** Find candidate handlers with Glob or Grep, then for each file: Read its local structure, apply a targeted Edit, and re-read to confirm the result before moving on.
+- **A.** Have the agent first build a complete map of every checkout execution path, retry branch, regional configuration, and persistence outcome before reading incident-specific logs or traces.
+- **B.** Have the agent launch simultaneous scans across all route definitions, middleware hooks, service handlers, cache keys, database writes, and MCP observability endpoints before selecting a likely cause.
+- **C.** Have the agent follow a fixed runbook that checks the gateway, session middleware, checkout handler, pricing module, cache, and database in the same order and depth for every incident.
+- **D.** Start from a few failing request IDs and their recent trace/log evidence, inspect the first implicated boundary, then revise the hypothesis and pick the next focused layer to examine.
 
-#### Correct answer to Question 7: D
+#### Correct answer to question 7: D
 
-The handlers are heterogeneous (different `actor` sources, early returns, partial calls already present), so a blind textual replacement would break cases. The reliable pattern is: find candidates with Glob/Grep, Read each file, apply a targeted Edit and verify the result.
-
-A repository-wide regex replacement relies on tests to catch errors after the fact. A bulk-refactor MCP server delegates everything to an opaque tool and reduces the agent to summarizing. A standalone migration script is generic and suffers the same variability problems.
-
-## Scenario: Claude Code for Continuous Integration
-
-### Question 8
-
-You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
-
-A payments company runs a merge-queue validation job that asks Claude Code to inspect about 8,000 independent file diffs and propose missing regression tests. The annotations only need to be posted back to pull requests before the next business day; no developer is waiting in an interactive session. Which Claude API capability should the CI team choose to reduce cost for this workload?
-
-- **A.** Store the review prompt and each changed file in prompt caching so later CI jobs reuse completed output for new diffs.
-- **B.** Submit the requests through a prompt-grouping endpoint that combines similar review prompts so the model is billed once per group.
-- **C.** Send the independent jobs through the Message Batches API and have CI poll for their completion within the 24-hour window.
-- **D.** Call the standard Messages API with streaming enabled so each review begins returning tokens immediately and uses lower-cost delivery.
-
-#### Correct answer to Question 8: C
-
-Thousands of independent requests, no one waiting, deadline the next business day: this is the canonical use case for the Message Batches API, which reduces cost (about 50%) in exchange for asynchronous processing within 24 hours.
-
-Prompt caching is misunderstood here: it caches the input prefix, not the output of other requests. A prompt-grouping endpoint does not exist. Streaming improves perceived latency but does not lower cost.
-
-## Scenario: Customer Support Resolution Agent
-
-### Question 9
-
-You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
-
-A returns assistant handles vague messages such as, “The headphones arrived broken; send my money back.” In test logs, some runs jump straight to `process_refund` after the user’s first message, even though policy requires a verified customer profile and a matched purchase record before any refund attempt. Which implementation pattern best enforces that requirement while still allowing the agent to handle non-refund cases flexibly?
-
-- **A.** Set `tool_choice` to prefer `get_customer` and `lookup_order` whenever the user mentions a refund, then switch it back to allow `process_refund` once the conversation appears to be about money.
-- **B.** Replace the agent’s open-ended reasoning with a single fixed route that always runs `get_customer`, then `lookup_order`, then `process_refund`, then `escalate_to_human` for every billing-related message.
-- **C.** Update the system prompt to say that refunds must never be issued until the customer and order have been verified, and include several examples showing the preferred order of tool calls.
-- **D.** Add a hook around refund execution that checks the current run's tool history for successful `get_customer` and `lookup_order` calls, returning a structured error if they are missing.
-
-#### Correct answer to Question 9: D
-
-A business prerequisite (verified customer and matched order before a refund) must be guaranteed deterministically. A hook that inspects the run's history and blocks `process_refund` with a structured error enforces the rule while leaving the agent free on everything else.
-
-Steering `tool_choice` from refund keywords depends on fragile conversation heuristics. A single fixed route turns the agent into a rigid pipeline and loses flexibility on non-refund cases. A system prompt rule improves behavior but does not guarantee it, and the logs already show violations.
-
-## Scenario: Multi-Agent Research System
-
-### Question 10
-
-You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
-
-A lab’s Claude Code research workspace now has a lead agent that decomposes requests, plus subagents for live source discovery, scanned-contract review, evidence synthesis, and board-ready memo writing. The team is adding lengthy guidance for search query construction, OCR caveats, contradiction handling, and executive formatting, but wants future edits to be easy and wants each agent to see only the guidance it needs. Which configuration approach is best?
-
-- **A.** Put the coordinator playbook, browser heuristics, PDF extraction rules, synthesis rubric, and report template into one global CLAUDE.md and rely on each agent to ignore unrelated sections.
-- **B.** Define roleConditions in a YAML manifest so Claude Code automatically loads instructions from paths such as instructions/web/*.md only when an agent name matches the path.
-- **C.** Copy the same citation policy, safety rules, and role-specific operating steps into every AgentDefinition, editing each copy when a research standard changes.
-- **D.** Create a small shared CLAUDE.md for project-wide standards, then use @import to compose separate coordinator, retrieval, analysis and reporting instruction files.
-
-#### Correct answer to Question 10: D
-
-A small shared `CLAUDE.md` for common standards plus separate, role-specific files composed with `@import` give modularity (one place to edit) and isolation (each agent sees only what it needs).
-
-One giant file loads everything into everyone's context, wasting tokens and creating confusion. A `roleConditions` YAML manifest is an unsupported, invented mechanism. Copying the same policy into every AgentDefinition duplicates the guidance and makes every update error-prone.
-
-## Scenario: Customer Support Resolution Agent
-
-### Question 11
-
-You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
-
-A Claude Agent SDK support agent handles subscription cancellations using MCP tools such as get_customer, lookup_order, process_refund, and escalate_to_human. Clear cases are fine, but ambiguous situations vary: a long-time customer charged after a confusing cancellation flow may receive a refund, a service credit, a denial, or an escalation depending on the run. The policy intentionally leaves room for judgment based on tenure, prior refunds, and evidence of confusion. Which prompt-design change would most directly improve consistency for these borderline cases?
-
-- **A.** Add several representative system-prompt examples of borderline disputes, showing when to resolve directly, offer a partial remedy, decline with a rationale, or call escalate_to_human.
-- **B.** Keep the system prompt short and avoid examples, because extra sample cases mainly increase prompt length and are unlikely to affect the agent’s support decisions.
-- **C.** Wait until the customer conversation contains a similar prior case, because behavioral examples should be learned only from earlier turns rather than placed in the system prompt.
-- **D.** Move the borderline dispute examples into a separate test set, because examples are useful for measuring the agent’s behavior but should not be included in runtime instructions.
-
-#### Correct answer to Question 11: A
-
-When the policy leaves room for judgment, inconsistency comes from the model not knowing where the boundaries lie. Representative few-shot examples in the system prompt (resolve, partial remedy, decline with rationale, escalate) calibrate decisions on borderline cases.
-
-Avoiding examples underestimates their effect: they are one of the most effective levers for consistency. Waiting for a similar prior case relies on examples that may never arrive. Test sets are needed to measure behavior, but they do not change it at runtime.
-
-## Scenario: Multi-Agent Research System
-
-### Question 12
-
-You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
-
-In your multi-agent research system, the document-analysis subagent uses an MCP tool named `extract_brief_text` to process uploaded legal filings before the synthesis agent compares arguments across sources. One filing fails during extraction because the PDF cannot be read by the parser. What is the best way for the MCP tool to report this failure so the coordinator can guide the user and keep the research workflow reliable?
-
-- **A.** Return `is_error: true` with the message `document extraction failed`, and require the coordinator to call a separate `extraction_troubleshooter` tool to determine the cause and recommended remediation.
-- **B.** Return `is_error: true` with only the parser exception class, internal worker ID, storage object URI, and the PDF library's numeric failure code for later engineering investigation.
-- **C.** Return `is_error: false` with an empty extraction result, note that the text may become available after reprocessing, and let the synthesis agent proceed as if the source is temporarily delayed.
-- **D.** Return a structured `is_error: true` result saying the document appears password-protected, with the file name and stage, and suggest asking the user for an unlocked copy or permission to omit it.
-
-#### Correct answer to Question 12: D
-
-A good tool error must be actionable: `is_error: true`, a probable cause in plain language (password-protected/encrypted PDF), file and stage involved, and a suggested next step (ask for an unlocked copy or permission to omit the source).
-
-A generic "document extraction failed" message is not actionable and adds a needless tool call. Returning only internal diagnostics gives the agent nothing it can use to guide the user. Returning `is_error: false` with an empty result hides the failure and lets synthesis proceed on a missing source.
-
-## Scenario: Structured Data Extraction
-
-### Question 13
-
-You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
-
-A health insurer uses Claude to extract prior-authorization details from uploaded medical necessity letters into JSON before sending the results to a claims adjudication service. Reviewers must be able to check uncertain values against the original letter months later. Which schema design best supports reliable validation, traceability, and downstream integration?
-
-- **A.** Define the JSON schema with the extracted claim fields plus parser version, temperature setting, prompt template name, and elapsed processing time for each document.
-- **B.** Define the JSON schema with only the normalized claim fields needed by the adjudication database, rejecting any metadata not directly stored in the business tables.
-- **C.** Define the JSON schema with the extracted claim fields plus compact metadata such as per-field confidence, source file and page/span references, and a timestamp.
-- **D.** Define the JSON schema with the extracted claim fields plus the full prompt, model response transcript, retry history, token counts, and worker host diagnostics.
-
-#### Correct answer to Question 13: C
-
-Traceability months later requires concise metadata useful for review: per-field confidence, source references (file, page/span) and an extraction timestamp. These enable validation, routing of uncertain cases and verification against the original.
-
-Parser version, temperature and template name are technical metadata that do not help a reviewer locate the value. Rejecting all metadata removes the needed traceability. Full transcripts, retry history and token counts bloat the record with heavy diagnostics that belong in logs, not in the schema.
+Debugging should be iterative and evidence-driven: start from concrete failing requests and their traces, examine the first boundary involved, then update the hypothesis and pick the next layer. Mapping everything up front or scanning everything in parallel wastes context. A fixed runbook doesn't adapt to what the evidence shows.
 
 ## Scenario: Code Generation with Claude Code
 
-### Question 14
+### Question 8
 
 You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
-A mobile app team wants Claude Code to apply the same accessibility checklist, secure-storage guidance, and code-review norms across their repository. The lead wants the root CLAUDE.md to contain only a brief overview plus links to the reusable instruction files so it remains easy for developers to maintain. Which configuration choice should they use?
+A team is using Claude Code to replace a custom event-bus state layer in a large dashboard application. One developer wants to introduce a centralized store first, another wants to migrate feature areas one by one, and a third suggests removing the event bus only after adding integration tests around the current behavior. The change spans dozens of components and would be painful to revert if the wrong path is chosen. What is the best way to use Claude Code for this work?
 
-- **A.** Add headings such as #include security.md and #include review-checklist.md at the top of CLAUDE.md to inline those sections during startup.
-- **B.** Create separate CLAUDE.md files inside several .claude/guidance/ subdirectories and rely on Claude Code to merge all of them automatically.
-- **C.** Move the common instructions into .claude/rules/ so Claude Code treats them as the default reusable standards for every project session.
-- **D.** Keep a short root CLAUDE.md that references files such as docs/claude/security.md and docs/claude/review-checklist.md via @import.
+- **A.** Use direct execution after asking Claude Code for a high-level plan, because once a plan is produced the resulting edits no longer need detailed inspection.
+- **B.** Ask Claude Code in plan mode to automatically select the best migration strategy and proceed without team input once it identifies the lowest-risk option.
+- **C.** Start in plan mode: have Claude outline the main migration strategies, affected files and rollback risks, then let the team choose an approach before edits.
+- **D.** Start in plan mode because it will run the refactor faster by precomputing the edits, then switch to direct execution once the plan has been cached.
 
-#### Correct answer to Question 14: D
+#### Correct answer to question 8: C
 
-The `@path/to/file` syntax in `CLAUDE.md` imports external files, keeping the root concise and the guidance reusable and maintainable separately.
+It's a high-impact change with several valid strategies, so plan mode is the right tool: explore and compare approaches, affected files, and risks without changing anything. The team then picks the path. Plan mode isn't for "speeding up" or caching edits, and the decision shouldn't be left to the model alone without human review.
 
-An `#include` directive does not exist in `CLAUDE.md`. `CLAUDE.md` files in arbitrary `.claude/guidance/` subfolders are not merged automatically at startup (they load only when working on files in those folders). Moving everything into `.claude/rules/` does not match the requirement of a short root with links to reusable files.
+## Scenario: Code Generation with Claude Code
+
+### Question 9
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
+Your team created a Claude Code command, `/refactor-safety`, for generated refactors in a shared TypeScript library. The command checks whether behavior changed unintentionally, but developers notice that the same reviewer often confidently misses edge-case breakages and sometimes keeps defending questionable findings when asked to re-check. Which review architecture is the best approach for making the command’s results more trustworthy?
+
+- **A.** Have the original Claude Code reviewer run a second pass with a stricter checklist and treat that result as equivalent to an independent reviewer’s validation.
+- **B.** One Claude Code instance produces the initial defect list; separate review instances then independently assess the patch and reconcile any disagreements.
+- **C.** Use independent Claude Code reviewers only for issues the first reviewer labels as severe, and rely on self-checking for all low and medium findings.
+- **D.** Have the same Claude Code instance append a required “audit my conclusions” section after it finishes the original review, using the same context and notes.
+
+#### Correct answer to question 9: B
+
+A model reviewing its own work in the same context carries the same blind spots and tends to defend its earlier conclusions. Independent instances, without the first reviewer's reasoning, assess the patch on their own and reveal disagreements. Self-review with a stricter checklist or an "audit" section in the same context is not independent validation.
 
 ## Scenario: Developer Productivity with Claude
+
+### Question 10
+
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+
+A Claude Agent SDK-based assistant is adding a TypeScript `GcsThumbnailCache` adapter to a media service. Using `Glob`, `Grep`, and `Read`, it finds several existing cache adapters that catch cloud SDK exceptions, log a short message with `cacheLogger` and the asset ID, wrap the original exception in the project’s `ThumbnailCacheError`, and rethrow it for the HTTP middleware to translate. What is the best approach for the assistant when generating the new adapter?
+
+- **A.** Introduce a new `ResilientCacheError` hierarchy, a retry policy registry, and a cross-provider error mapper before implementing the adapter methods.
+- **B.** Reuse the local try/catch structure: log the provider error with the existing `cacheLogger` fields, wrap it in `ThumbnailCacheError`, and rethrow.
+- **C.** Generate only the successful upload and lookup paths, allowing storage-provider failures to surface however the runtime reports them during execution.
+- **D.** Stop generation and ask the user whether this adapter should log errors, wrap them, retry them, or let callers inspect the original provider exception.
+
+#### Correct answer to question 10: B
+
+When generating code, the agent should follow the conventions already in the codebase: same try/catch, `cacheLogger`, wrapping in `ThumbnailCacheError`, and rethrowing to the middleware. Building new hierarchies is over-engineering, ignoring errors breaks the contract, and asking the user is unnecessary when the pattern is clear and consistent.
+
+## Scenario: Claude Code for Continuous Integration
+
+### Question 11
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
+A payments team uses Claude Code in CI to scan pull requests for risky migration changes and generate regression test recommendations. Most review batches finish in under 7 minutes, but schema-heavy changes sometimes take 30 minutes; engineering leadership wants every pull request that reaches the merge queue to enter Claude Code review within a predictable 10-minute window. Which orchestration approach best supports this requirement?
+
+- **A.** Start a new review batch every 10 minutes from the merge-queue intake, letting batches overlap, and track each batch's status and SLA timer by its own run ID.
+- **B.** Run only one Claude Code review batch at a time, queueing all new merge-queue items until the active batch has completed and posted feedback.
+- **C.** Reduce each Claude Code batch to at most five files changed, splitting larger pull requests into smaller batches before submitting them to the review pipeline.
+- **D.** Configure the CI orchestrator to submit the next Claude Code batch immediately after the previous batch reports a terminal success or failure state.
+
+#### Correct answer to question 11: A
+
+The requirement is that every PR enters review within 10 minutes, while some batches take 30. Starting batches on a fixed schedule and letting them overlap, tracked by run ID, decouples intake from completion time. Serial or "next after the previous one" approaches get blocked by long batches, and capping files doesn't guarantee start latency.
+
+## Scenario: Claude Code for Continuous Integration
+
+### Question 12
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
+A Bitbucket Pipelines job runs Claude Code after every push to a feature branch. It scans the commit range, proposes regression tests, and writes a single build-summary comment to the pull request; developers only read the completed comment after the pipeline finishes. The team wants to shorten job time and is choosing how to configure Claude Code for this fully automated step. Which configuration is the best fit?
+
+- **A.** Enable plan mode whenever the patch exceeds a configured threshold, such as 500 changed lines, and otherwise use -p direct execution.
+- **B.** Run Claude Code with the -p flag and have it execute the review-and-test-generation prompt directly, without enabling plan mode.
+- **C.** Keep plan mode enabled for all CI runs so Claude Code can expose architectural concerns before generating comments and test suggestions.
+- **D.** Enable plan mode only for the payments and authentication directories, while using direct execution for lower-risk folders.
+
+#### Correct answer to question 12: B
+
+In a fully automated pipeline with nobody approving a plan, plan mode adds latency for no benefit. `-p` (non-interactive mode) with direct execution is the right choice. Plan mode is for interactive cases where a human evaluates the approach before the edits.
+
+## Scenario: Customer Support Resolution Agent
+
+### Question 13
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
+A support engineering team is splitting its Claude Code work into several repositories: `vip-support-agent` handles refunds and account recovery, `release-notes-bot` drafts changelogs, and `qa-triage` summarizes bug reports. Everyone should have access to a generic internal-docs search MCP tool, but only `vip-support-agent` should be able to call `get_customer`, `lookup_order`, `process_refund`, and `escalate_to_human`. Which MCP configuration choice best supports this setup while minimizing unnecessary tool exposure?
+
+- **A.** Keep all MCP server definitions in a central runtime service catalog, and have each agent query the catalog at startup to decide which support tools to register for the current session.
+- **B.** Register the customer, order, refund, escalation, analytics, and admin MCP tools globally, then instruct the support agent through prompts and `tool_choice` guidance to use only the relevant support tools.
+- **C.** Copy the full `~/.claude.json` MCP configuration into every repository, then comment out the unsupported tools in projects such as `release-notes-bot` and `qa-triage`.
+- **D.** Put the company-wide utilities in the user-level `~/.claude.json`, and add a project `.mcp.json` in `vip-support-agent` exposing only the customer, order, refund and escalation servers.
+
+#### Correct answer to question 13: D
+
+MCP configuration scopes: user-level (`~/.claude.json`) for tools available everywhere, and project-level `.mcp.json` for tools specific to one repo. This way only `vip-support-agent` sees the sensitive tools (least privilege). Registering everything globally and relying on the prompt doesn't really restrict access, and copying or commenting out configs is fragile.
+
+## Scenario: Customer Support Resolution Agent
+
+### Question 14
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
+During a test of a support resolution agent, the cancel_subscription and lookup_order MCP tools both return HTTP 400 with a short text string when something goes wrong. In practice, the agent sometimes asks a customer to correct their order number when the real issue is an expired service token, and sometimes retries a cancellation that failed because the subscription is already terminated. What is the best way to redesign the tool error handling so the agent can make reliable recovery decisions?
+
+- **A.** Add more few-shot examples to the agent prompt showing how to interpret messages like “order unavailable,” “customer not found,” and “refund blocked” for the most common failure cases.
+- **B.** Create a separate explain_last_tool_failure MCP tool that the agent can call after any failed backend action to ask for a more detailed diagnosis before deciding what to do next.
+- **C.** Wrap all MCP calls in the same failure handler that retries twice with exponential backoff, then escalates to a human if the third attempt does not succeed.
+- **D.** Have each MCP tool return a consistent error object with fields such as error_category, error_code, retryable, safe_to_retry_after and recommended_recovery, then branch on them.
+
+#### Correct answer to question 14: D
+
+A generic 400 with plain text doesn't let the agent tell a bad order number from an expired token, or a temporary error from a permanent one (subscription already terminated). Structured fields such as `error_category`, `retryable`, and `recommended_recovery` support deterministic recovery decisions.
+
+## Scenario: Claude Code for Continuous Integration
 
 ### Question 15
 
-You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
-A Claude Agent SDK assistant is helping investigate an intermittent issue in a large internal platform: some nightly invoice-generation jobs finish with “completed” status but produce no invoice rows. The monorepo includes a webhook intake service, a job scheduler, queue consumers, feature-flag middleware, invoice business logic, a persistence layer, and MCP servers for logs and traces. Which investigation strategy should the agent use?
+A CI pipeline for an infrastructure-as-code repository uses Claude Code to comment on pull requests that modify Terraform modules. After a recent change passed review but later broke network isolation rules, the team wants to redesign the prompt workflow so findings are more complete without flooding maintainers with speculative comments. Which rationale best supports using multiple independent Claude Code review instances before posting a consolidated pull request summary?
 
-- **A.** Begin with a few failing job IDs and their logs or traces, inspect the first implicated subsystem, then revise the hypothesis and choose the next focused code search or tool call from that evidence.
-- **B.** Start simultaneous analysis tasks for the webhook handler, scheduler, queue consumer, feature-flag layer, persistence adapter, and dashboard code, then merge all summaries into one large context window.
-- **C.** Run a standard reliability checklist in a fixed order: validate queue configuration, inspect worker startup, review retry policy, audit repository methods, and only then compare the findings to the failing job IDs.
-- **D.** First map every possible execution path from webhook receipt through all queue, retry, worker, and database branches, then begin checking which path matches the intermittent failures.
+- **A.** Use several isolated Claude Code review jobs so their agreement can be treated as objective, since separate runs eliminate subjective judgments and model-specific blind spots from the review.
+- **B.** Use several isolated Claude Code review jobs mainly because they can run at the same time, making the pipeline faster and therefore more likely to catch defects before merge.
+- **C.** Use several isolated Claude Code review jobs because independent reviewers are easier to configure than maintaining one well-structured review prompt with output requirements.
+- **D.** Run several isolated review jobs on the same pull request, each with a distinct rubric, then merge their findings, since separate analyses expose non-overlapping defects.
 
-#### Correct answer to Question 15: A
+#### Correct answer to question 15: D
 
-An intermittent bug in a large system calls for an evidence-driven, iterative investigation: start from real failing job IDs and their logs/traces, examine the first implicated subsystem, and refine the hypothesis at each step.
+Independent instances with distinct rubrics (for example network security, IAM, compliance) look at the same PR from different angles and find defects that don't overlap. The results are then merged into one summary. Agreement between runs is not "objective", parallelism isn't the main reason, and configuring it isn't simpler.
 
-Starting analysis of every subsystem at once scatters effort and floods the context with irrelevant summaries. A fixed reliability checklist is disconnected from the evidence. Mapping every execution path up front is costly and not focused on the actual failure.
-
-## Scenario: Developer Productivity with Claude
+## Scenario: Code Generation with Claude Code
 
 ### Question 16
 
-You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
-A DevEx group is building a Claude Agent SDK documentation agent for a legacy deployment orchestrator. The repository has scheduler modules, cloud-provider plugins, a small REST API, and several shell-based operational workflows. New engineers complain that existing comments help them identify individual functions but not how to understand the system or safely reuse its patterns. What is the best approach for the agent to generate useful documentation?
+A documentation repo has a root CLAUDE.md with company-wide writing standards, a docs/CLAUDE.md with documentation style guidance, and scoped convention files selected by globs such as docs/**/*.md, examples/**/*.ts, **/*.test.ts, and infra/**/*.yaml. A writer asks Claude Code to revise docs/reference/api/payments.md. Which configuration behavior should you expect?
 
-- **A.** Produce one long Markdown file that walks through every source file in repository order, embedding overview notes, class descriptions, and examples wherever they happen to appear.
-- **B.** Plan separate documentation passes for the subsystem map, responsibilities, public classes/functions and runnable scenarios, then link them so readers can move between the levels.
-- **C.** Begin by asking the team to rewrite the documentation request into exhaustive acceptance criteria before scanning the repository, since the main risk is ambiguity in a large documentation task.
-- **D.** Generate a single alphabetical catalog of exported symbols with inferred parameter descriptions, since maintainers can inspect the source when they need architectural or workflow context.
+- **A.** The root CLAUDE.md, the docs/CLAUDE.md, and any scoped rules whose glob patterns match this file, such as docs/**/*.md or **/*.md.
+- **B.** Claude Code will use only the root CLAUDE.md unless docs/CLAUDE.md and the Markdown rules are explicitly imported from that root file.
+- **C.** Claude Code will select the most specific matching instruction source, such as docs/reference/api/**, and ignore the root CLAUDE.md and broader Markdown rules.
+- **D.** Claude Code will load the root CLAUDE.md plus every rule file in the repository, including rules for tests, React components, and database migrations.
 
-#### Correct answer to Question 16: B
+#### Correct answer to question 16: A
 
-New engineers need several levels: a subsystem map, component responsibilities, API references and runnable scenarios. Planning separate passes and linking them lets readers move from overview to detail.
-
-One long Markdown file in repository order is organized by file, not by concept. Asking the team for exhaustive acceptance criteria blocks the work when the problem is already clear. An alphabetical catalog of symbols lacks architectural context, which is exactly what is missing today.
+The CLAUDE.md files are hierarchical and additive: the root and `docs/CLAUDE.md` both apply to files under `docs/`. Scoped rules are added when their glob matches the file being worked on. Rules whose globs don't match (tests, infra) are not loaded. No explicit import is needed, and the most specific source doesn't override the others.
 
 ## Scenario: Structured Data Extraction
 
@@ -329,18 +300,16 @@ One long Markdown file in repository order is organized by file, not by concept.
 
 You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
-An insurance analytics group is using Claude to extract claimant names, incident dates, injury descriptions, reserve amounts, coverage limits, and settlement status into a JSON-schema-validated claims warehouse. The backlog contains 120,000 files, including adjuster narratives, scanned medical invoices, police reports, attorney letters, and standardized claim forms. What is the best approach before running the full archive through the extraction pipeline?
+A corporate legal team uses Claude to extract renewal deadlines, indemnity caps, governing-law clauses, and notice requirements from supplier contracts into JSON. The data feeds an internal system that automatically alerts business owners and starts approval workflows for contract amendments, so incorrect extractions can create legal and financial exposure. Which validation and oversight strategy is the best fit for this pipeline?
 
-- **A.** Test the pipeline on one recent auto-claim PDF that contains all required fields, confirm that it produces valid JSON, and use that result as approval to process the remaining claim archive.
-- **B.** Start the full extraction job with logging enabled, send any records that fail JSON schema validation to a repair queue, and use the production run’s errors to decide whether the prompt needs changes.
-- **C.** Use the current prompt and schema across the archive because Claude’s language understanding should transfer from the examples in the prompt to unseen insurance documents without a separate validation phase.
-- **D.** Pilot on a representative mix of claim letters, adjuster notes, bills and police reports; have reviewers compare JSON outputs to the sources for missing or wrong values, then refine prompt and schema before the full batch.
+- **A.** Require every output to pass a strict JSON Schema with mandatory fields and enumerated types, then allow downstream systems to rely on any record that conforms to the schema.
+- **B.** Run JSON Schema checks first, then domain rules comparing extracted clauses and dates to the contract text; route low-confidence or high-impact fields to reviewers and log provenance.
+- **C.** Run a benchmark on a representative contract set, and if field-level accuracy exceeds the legal team’s target, disable routine review except for parser failures or missing JSON fields.
+- **D.** Send extracted JSON to an external legal data API for validation and accept its returned status as the sole approval signal before updating internal obligation trackers.
 
-#### Correct answer to Question 17: D
+#### Correct answer to question 17: B
 
-With 120,000 heterogeneous documents, the prompt and schema must be validated on a representative pilot covering every document type, with human review against the sources, then refined before the full run.
-
-Testing one ideal PDF does not represent the variety of documents. Starting the full job with a repair queue uses production as a test, with costly errors that are hard to correct. Reusing the current prompt and schema assumes generalization without verification: schema validity does not guarantee correct values.
+A schema only guarantees the shape, not that the content is correct. For high-impact legal data you need layers: schema validation, semantic rules checked against the source text, routing of low-confidence or high-impact fields to human review, and provenance for auditing. A good benchmark doesn't justify removing oversight, and an external API isn't enough as the only signal.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -348,113 +317,101 @@ Testing one ideal PDF does not represent the variety of documents. Starting the 
 
 You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
-A customer says, “Your system promised me a $38 loyalty credit after a delayed delivery, but my latest invoice still shows the full amount.” Claude reviews the billing notes and returns an API response with `stop_reason: "tool_use"`; the assistant message content contains a `tool_use` block requesting `process_refund` for a specific invoice transaction and credit amount. What should the agent runtime do next?
+A customer contacts support saying: “My overnight package shows ‘delivery attempted’ even though I was home, my annual membership renewal was billed at the wrong tier, and I need to know whether the cracked tablet I bought in March is still covered.” Your Claude Agent SDK resolution agent can call MCP tools for customer lookup, order lookup, billing adjustments, warranty checks, and human escalation. Which orchestration approach is best for this conversation?
 
-- **A.** Treat the response as the completed resolution, send the customer a confirmation that the adjustment is handled, and close the ticket without running any MCP tool.
-- **B.** Find the `process_refund` `tool_use` block, execute the MCP tool with its arguments, append the tool result to the conversation, and call Claude again.
-- **C.** Read the tool name and refund parameters directly from the `stop_reason` metadata, execute that inferred operation, and summarize the result to the customer.
-- **D.** Immediately call Claude again with the same conversation and a reminder to continue resolving the case, without invoking `process_refund` or adding a tool result.
+- **A.** Have the main agent launch parallel subagents for the three topics and stream their outputs directly to the customer as they finish, because the Agent SDK automatically reconciles the subagent conclusions into a coherent final answer.
+- **B.** Have the main agent spawn three subagents with only the customer's raw message and no customer profile or order context, because decomposition lets each subagent independently infer whatever background it needs from the available tools.
+- **C.** Treat the delivery exception, subscription charge and warranty question as separate workstreams; delegate each one to a focused subagent with the case context, then synthesize a single response handling dependencies and escalations.
+- **D.** Have the main agent run shipping, billing, and warranty subagents in parallel and promise resolution during the same chat, because parallel execution eliminates uncertainty from missing records, policy exceptions, or required human approvals.
 
-#### Correct answer to Question 18: B
+#### Correct answer to question 18: C
 
-`stop_reason: "tool_use"` means Claude is requesting a tool call. The runtime must extract the `tool_use` block from the content, execute the tool with the given arguments, append the `tool_result` to the conversation and call Claude again to continue the loop.
+The request contains three independent topics. The coordinator breaks them down, delegates with the Task tool to specialized subagents, and explicitly passes the customer and case context (subagents don't inherit it). It then synthesizes a single answer, handling dependencies and escalations. Subagents without context, unreconciled outputs, or promises nobody can guarantee are wrong.
 
-Treating the response as a completed resolution confuses a tool request with a final answer. Reading parameters from `stop_reason` is wrong: `stop_reason` does not contain them, they live in the `tool_use` block. Calling Claude again without running the tool omits the result and breaks the protocol.
-
-## Scenario: Multi-Agent Research System
+## Scenario: Code Generation with Claude Code
 
 ### Question 19
 
-You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
-The synthesis subagent in your research system calls an MCP tool named `dataset_resolver` to pull statistics from a commercial data catalog. Load tests show occasional TCP resets, HTTP 429 responses, and short 500-level outages; the catalog also returns clear errors for misspelled dataset IDs, expired workspace tokens, and datasets excluded by the customer’s license. Which design best defines the responsibility boundary between `dataset_resolver` and the agents that depend on it?
+A documentation team is adding a Claude Code skill named `schema-notes` that scans migration files and model definitions to draft database documentation. It should be able to locate and read repository files, but it must not modify files or run terminal commands. Which configuration best enforces that constraint?
 
-- **A.** Implement bounded retries with backoff inside `dataset_resolver` for timeouts, 429s and 5xx, and return structured errors for failures like unknown dataset IDs, expired credentials or license limits.
-- **B.** Make `dataset_resolver` convert all exceptions and non-2xx responses into a single `source temporarily unavailable` result so the report generator can continue without exposing vendor-specific details.
-- **C.** Configure `dataset_resolver` to retry all failed requests up to five times with the same exponential backoff, including invalid dataset names, unauthorized workspace access, and terms-of-use denials.
-- **D.** Have `dataset_resolver` return every failed API call immediately to the synthesis agent with the raw status and message, and let the agent decide whether to retry, reformat the request, or ask another subagent for help.
+- **A.** Define the skill in `SKILL.md` with frontmatter `allowed-tools: [Read, Glob]`, so it can inspect and search files but cannot edit or run shell commands.
+- **B.** Add a frontmatter value such as `no-write: true` in `SKILL.md`, so Claude Code automatically disables every mutating operation for that skill.
+- **C.** Place a rule in the project `CLAUDE.md` saying the skill may only read files, so Claude Code enforces that instruction as the skill’s tool boundary.
+- **D.** Install the skill only under the project’s `.claude/skills/` directory instead of the user skills directory, so it inherits project-local read-only permissions.
 
-#### Correct answer to Question 19: A
+#### Correct answer to question 19: A
 
-Transient errors (timeouts, 429, 5xx) are best handled inside the tool with bounded retries and backoff. Permanent errors (wrong ID, expired credentials, license denial) must instead be returned as structured errors so the agent can correct the request or escalate.
+The `allowed-tools` field in the `SKILL.md` frontmatter limits which tools the skill can use. That is a real technical boundary. A `no-write` field doesn't exist, a rule in CLAUDE.md is only guidance (not enforcement), and where the skill is installed doesn't change its permissions.
 
-Collapsing every failure into "source temporarily unavailable" hides the real cause and prevents correction. Retrying every failure five times wastes retries on errors that will never succeed. Returning every failure raw to the synthesis agent burdens it with transient failures the tool can resolve on its own.
-
-## Scenario: Customer Support Resolution Agent
+## Scenario: Code Generation with Claude Code
 
 ### Question 20
 
-You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
-A Claude Agent SDK support agent is being added to a retailer's returns queue. Its MCP tool `build_return_packet` can return customer tier, order age, delivery status, and basic return-window eligibility in about 600 ms, but warranty annotations, warehouse inspection exceptions, and fraud-review notes may take another 5–9 seconds. The team wants the agent to feel responsive during chats while still making reliable return, refund, or escalation decisions. What is the best approach?
+Your team created a Claude Code slash command, `/make-migrator`, that generates Python data-migration scripts for customer account records. The scripts pass linting, but they keep making inconsistent choices about legacy `tier` values, blank renewal dates, and whether archived accounts should be skipped. Which prompt improvement is the best next step to make the generated migrations more consistently correct?
 
-- **A.** Remove the slow warehouse and warranty sections from `build_return_packet` entirely, allowing the agent to resolve all return requests using only order age and delivery status.
-- **B.** Keep the workflow unchanged and focus only on database index tuning and cache warming for `build_return_packet`, since the agent should not reason until the entire lookup payload is complete.
-- **C.** Have the agent immediately tell customers that return checks may take up to ten seconds, then remain silent until `build_return_packet` finishes assembling every field.
-- **D.** Have `build_return_packet` stream a compact header first (customer tier, order age, delivery status, return-window flags), so the agent can proceed while warranty and warehouse details load.
+- **A.** Update `CLAUDE.md` with stricter naming rules for generated migration functions, including prefixes, suffixes, and preferred helper names.
+- **B.** Revise `/make-migrator` to include several representative before-and-after schema examples and a small set of migration tests for defaults, renames and enum mappings.
+- **C.** Add the full database DDL history and every past migration file to the command context so Claude Code has more background before generating the next migrator.
+- **D.** Require the team to run `/make-migrator` only in plan mode first, then approve the plan before Claude Code writes any migration code.
 
-#### Correct answer to Question 20: D
+#### Correct answer to question 20: B
 
-Streaming a compact header of fast data first lets the agent respond immediately and ask targeted questions, while slower details (warranty, warehouse exceptions, fraud review) arrive afterward. This balances responsiveness and reliable decisions.
+The inconsistencies come from ambiguous business rules (legacy tiers, empty dates, archived accounts). Concrete before/after examples and tests that define the expected behavior remove the ambiguity. Naming rules don't affect correctness, dumping all the history dilutes the context, and plan mode doesn't define the rules.
 
-Removing the slow sections drops information needed for correct decisions. Focusing only on database tuning accepts a poor user experience while waiting for optimizations. Warning customers and then staying silent keeps the user waiting without using the data already available.
-
-## Scenario: Customer Support Resolution Agent
+## Scenario: Developer Productivity with Claude
 
 ### Question 21
 
-You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
-A billing-support agent is helping a user who says, “I was charged twice; my login email is <dana.reyes@example.net>.” The agent calls the MCP tool `get_customer` with that email, the customer database responds normally, and the query returns no matching account. Which tool response and follow-up behavior best classify and handle this failure mode?
+A Claude Agent SDK productivity agent is migrating 32 Python modules from an old `@timed_task(...)` decorator to a new `telemetry.track(...)` pattern. Some modules already import `telemetry`, some alias the old metrics package, and several decorators include file-specific arguments that must be preserved. Which approach should the agent use to make the migration most reliably?
 
-- **A.** Return `{ "isError": false, "customer": { "id": "temp-unknown", "email": "user-supplied", "status": "unverified" } }`, and have the agent continue to search recent orders using the placeholder account.
-- **B.** Return `{ "isError": true, "errorCategory": "transient", "isRetryable": true, "message": "Customer record not available yet." }`, and have the agent automatically retry the same lookup several times before responding.
-- **C.** Return `{ "isError": true, "errorCategory": "capacity", "isRetryable": true, "message": "Customer service is temporarily overloaded." }`, and have the agent apologize for a system issue before trying again later.
-- **D.** Return `{ "isError": true, "errorCategory": "not_found", "isRetryable": false, "message": "No account matched." }`, and have the agent ask the user to verify the email or give another identifier.
+- **A.** Send the complete file list to a bulk-edit MCP server and request one combined patch, prioritizing throughput and reviewing only the final repository-wide diff.
+- **B.** Have the agent generate a standalone migration script that rewrites every candidate module, then ask a developer to run the script locally and report back any failures after it completes.
+- **C.** Run a single Bash command with a recursive substitution over the repository, then use Grep afterward to confirm that the old decorator text no longer appears anywhere.
+- **D.** Find candidate modules with Glob or Grep, then handle them one at a time: Read the file, apply a targeted Edit, check the updated content, and only then move on.
 
-#### Correct answer to Question 21: D
+#### Correct answer to question 21: D
 
-A successful query with no results is a "not found" error: not transient and not retryable. The right response states it in structured form (`not_found`, `isRetryable: false`) and the agent asks the user to verify the email or provide another identifier.
+For a migration with file-specific variations, the reliable way is to find the candidates with Grep/Glob, then for each file Read, apply a targeted Edit, and check the result. A blind global substitution, a single bulk patch, or an unverified script don't handle aliases, existing imports, and arguments that must be preserved.
 
-Returning a placeholder "temp-unknown" account invents data and proceeds on it. Classifying the error as transient or capacity is wrong: it causes useless retries and misleading messages about system outages.
-
-## Scenario: Code Generation with Claude Code
+## Scenario: Multi-Agent Research System
 
 ### Question 22
 
-You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
-A mobile team wants Claude Code to use an internal “test-data” MCP server that generates seeded API fixtures during debugging sessions. The configuration must be available automatically to anyone who checks out the app repository and should be reviewed like other project changes. Where should the team put this MCP server configuration?
+A due-diligence assistant built with the Claude Agent SDK has a coordinator and five specialists: `Signal` monitors news and web sources, `Vault` searches uploaded deal-room files, `Ledger` analyzes spreadsheets, `Briefsmith` synthesizes findings, and `Dossier` formats the final memo. Requests vary from “check whether this contract mentions exclusivity” to “build a cited risk brief on a supplier using web signals, financial trends, and attached audits.” Which orchestration approach is the best fit?
 
-- **A.** Commit a project-scoped .mcp.json in the repository root (or in the repository's .claude/ directory) with the test-data MCP server.
-- **B.** Create a .mcp/servers.json directory structure in the repository and place the test-data MCP server definition there.
-- **C.** Add the test-data MCP server definition under .claude/rules/testing.md so it loads whenever files in the tests directory are opened.
-- **D.** Ask each developer to add the test-data MCP server definition to their own ~/.claude.json file before using Claude Code.
+- **A.** Start every investigation by running the web, database, spreadsheet, synthesis, and report agents in parallel, then ask the coordinator to discard outputs that are not useful.
+- **B.** Have the coordinator inspect each request, reason about the needed evidence and deliverable, then invoke only the relevant specialists with scoped subtasks, recording its routing rationale in the run's history.
+- **C.** Put a permanent instruction in the coordinator prompt that market questions always go to the web agent, technical questions always go to the document agent, and executive questions always go to the report agent.
+- **D.** Maintain a large routing table in a deployment file that maps every known research category, such as pricing, regulation, patents, and competitors, to a fixed specialist sequence.
 
-#### Correct answer to Question 22: A
+#### Correct answer to question 22: B
 
-Project-scoped MCP servers live in a `.mcp.json` file committed to the repository: anyone who clones gets the configuration, and changes go through normal review.
+Requests vary widely in complexity, so routing should be dynamic. The coordinator analyzes each request and invokes only the specialists it needs with well-scoped subtasks, recording why. Running everything in parallel wastes resources, and fixed rules or routing tables can't adapt to new or mixed requests.
 
-A `.mcp/servers.json` structure is a non-standard path that Claude Code does not read. Rules files such as `.claude/rules/testing.md` contain instructions, not MCP configuration. Each developer's `~/.claude.json` keeps the configuration personal and unshared, with no review.
-
-## Scenario: Code Generation with Claude Code
+## Scenario: Structured Data Extraction
 
 ### Question 23
 
-You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
-A platform team maintains a monorepo where every service must follow the same incident-response logging rules and database migration checklist. They want Claude Code to load those shared instructions for all sessions, but they do not want the root CLAUDE.md to become a long policy document. Which configuration choice best fits Claude Code’s supported project-instruction workflow?
+A legal operations team uses Claude to extract obligation data from vendor contracts into a JSON payload consumed by an approval system. In some image-only exhibits, Claude can infer a syntactically valid `counterpartyName` from a signature block, but assigns 0.52 confidence; this field affects whether the contract is routed to sanctions screening. What is the best approach for handling this field in the structured extraction workflow?
 
-- **A.** Create .claude/rules/security.md and .claude/rules/migrations.md so Claude Code treats them as general reusable instruction modules for every session.
-- **B.** Add YAML front matter to CLAUDE.md, such as includes: [docs/claude/security.md, docs/claude/migrations.md], so Claude Code expands those files before reading the instructions.
-- **C.** Keep the root CLAUDE.md focused on high-level project context, and add @import references to detailed files such as docs/claude/security.md and docs/claude/migrations.md.
-- **D.** Move each topic into its own .claude/security/CLAUDE.md and .claude/migrations/CLAUDE.md file, relying on Claude Code to automatically merge every nested CLAUDE.md under .claude/.
+- **A.** Return the parsed `counterpartyName` with provenance and a confidence/quality flag, letting the approval workflow decide whether analyst review is needed.
+- **B.** Reject the entire contract package whenever `counterpartyName` confidence is low, leaving the field blank and stopping all downstream processing.
+- **C.** Return the parsed `counterpartyName` in the normal contract JSON because it matches the schema, and avoid exposing confidence data to keep integrations simple.
+- **D.** Automatically run the same extraction again whenever `counterpartyName` confidence is below the threshold, and use the second result as the final value.
 
-#### Correct answer to Question 23: C
+#### Correct answer to question 23: A
 
-The workflow supported for a short `CLAUDE.md` is to keep high-level context at the root and use `@import` references to separate files containing detailed policies, loaded in every session.
-
-Path rules in `.claude/rules/` are not what is asked: the question wants the supported mechanism to include reusable instructions from the root `CLAUDE.md`. An `includes:` front matter does not exist. Nested `CLAUDE.md` files under `.claude/` are not merged automatically.
+With uncertain extraction on a critical field, don't hide the uncertainty and don't block everything. Return the value with provenance and a confidence flag so the downstream workflow can decide (proceed, be cautious, or send to an analyst). Simply re-running the extraction doesn't make the result more reliable.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -462,37 +419,33 @@ Path rules in `.claude/rules/` are not what is asked: the question wants the sup
 
 You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
-A retailer’s Claude Agent SDK support agent can verify identity, inspect loyalty status, look up shipments, issue standard refunds, and transfer cases through MCP tools. In a staging run, it handles routine “missing item” claims well, but ambiguous cases include customers asking for a supervisor, requests for goodwill credits above the agent’s limit, and conversations where all permitted remedies have already been checked. Which escalation design is the best approach?
+A Claude Agent SDK support agent handles subscription downgrade and overcharge complaints. Its `assemble_billing_context` MCP tool can identify the customer's plan, renewal date, refund eligibility, and open chargeback status in under a second, but itemized invoices and internal audit notes often take 7-10 seconds to retrieve. Leaders want the agent to start helping sooner while still making accurate final decisions. What is the best approach?
 
-- **A.** Configure the agent to escalate according to a fixed matrix, such as all enterprise accounts, all orders above $500, and all chargeback-related tickets, regardless of the available MCP tool results.
-- **B.** Escalate when the customer asks for a human, when a requested remedy needs approval outside refund and account policies, or when its reasoning shows no policy-compliant tool workflow is likely to move the case forward.
-- **C.** Configure the agent to escalate after exactly three unsuccessful MCP calls in a case, whether those calls are repeated failures, normal lookups, or intermediate steps in a viable refund workflow.
-- **D.** Configure the agent to escalate whenever the conversation classifier detects anger, sarcasm, or disappointment, even if the order status and refund policy indicate the agent can complete a standard resolution.
+- **A.** Stream a compact entitlement-and-risk summary as soon as it is available, let the agent start drafting the resolution path from it, and merge invoice-line details and audit notes as they arrive.
+- **B.** Stop calling the billing-history tool during the initial turn, and have the agent resolve disputes using only the customer profile and the customer's description unless the user complains.
+- **C.** Have the agent immediately acknowledge the request and explain that billing checks can take up to 10 seconds, then wait silently for the full tool result before reasoning.
+- **D.** Keep the tool response atomic and focus on reducing database query time through indexing, connection pooling, and cache warming before changing the agent workflow.
 
-#### Correct answer to Question 24: B
+#### Correct answer to question 24: A
 
-Good escalation criteria are observable and tied to real limits: an explicit request for a human, a remedy outside the agent's authority, or no policy-compliant path left. This way the agent resolves what it can and escalates only when needed.
+The latency problem is solved by streaming and progressive disclosure: the compact summary arrives quickly and the agent starts working, then the slower details (invoices, audit notes) are merged in before the final decision. Skipping data compromises accuracy, waiting in silence doesn't reduce latency, and optimizing only the database doesn't change the flow.
 
-A fixed escalation matrix ignores context and blocks resolvable cases. Escalating after exactly three unsuccessful calls uses an arbitrary counter that also penalizes legitimate steps. Escalating on detected anger or sarcasm hands off cases the agent could resolve, harming first-contact resolution.
-
-## Scenario: Structured Data Extraction
+## Scenario: Developer Productivity with Claude
 
 ### Question 25
 
-You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
-A healthcare data team uses Claude to extract `patient_id`, `specimen_site`, `collection_time`, and `critical_flag` from scanned pathology reports into JSON for a hospital integration. In a stability test, the same 60 reports are processed three times each; all outputs satisfy the JSON schema, but 11 reports alternate between two `specimen_site` values and 5 reports produce different `collection_time` values across runs. What is the best approach before sending these records to the integration engine?
+A developer productivity team is deploying a Claude Agent SDK assistant for an on-call engineering group that maintains several incident-management services. The agent can already use Read, Grep, Glob, Bash, and Write to inspect repositories, but it struggles with questions such as, “Why do severity escalations bypass the normal queue during regional failovers?” because the answer depends on operational policies recorded in the company’s runbook and design-decision system. What is the best approach to improve the assistant’s reliability for these questions?
 
-- **A.** Select the first successful JSON object produced for each lab report as the canonical record, because a schema-valid response should be considered authoritative once generated.
-- **B.** Process each report five more times and merge the results by taking the most common categorical value and the average timestamp when runs disagree.
-- **C.** Document the observed variation as expected behavior for language-model extraction, keep the current pipeline, and let downstream systems handle occasional differences in `specimen_site` and `collection_time`.
-- **D.** Run a consistency-focused debug pass on the repeated outputs, inspect the source passages and criteria for the unstable fields, then tighten instructions, schema constraints and model settings before re-testing.
+- **A.** Have the agent ask engineers to paste the relevant runbook pages into the chat whenever a question depends on team-specific terminology or operational history.
+- **B.** Build a small custom tool that returns a weekly exported bundle of Markdown files from the runbook repository whenever the agent needs background context.
+- **C.** Keep using Read, Grep, Glob and Bash to inspect the services, and add an MCP server that queries the company's live runbook and design-record system for authoritative answers.
+- **D.** Rely on Read, Grep, Glob, and Bash to trace call paths and configuration until the agent can infer the operational rationale without adding external documentation access.
 
-#### Correct answer to Question 25: D
+#### Correct answer to question 25: C
 
-All outputs are schema-valid, yet some fields are unstable across runs: a sign of ambiguity in the sources or in the instructions. The right path is to diagnose the unstable cases, inspect the source passages, tighten criteria, constraints, settings and ambiguity handling, then re-test.
-
-Taking the first schema-valid object picks an arbitrary result. Rerunning and merging by majority and average produces data that may not exist in the document. Documenting the variation as expected accepts unreliable data in a critical healthcare context.
+The missing information isn't in the code, it's in the operational documentation. An MCP server that queries the live runbook and design-decision system gives authoritative, up-to-date access. Asking users to paste it isn't scalable, a weekly export goes stale, and inferring the rationale from code alone is unreliable.
 
 ## Scenario: Multi-Agent Research System
 
@@ -500,151 +453,163 @@ Taking the first schema-valid object picks an arbitrary result. Rerunning and me
 
 You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
-In a multi-agent research pipeline, the source-harvesting subagent calls an `extract_evidence_cards` tool that returns short claims, quoted passages, source URLs, retrieval timestamps, and section locators. The synthesis agent has begun treating these evidence cards as trusted inputs, but audits show that some locators and quotes do not match the retrieved pages. Which architecture change best enforces provenance before the evidence cards are used downstream?
+In your research system, the evidence-gathering subagent has two MCP tools in its allowedTools list. `DataVault` is described as “retrieve supporting evidence from internal collections,” and `InterviewFinder` is described as “locate relevant source material from archived interviews.” In evaluation runs, prompts such as “pull the latest adoption-rate statistics by region” sometimes call `InterviewFinder`, while prompts asking for “firsthand practitioner quotes about rollout barriers” sometimes call `DataVault`. What is the best root-cause diagnosis and remediation?
 
-- **A.** Expose a citation-audit tool and instruct the document specialist to call it whenever it is uncertain about a quote, locator, or source attribution.
-- **B.** Have the coordinator agent review the assembled outline for missing or suspicious references after all specialist agents have finished their research passes.
-- **C.** Strengthen the document specialist’s system prompt so it must only produce citations it has verified and must flag any uncertain provenance in its response.
-- **D.** Attach a PostToolUse hook to the extraction tool that checks each emitted quote, URL, timestamp and locator against the source payload before accepting it.
+- **A.** Rewrite each MCP tool description with its evidence type, out-of-scope requests, selection cues and short examples, keeping both tools available.
+- **B.** Classify the wrong InterviewFinder calls as hallucinated tool invocations and add a fallback that retries the same request whenever the returned evidence is not numeric.
+- **C.** Restrict the evidence subagent’s allowedTools list to only DataVault so all evidence retrieval goes through a single, predictable data-access path.
+- **D.** Add a sentence to the coordinator prompt saying “use DataVault for numbers and InterviewFinder for quotes,” but leave the MCP tool names and descriptions as they are.
 
-#### Correct answer to Question 26: D
+#### Correct answer to question 26: A
 
-Provenance must be verified deterministically before the evidence enters the pipeline. A PostToolUse hook that compares quotes, URLs, timestamps and locators against the actual payload blocks inconsistent records at the source.
-
-A citation-audit tool relies on the agent deciding when it is "uncertain." A final review by the coordinator checks too late, after the evidence has already shaped the work. Strengthening the system prompt is only an instruction: it helps but does not guarantee anything.
-
-## Scenario: Claude Code for Continuous Integration
-
-### Question 27
-
-You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
-
-A platform team is adding Claude Code checks to CI for pull requests in a GraphQL gateway. A recent incident occurred because a single automated review approved a resolver change while missing a subtle authorization regression. The team wants the new prompt architecture to produce more actionable findings without simply asking one reviewer to re-check its own answer. Which design choice has the strongest quality rationale?
-
-- **A.** Run several isolated Claude Code review jobs against the same merge request mainly so the CI system can execute them in parallel and return the review faster than a single sequential prompt.
-- **B.** Run several isolated Claude Code review jobs against the same merge request because multiple agents are easier to configure and maintain than one carefully designed review workflow.
-- **C.** Run several isolated Claude Code review jobs against the same merge request because separate model invocations eliminate reviewer bias and make the final PR comment objectively neutral.
-- **D.** Run several isolated Claude Code review jobs on the same merge request, each with a distinct rubric (API compatibility, data validation, tests), then merge the findings into one comment.
-
-#### Correct answer to Question 27: D
-
-Multiple independent reviews add value when each has a distinct focus (API compatibility, data validation, test adequacy): they cover different aspects instead of repeating the same check, and their findings are then merged into one comment.
-
-Running parallel jobs mainly for CI speed justifies the choice only by speed. Claiming that multiple agents are easier to configure is false: they are more complex, not simpler. Claiming that separate invocations make the result objectively neutral overstates: they reduce self-confirmation bias, but do not remove it.
+The model chooses tools mainly from their descriptions. If they are vague and overlap ("evidence" versus "source material"), routing is wrong. The fix is clear, differentiated descriptions: what each tool does, what it doesn't do, selection cues, and examples. Removing a tool loses capability, and a note in the coordinator prompt doesn't fix the descriptions the subagent sees.
 
 ## Scenario: Structured Data Extraction
 
-### Question 28
+### Question 27
 
 You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
-A legal operations team uses Claude to extract structured lease abstracts from commercial real estate agreements, including commencement date, base rent, escalation formula, renewal options, and termination notice deadlines. The JSON Schema validator rejects malformed records, but attorneys still find cases where an extracted value is plausible and correctly typed yet comes from an exhibit, example calculation, or superseded amendment. The review team can inspect only a small fraction of the daily output. Which quality-control strategy is the best approach?
+A legal operations team uses Claude to extract renewal dates, parties, and termination clauses from 12,000 archived service contracts each week. The outputs are validated against a JSON Schema before being loaded into a contract intelligence database, but some documents are image-only scans, some are in unsupported languages, and some responses contain fields that fail validation. What is the best error-handling design for this batch extraction workflow?
 
-- **A.** Keep the schema checks unchanged and randomly audit 10% of completed lease records each week, using the audit results as a general quality metric for the extraction pipeline.
-- **B.** After JSON Schema validation, send only records with missing required fields or null values to reviewers, and automatically approve records whose required fields have valid strings, numbers, and dates.
-- **C.** Rank documents for review mainly by layout signals such as OCR noise, rotated pages, handwritten amendments, and unusual section headings, then inspect the leases with the most formatting anomalies first.
-- **D.** Build a labeled validation set of lease abstracts, calibrate confidence separately for key fields like dates, rates and options, and route to reviewers when calibrated risk exceeds thresholds.
+- **A.** Return a batch manifest with each contract's status, validated payload when available, and machine-readable error codes such as `parse_error`, then keep processing.
+- **B.** Immediately resubmit every failed contract to Claude up to five times and only record an error if all retries fail, without storing the intermediate failure reasons.
+- **C.** Abort the entire batch as soon as one contract fails schema validation, mark the run as failed, and require an operator to restart the batch after correcting that contract.
+- **D.** Exclude any contract that does not produce valid JSON from the export file so downstream systems only receive clean records and the daily completion rate is not delayed by bad inputs.
 
-#### Correct answer to Question 28: D
+#### Correct answer to question 27: A
 
-Errors are plausible, correctly typed values from the wrong section: schema validation cannot detect them. With limited review capacity, you need confidence calibrated per field on a labeled set, with routing of high-risk cases according to reviewer capacity.
+In batch processing, isolate failures for each item: a manifest with per-contract status, the validated payload, and machine-readable error codes, and keep processing the rest. Aborting the whole batch, silently dropping failures, or retrying blindly without keeping the reasons all hurt reliability and debugging.
 
-Random weekly audits measure quality but do not route review where it matters. Sending only records with missing fields checks something that is not the problem here. Ranking by layout signals uses cues that do not correlate with the actual error (a value taken from an exhibit or superseded amendment).
+## Scenario: Code Generation with Claude Code
 
-## Scenario: Developer Productivity with Claude
+### Question 28
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
+A backend team adds `.claude/rules/api-migration.yaml` with guidance for replacing a legacy Express pattern. The file includes:
+
+```yaml
+
+paths:
+
+- "packages/api/routes/**/*.js"
+
+- "packages/api/models/**/*.js"
+
+```
+
+What does this `paths` field mean in Claude Code?
+
+- **A.** It declares that generated unit tests for the API migration should be written only under `packages/api/routes/` and `packages/api/models/`.
+- **B.** It tells Claude Code to look for this YAML rule file under `packages/api/routes/` or `packages/api/models/` instead of under `.claude/rules/`.
+- **C.** It causes Claude Code to load additional instruction snippets from matching JavaScript files and append them to the rule before responding.
+- **D.** It scopes the rule so Claude Code considers it only when work involves files matching `packages/api/routes/**/*.js` or `packages/api/models/**/*.js`.
+
+#### Correct answer to question 28: D
+
+In `.claude/rules/` files, the `paths` field defines glob patterns that make the rule conditional: it's loaded only when Claude is working on files that match those patterns. It doesn't specify where to write tests or where to look for the rule file, and it doesn't import content from the JS files.
+
+## Scenario: Structured Data Extraction
 
 ### Question 29
 
-You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
-A team is building a Claude Agent SDK assistant that generates React components across several product apps. The source of truth for accessibility labels, token usage, and component composition is maintained in a design-system portal, while individual repos contain a mix of old examples and partial notes. What is the best way to ensure the assistant follows the current design-system rules during code generation?
+A legal technology company must convert 120,000 legacy supplier contracts into structured JSON for a renewal-risk dashboard. Each output must satisfy a schema with nested fields for parties, payment terms, renewal windows, and termination clauses. The dashboard import is scheduled for next week, but it only needs the completed dataset, not live document-by-document results. Early tests suggest that older scanned amendments and unusual renewal language may cause repeated validation failures. What is the best extraction workflow?
 
-- **A.** Ask the engineer opening each task to paste the current design-system checklist into the initial prompt before the agent edits any files.
-- **B.** Publish the UI library's design-system rules through an MCP server as a resource the agent consults before generating components.
-- **C.** Have the agent scan existing component files and infer the required accessibility and styling rules from inline comments near similar implementations.
-- **D.** Configure the agent to use Glob and Grep for files such as `*style*`, `*accessibility*`, and `*design*` whenever it starts work in a package.
+- **A.** Submit the entire archive to batch processing immediately, then examine schema validation failures afterward and rerun any documents affected by prompt mistakes.
+- **B.** Pilot interactively on a representative slice, analyze recurring schema and extraction errors, fix the prompt, then submit the batch.
+- **C.** Divide the archive into ten equal batch waves, review every wave manually, and change the prompt after each wave before starting the next one.
+- **D.** Process all contracts through synchronous API calls so the team can inspect failures as they happen, then patch each prompt issue while the full job continues running.
 
-#### Correct answer to Question 29: B
+#### Correct answer to question 29: B
 
-The source of truth lives outside the repos, which contain outdated examples. Exposing the rules through an MCP server (a resource or tool) gives the agent consistent, always-current access to the official guidance.
-
-Pasting the checklist into every prompt depends on manual, error-prone copy-paste. Inferring the rules from component comments or searching files with Glob and Grep relies on repository code, which the scenario says contains old examples and partial notes.
-
-## Scenario: Developer Productivity with Claude
-
-### Question 30
-
-You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
-
-A Claude Agent SDK assistant is adding a `rotate-api-keys` command to a Go service's internal CLI. Using Glob, Grep, and Read, it finds that 11 of the 15 commands added in the last year are implemented through a `cmdregistry` package with shared flag parsing and logging, while four older commands define flags directly in `main.go`. The requirements are straightforward and do not require product behavior decisions. What is the best strategy for the agent when generating the new command?
-
-- **A.** Implement the new CLI command with a new decorator-based framework because it reduces boilerplate compared with both patterns found in the repository.
-- **B.** Copy the structure of whichever existing CLI command has the closest command name, even if that means using the older inline parser style for this one file.
-- **C.** Use the command-registry pattern followed by most existing commands, and note in the implementation summary that it matches the dominant local convention.
-- **D.** Pause generation and ask the user to choose between the command-registry module pattern and the older inline parser pattern before writing any code.
-
-#### Correct answer to Question 30: C
-
-When the codebase has a clear dominant convention (11 of 15 recent commands use `cmdregistry`) and requirements are straightforward, the agent should follow that convention and briefly document the choice, without blocking work.
-
-A new decorator-based framework introduces a pattern not present in the project. Copying the command with the closest name chooses the model by name rather than by convention, and may adopt the deprecated style. Pausing to ask the user asks something the evidence already answers.
+Large volume, no need for real-time results, and a risk of systematic errors. The right flow is to iterate on the prompt first with a small, representative interactive pilot, then run the stabilized prompt with the Batch API (lower cost, asynchronous). Submitting everything right away multiplies the errors, synchronous calls cost more, and manual waves are slow.
 
 ## Scenario: Claude Code for Continuous Integration
 
-### Question 31
+### Question 30
 
 You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
-A team is adding Claude Code to the CI pipeline for a database-backed inventory API. Developers are skeptical because a previous bot flooded pull requests with debatable comments about naming, layering, and possible edge cases. Which rollout approach is most likely to produce actionable feedback while increasing trust in the automated review over time?
+A Claude Code pull request workflow invokes an MCP tool named `screenshot-diff-linter` once per changed frontend file. For `src/render/diagram.ts`, the tool returns:
 
-- **A.** Start with a small set of explicit, high-confidence checks such as unsafe migration patterns and missing tests on touched modules, measure acceptance, and expand categories only once results are useful.
-- **B.** Require the service owner to manually validate every Claude Code finding before it is shown to pull request authors, keeping the same broad prompt set but adding a human gate.
-- **C.** Configure Claude Code to flag all suspected design, security, testing, documentation, and maintainability concerns immediately so the team can decide which categories are useful after several sprints.
-- **D.** Run Claude Code in a read-only preview job that posts a summary artifact but does not comment on pull requests until developers ask for individual findings to be promoted.
+```json
 
-#### Correct answer to Question 31: A
+{
 
-To build trust after a noisy bot, start small: a few explicit, high-confidence categories, measure comment acceptance, and expand only when results are consistently useful.
+"message": "SVG snapshot generation is not supported for this renderer",
 
-Requiring the service owner to validate every finding adds manual overhead without improving prompt quality. Flagging every possible concern repeats the flood of comments that destroyed trust. A read-only preview job is so cautious that it delivers no value directly in the pull request workflow.
+"isRetryable": false,
 
-## Scenario: Customer Support Resolution Agent
+"errorCategory": "tool_unavailable_for_file_type"
+
+}
+
+```
+
+Twenty other changed files are still waiting for analysis. What should the workflow do next?
+
+- **A.** Send `src/render/diagram.ts` through the same fallback error path used for network timeouts, retrying only if the whole CI job reaches its generic retry phase.
+- **B.** Write the error message for `src/render/diagram.ts` into the PR comment backlog, leave the file in the pending queue, and let a later reporting step decide whether it matters.
+- **C.** Retry the screenshot-diff tool for `src/render/diagram.ts` with exponential backoff, because tool errors can clear after the analyzer warms its cache.
+- **D.** Mark `src/render/diagram.ts` as skipped with a non-retryable `tool_unavailable_for_file_type` analysis result, then continue running the screenshot-diff analysis for the other files.
+
+#### Correct answer to question 30: D
+
+The error is structured and says it's not retryable (`isRetryable: false`, the tool is unsupported for that file type). Retrying is useless. The right move is to record the file as skipped with the appropriate category and keep analyzing the other files. Treating it like a timeout or leaving it in the pending queue ignores the information the error provides.
+
+## Scenario: Developer Productivity with Claude
+
+### Question 31
+
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+
+A developer tools team is building a Claude Agent SDK assistant called SpecScout to improve coverage for a Python data-normalization package. The assistant can inspect source with Read and Grep, create test files with Write, and execute commands such as `pytest tests/test_normalizers.py -k ...` through Bash. Which workflow is the best approach for SpecScout to generate dependable tests while keeping failures easy to isolate?
+
+- **A.** Have SpecScout ask the developer for a finalized checklist of every edge case and expected output, then generate tests directly from that checklist without deciding intermediate validation points.
+- **B.** Have SpecScout identify a narrow behavior, write one or a few focused tests for it, run the relevant pytest target with Bash, inspect any failures, adjust the tests or its understanding, then repeat.
+- **C.** Have SpecScout scan the module once, generate a complete regression suite for every discovered branch, and run the full test suite only after all new test files have been written.
+- **D.** Have SpecScout write the proposed tests and send them to the CI coverage service, relying on the service’s final pass/fail and coverage report instead of running local commands during generation.
+
+#### Correct answer to question 31: B
+
+Generating tests incrementally (one narrow behavior, a few tests, run the specific pytest target, analyze, adjust) makes failures easy to isolate and builds quick feedback. Generating everything and running it only at the end, or relying only on CI, makes diagnosis harder.
+
+## Scenario: Claude Code for Continuous Integration
 
 ### Question 32
 
-You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
-A support resolution agent is handling a cancellation request: “Please cancel the extended warranty on contract C-90217.” It calls the MCP tool `lookup_order` with `contractNumber: "C-90217"`. The warranty service responds successfully, but the query returns no matching contract. Which tool response and agent behavior best handle this failure mode?
+A CI job uses Claude Code to propose unit tests for changed Go packages before a pull request can be merged. The generated tests usually pass, but maintainers keep editing them because they do not use the project’s table-driven layout, subtest names, shared setup helpers, or expected mix of negative cases. What is the best prompting approach to improve the consistency of the generated tests?
 
-- **A.** Return `{ "isError": true, "errorCategory": "capacity", "isRetryable": true, "message": "Subscription service unavailable." }`, then tell the agent to wait briefly and call `lookup_order` again with the same contract number.
-- **B.** Return a structured error (`isError: true`, `errorCategory: "not_found"`, non-retryable, clear message), then ask the customer to recheck the contract number or give another identifier such as the account email.
-- **C.** Return `{ "isError": true, "errorCategory": "temporary_failure", "isRetryable": true, "message": "No matching row yet; retry may succeed." }`, then have the agent automatically retry three times before asking the customer anything.
-- **D.** Return `{ "isError": false, "subscription": { "contractNumber": "C-90217", "status": "active", "customerName": "Unknown" } }`, then let the agent continue the return workflow while marking the account as unverified.
+- **A.** Tell Claude Code to inspect the repository and make the new tests look like the existing suite, while keeping the prompt short to avoid constraining the generated cases too much.
+- **B.** Write a paragraph in the prompt explaining that tests should use clear names, cover edge cases, avoid brittle assertions, and follow the conventions usually found in mature Go services.
+- **C.** Include two or three nearby, well-reviewed Go test files in the prompt and ask Claude Code to follow their table-driven structure, naming style, setup helpers and range of cases.
+- **D.** Add a broader testing policy to CLAUDE.md describing that all generated Go tests should be idiomatic, maintainable, and consistent with the repository’s normal review expectations.
 
-#### Correct answer to Question 32: B
+#### Correct answer to question 32: C
 
-The service responded correctly but found no contract: it is a non-retryable `not_found` error. The agent should report it in structured form and ask the customer to recheck the number or provide an alternative identifier.
+To get conventions followed precisely, concrete examples from well-reviewed files in the same repo work better than generic descriptions. They show the table-driven structure, naming, helpers, and the mix of cases. Vague instructions ("make them look like...", "idiomatic") don't specify the expected pattern.
 
-Classifying the miss as a capacity or temporary failure triggers useless retries. Returning an "active" contract with an unknown customer fabricates a nonexistent record and continues the workflow on false data.
-
-## Scenario: Multi-Agent Research System
+## Scenario: Developer Productivity with Claude
 
 ### Question 33
 
-You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
-A research coordinator invokes several Claude Agent SDK subagents through the Task tool to build a regulatory-change report. The timeline extractor is supposed to return a `ChronologyCard` containing `event_date`, `jurisdiction`, `change_summary`, `source_refs[]`, and `quoted_support`, but intermittent runs produce narrative text with missing dates that later shapes the report outline. Which configuration best enforces the expected result format before the coordinator uses these subagent findings?
+A platform team is creating a Claude Agent SDK tool called RouteProbe to improve test coverage for a microservice’s request-routing layer. The agent can inspect handlers with Read and Grep, create test files with Write, and execute npm test commands through Bash. Which approach should the team use so RouteProbe adds tests reliably while keeping failures easy to diagnose?
 
-- **A.** Let the coordinator proceed normally and add a synthesis instruction that it should ignore any ChronologyCard lacking an event_date, source reference, or quoted support when it composes the final timeline.
-- **B.** Update the specialist prompts to say that every ChronologyCard must be valid JSON, include ISO dates, and perform a self-check for citations before sending the answer back.
-- **C.** Have each specialist call a separate reviewer agent after drafting its ChronologyCard, with the reviewer returning an approval message that the coordinator can read alongside the original result.
-- **D.** Register a PostToolUse hook on the Task calls to specialist agents that validates each ChronologyCard's fields and sources before it enters the coordinator context.
+- **A.** Have the agent write candidate tests continuously and rely on the repository’s nightly CI job to surface failures, using the next day’s CI report as the first validation checkpoint.
+- **B.** Have the agent scan the module, generate a complete regression suite for all discovered branches in one pass, then run the full test suite only after every planned test file has been written.
+- **C.** Have the agent ask the engineer to enumerate every expected case and assertion up front, then generate the listed tests exactly as provided without independently running them between additions.
+- **D.** Have the agent identify one uncovered behavior at a time, write a focused test, run the relevant test command with Bash, inspect and fix any failure, then select the next behavior.
 
-#### Correct answer to Question 33: D
+#### Correct answer to question 33: D
 
-To guarantee the format before the coordinator uses the results, deterministic validation is needed: a PostToolUse hook on the Task calls that parses the `ChronologyCard`, verifies required fields and references, and fails or requests repair.
-
-Telling synthesis to ignore malformed cards still lets bad data into the coordinator context. Prompt rules with self-checks rely on the model and are not guaranteed. A separate reviewer agent adds an approval message but does not block or correct invalid output.
+The right approach is an iterative test-driven loop, one behavior at a time with immediate execution of the relevant test, so each failure can be traced to a specific change. Waiting for nightly CI or generating everything in one pass delays the feedback and mixes the causes of failures together.
 
 ## Scenario: Structured Data Extraction
 
@@ -652,115 +617,117 @@ Telling synthesis to ignore malformed cards still lets bad data into the coordin
 
 You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
-A healthcare analytics team uses Claude to extract medication-change events from de-identified clinician notes. Each extracted event is stored as JSON and later used as labeled examples to train a smaller classifier that detects dose increases, discontinuations, and substitutions. The JSON schema validation is reliable, but reviewers worry that some extracted events are plausible-looking yet not clearly supported by the note. Which approach is best for preparing these records for model training?
+A legal operations team uses Claude to extract renewal terms from commercial lease PDFs into a JSON object validated by a schema. The schema usually passes, but `renewalNoticeWindowDays` is unreliable: clauses such as “tenant must notify landlord no later than three months before the end date,” “90 days prior written notice,” and “notice by the first day of the final quarter” are sometimes omitted, sometimes copied as text, and sometimes normalized to an integer. The needed information is usually present, but the wording varies across landlords. What is the best prompt-engineering change to improve consistency for this field?
 
-- **A.** Track the extractor’s overall F1 score on a monthly benchmark and allow any schema-valid record into the corpus as long as the aggregate metric stays above the team’s target.
-- **B.** Lower the inclusion threshold so the corpus captures more rare procedure mentions, then rely on the downstream model to generalize away occasional incorrect examples during training.
-- **C.** Require each accepted snippet to carry a calibrated confidence score and source span, use conservative thresholds for automatic inclusion, and audit sampled records periodically.
-- **D.** Reuse the production extraction workflow unchanged because it already validates JSON shape, retries malformed responses, and logs document-level processing status.
+- **A.** Add representative few-shot examples that map complete lease excerpts to the exact JSON expected, including notice wording variants and null cases.
+- **B.** Move the extraction job to a larger Claude model so it can infer the intended normalization rules from the lease language without additional examples.
+- **C.** Change the JSON schema so `renewalNoticeWindowDays` is always required and restricted to an integer, then reject any output that does not include it.
+- **D.** Lower temperature to 0 and keep the current prompt unchanged so Claude produces the same `renewalNoticeWindowDays` value whenever similar text appears.
 
-#### Correct answer to Question 34: C
+#### Correct answer to question 34: A
 
-Training data must be high quality: errors propagate into the trained model. You need traceability (source span), calibrated confidence with conservative inclusion thresholds, and periodic human audits.
+The information is there, but the normalization is inconsistent ("three months", "90 days", "first day of the final quarter"). Few-shot examples that show how different phrasings map to the integer, and when to use null, teach the transformation. A bigger model doesn't define the rules, a stricter schema forces hallucinated values, and temperature 0 doesn't make it correct.
 
-A good aggregate F1 score can hide specific errors. Lowering the inclusion threshold reduces quality and assumes the model will "generalize away" noise. Reusing the production workflow unchanged validates only JSON shape, which says nothing about whether the content is supported by the note.
-
-## Scenario: Structured Data Extraction
+## Scenario: Code Generation with Claude Code
 
 ### Question 35
 
-You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
-A finance team is building a Claude-based pipeline to extract purchase order numbers, line-item totals, tax amounts, payment terms, and remittance addresses from 250,000 vendor invoices into a JSON-schema-validated accounts payable system. The archive includes emailed PDFs, OCR from paper scans, international invoices, and several vendor-specific layouts. What is the best approach before running the full historical backfill?
+Your team maintains an on-prem payments library used by five product groups. Its reference material includes thousands of Markdown files for settlement flows, compliance notes, connector quirks, and version-specific upgrade instructions. Developers want Claude Code to consult this material during refactors, but they do not want unrelated pages to displace source files from the conversation. Which configuration is the best fit?
 
-- **A.** Pilot on a stratified sample of invoices, review the JSON outputs against the source files, then adjust schema and prompt before the backfill.
-- **B.** Start the production batch with monitoring enabled, then use any failures or downstream complaints from the accounting system to tune the prompt afterward.
-- **C.** Test the workflow on one recently issued invoice from the standard template, confirm that it passes schema validation, then process the remaining archive.
-- **D.** Proceed directly with the full invoice archive because a well-specified JSON schema and a capable model should generalize across the document set.
+- **A.** Configure Claude Code to prepend the complete documentation bundle to each session so the model can answer without making additional retrieval calls.
+- **B.** Create a custom MCP tool named `lookup_manuals` that accepts broad task descriptions and returns synthesized guidance from the documentation for every code generation request.
+- **C.** Publish the manuals from an MCP server as resources with a searchable catalog by product, version and topic, so Claude fetches only relevant pages.
+- **D.** Add a generated section to `CLAUDE.md` containing links and summaries for every manual page, regenerated nightly as products and versions change.
 
-#### Correct answer to Question 35: A
+#### Correct answer to question 35: C
 
-Before a large, heterogeneous backfill (PDFs, OCR, international invoices, varied layouts), a pilot on a stratified sample with manual review against the sources is needed to refine schema and prompt.
-
-Starting production with monitoring uses production as a test. Testing one standard invoice does not represent the variety. Running the full archive directly assumes that schema plus model is enough without empirical verification.
-
-## Scenario: Claude Code for Continuous Integration
-
-### Question 36
-
-You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
-
-A repository’s CI review step uses Claude Code to comment on pull requests. The platform team wants Terraform changes under `infra/terraform/` reviewed for state and provider risks, backend TypeScript under `packages/api/` checked against internal error-handling conventions, and Jupyter notebooks under `notebooks/` reviewed only for reproducibility notes. Which configuration approach should you use so Claude Code applies these standards automatically according to the files changed?
-
-- **A.** Create rule files under `.claude/rules/` with path globs such as `infra/terraform/**/*.tf`, each holding the review guidance for that area.
-- **B.** Place separate `CLAUDE.md` files inside `infra/terraform/`, `packages/api/`, and `notebooks/` so each directory carries its own local review instructions.
-- **C.** Define `/review-infra`, `/review-api`, and `/review-notebooks` commands in `.claude/commands/` and have reviewers rely on the matching command for each pull request.
-- **D.** Add a single `.claude-policy.yml` file at the repository root with `if path startsWith(...)` branches that switch review criteria for each folder.
-
-#### Correct answer to Question 36: A
-
-Rule files in `.claude/rules/` with `paths` globs are applied automatically according to the changed files: exactly the requested path-based behavior, across multiple directories and file types.
-
-Separate `CLAUDE.md` files per folder work by directory but are less precise than globs by extension (e.g., `*.tf`, `*.ipynb`). Dedicated slash commands require manual invocation. A `.claude-policy.yml` file with path branches does not exist.
-
-## Scenario: Developer Productivity with Claude
-
-### Question 37
-
-You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
-
-A Claude Agent SDK-based repository assistant needs to allow deployments from `release/*` branches. The setting lives in an existing `deploy-rules.jsonc` file that includes maintainer comments about production safeguards and uses a consistent indentation pattern that differs from the project formatter. What is the best editing strategy for the agent?
-
-- **A.** Rewrite `deploy-rules.jsonc` with sorted keys, standardized two-space indentation, and no comments while adding the new branch pattern.
-- **B.** Ask the user to choose a preferred JSONC formatting convention before changing the branch rule, even though the file already has a consistent style.
-- **C.** Read `deploy-rules.jsonc`, update only `protectedBranches` to include `release/*`, and keep comments, ordering and indentation intact.
-- **D.** Create a new `deploy-rules.generated.jsonc` with the revised branch rule and configure the workflow to load it before the original file.
-
-#### Correct answer to Question 37: C
-
-When editing an existing configuration file, the change should be minimal and targeted: read the file, update only the needed array, and preserve comments, ordering and indentation (the comments contain important safety information).
-
-Rewriting the file with sorted keys and no comments reformats it and deletes maintainer comments. Asking the user about formatting requests an unnecessary decision, since the file already has a consistent style. A separate generated file creates a duplicate and an ambiguous loading order.
+For a large documentation base, the right approach is on-demand access. Expose the documents as MCP resources with a searchable catalog so Claude fetches only the relevant pages, without filling the context. Preloading everything or listing everything in CLAUDE.md wastes context, and a tool that returns "synthesized guidance" is opaque and imprecise.
 
 ## Scenario: Multi-Agent Research System
 
-### Question 38
+### Question 36
 
 You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
-In a market research system, a SourceCheck subagent verifies quotations from embargoed participant interview transcripts before the synthesis agent writes a trend report. The web-search, synthesis, and report agents should never be able to browse those transcripts, and even SourceCheck should see only excerpts approved for the current client engagement. Which design is the best approach for securing SourceCheck’s access?
+A policy-intelligence team uses a coordinator agent to monitor new regulations across 40 jurisdictions. Each night, web and document subagents process tens of thousands of notices and produce structured JSON summaries; each morning, analysts open a dashboard, ask the coordinator why certain items were escalated, and request quick changes to the cited briefing. Which invocation plan best balances cost, volume, and latency for this workflow?
 
-- **A.** Give the SourceCheck subagent the full document repository toolset, but include system instructions telling it to open embargoed survey files only when the coordinator says they are needed.
-- **B.** Allow the SourceCheck subagent to retrieve complete embargoed survey files, then have the synthesis subagent redact fields that should not appear in the final research brief.
-- **C.** Place all embargoed survey tools on a separate MCP server available only to the research workspace, and let any subagent connected to that server call whichever repository tools it exposes.
-- **D.** Give the SourceCheck subagent only a scoped `fetch_approved_excerpt` tool that verifies the study ID and project clearance, returns only the permitted passage, and logs each access.
+- **A.** Use Batch API jobs for overnight corpus expansion, entity extraction and per-source relevance scoring, and real-time calls for coordination, synthesis planning and revisions.
+- **B.** Use Batch API jobs for every agent call, including coordinator routing, synthesis planning, and analyst follow-up edits, because the lower per-call cost is the main constraint at this processing volume.
+- **C.** Use real-time invocations for the first coordinator pass, then avoid Batch API entirely because multi-agent loops with delegated subagents require immediate responses at every step.
+- **D.** Use real-time invocations for all web retrieval review, extraction, scoring, coordination, synthesis, and report editing so the architecture has one consistent execution mode end to end.
 
-#### Correct answer to Question 38: D
+#### Correct answer to question 36: A
 
-Access to sensitive data must be limited at the tool level (least privilege): SourceCheck receives only a scoped tool that checks clearance, returns only the permitted excerpt and logs every access.
+The Batch API suits large volumes that aren't urgent (the nightly processing). Interactive work by analysts in the morning, and the coordinator's decisions, need real-time calls. Using batch for everything makes the interactive work slow, and real-time for everything wastes money at high volume.
 
-Giving the full toolset with prompt instructions relies on the prompt to protect embargoed data. Retrieving complete files and redacting later exposes the data and redacts too late. A separate MCP server for the workspace grants access to every connected agent, without per-agent or per-engagement scoping.
+## Scenario: Code Generation with Claude Code
 
-## Scenario: Structured Data Extraction
+### Question 37
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
+Your team has a Claude Code slash command `/lint-fix` that should repair JavaScript lint errors before Claude proposes any code changes. The workspace exposes several MCP tools, including `prettier_format`, `ts_typecheck`, and `eslint_autofix_runner`, but this command must always run `eslint_autofix_runner`; other commands should still be free to choose tools normally. Which configuration best ensures predictable tool use for `/lint-fix`?
+
+- **A.** Shorten the system prompt for `/lint-fix` so Claude has fewer instructions to consider, relying on the shorter prompt to make it pick `eslint_autofix_runner`.
+- **B.** Add a `CLAUDE.md` note stating that every exposed code-quality tool is mandatory for `/lint-fix`, including `prettier_format`, `ts_typecheck`, and `eslint_autofix_runner`.
+- **C.** Give `prettier_format`, `ts_typecheck`, and `eslint_autofix_runner` the same description, such as “checks and improves code quality,” so Claude treats them uniformly.
+- **D.** Configure the `/lint-fix` command to set `tool_choice` to the exact `eslint_autofix_runner` tool, keeping the tool descriptions clear about when each one should be used.
+
+#### Correct answer to question 37: D
+
+`tool_choice` set to a specific tool forces it to be called deterministically. Setting it only in the `/lint-fix` command leaves the other commands free. Shortening the prompt or making descriptions identical makes things worse, and a note in CLAUDE.md is neither selective nor enforced.
+
+## Scenario: Claude Code for Continuous Integration
+
+### Question 38
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
+A Claude Code CI workflow runs an MCP tool named `api-contract-diff` on each changed OpenAPI specification before posting pull request feedback. For `services/catalog/openapi.yaml`, the tool returns this structured error:
+
+```json
+
+{
+
+"message": "Recursive schema expansion exceeded the analyzer limit",
+
+"isRetryable": false,
+
+"errorCategory": "analysis_limit_exceeded"
+
+}
+
+```
+
+Several other changed specs have not been analyzed yet. What should the workflow do next?
+
+- **A.** Schedule several more attempts for the catalog spec because MCP tool failures may clear when worker load, cache state, or network conditions change.
+- **B.** Mark the catalog API check as needing manual review with `analysis_limit_exceeded`, do not re-invoke the diff tool for that file, and continue with the rest.
+- **C.** Treat the exception like any other tool crash, abort the contract-review stage, and rerun the whole CI job with the default exponential backoff policy.
+- **D.** Add the full error payload to the PR summary, leave the catalog file in the standard retry queue, and continue processing the remaining changed specs.
+
+#### Correct answer to question 38: B
+
+The error is structured, not retryable, and of type `analysis_limit_exceeded`. Calling the tool again on that file is pointless. Mark it for manual review with the category, then continue with the other specs. Aborting everything or leaving the file in the retry queue ignores the error's semantics.
+
+## Scenario: Customer Support Resolution Agent
 
 ### Question 39
 
-You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
-A claims intake team uses Claude to extract policyholder details from uploaded loss notices, adjuster notes, and scanned repair estimates. During testing, the same packet sometimes contains different insured addresses, such as a mailing address in the notice and a property address in the estimate. The claims platform can automatically route records to a review queue when the JSON output marks a field as uncertain.
+A return-resolution agent handles chats where customers often change their explanation midstream. In one trace, the agent calls get_customer to verify the account and lookup_order to retrieve delivery status, payment method, and return-window details; later in the same chat, it calls the same tools again before drafting the refund note, checking exception eligibility, and deciding whether to escalate. Which configuration best reduces this repeated lookup latency while keeping the agent’s decisions grounded in the retrieved records?
 
-Which JSON schema design is the best choice for the `insured_address` field?
+- **A.** Enable a five-minute cache inside the MCP server for get_customer and lookup_order, and continue instructing the agent to call the tools whenever it needs those fields.
+- **B.** Cache only missing-customer and order-not-found responses from the MCP tools, so the agent avoids retrying unavailable records during the same return or refund conversation.
+- **C.** Treat prior get_customer and lookup_order outputs as case-scoped conversation state and check them before repeating an identical call; use server TTL caching only as a backup.
+- **D.** Keep the workflow unchanged because the tool responses usually return in less than a second, and rely on the agent to complete the extra checks without adding explicit reuse behavior.
 
-- **A.** Store `insured_address` as the address string that appears most often across the packet, with validation passing when any address occurs twice.
-- **B.** Store `insured_address` as the first address Claude encounters in the packet, using the upload order as the tie-breaker for conflicting values.
-- **C.** Make `insured_address` required and reject the entire extraction whenever Claude finds more than one plausible address in the submission packet.
-- **D.** Model `insured_address` as an object with `normalized_value`, `candidates` (each address found, with its source section), `has_conflict` and `conflict_note`.
+#### Correct answer to question 39: C
 
-#### Correct answer to Question 39: D
-
-Conflicting values must be modeled, not hidden: an object with a normalized value, a list of candidates with their source, and conflict flags lets the platform route uncertain records to review.
-
-Choosing the most frequent or the first address picks a value heuristically and loses the conflict. Rejecting the whole extraction whenever several addresses appear discards everything instead of reporting the field-level uncertainty.
+The data has already been retrieved in the same conversation. Treat it as case state and reuse it before repeating identical calls. That cuts latency while the decisions stay based on the actual records. Server-side caching is a secondary optimization, caching only negative responses doesn't help, and doing nothing ignores the problem.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -768,132 +735,118 @@ Choosing the most frequent or the first address picks a value heuristically and 
 
 You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
-A monorepo has a root `CLAUDE.md` with baseline engineering practices and a `packages/ui/CLAUDE.md` with component-library guidance. The team also keeps scoped conventions with selectors such as `packages/ui/**`, `**/*.tsx`, `**/*.stories.tsx`, `apps/api/**`, and `migrations/**/*.sql`. A developer asks Claude Code to update `packages/ui/src/components/DatePicker.stories.tsx`. Which configuration behavior should you expect?
+A platform team is building a Claude Code slash command, `/add-audit-event`, for a repository that always uses the same delivery path: first create the event schema and registration files, then implement the emitter calls in the affected module, and finally generate regression tests from the resulting diff. The output of each phase becomes the input to the next. Which orchestration approach is the better trade-off for this command?
 
-- **A.** Claude Code should select the most specific matching rule, such as the Storybook rule, and ignore broader matches like `packages/ui/**` or `**/*.tsx`.
-- **B.** Claude Code should load every convention file in the repository, including backend, database, mobile, and deployment rules, so the edit is checked against the full project policy set.
-- **C.** It combines the root instructions, `packages/ui/CLAUDE.md`, and any scoped rules whose globs match the stories file, such as TSX or Storybook conventions.
-- **D.** Claude Code should use only the root `CLAUDE.md` unless it explicitly links to `packages/ui/CLAUDE.md` and imports the Storybook convention file by name.
+- **A.** Avoid prompt chaining unless the team can predefine every possible file change, error condition, and test case the command might encounter.
+- **B.** Use prompt chaining: the scaffolding step's output feeds the implementation step, whose completed changes then feed test generation.
+- **C.** Use dynamic task decomposition so Claude can decide at runtime whether scaffolding, implementation, or tests should happen first for each new service.
+- **D.** Treat prompt chaining and dynamic task decomposition as equivalent, and select whichever is simpler to configure in the team’s CLAUDE.md file.
 
-#### Correct answer to Question 40: C
+#### Correct answer to question 40: B
 
-In Claude Code instructions are cumulative: the root `CLAUDE.md`, the `CLAUDE.md` of the folder containing the file, and all scoped rules whose globs match the path (`packages/ui/**`, `**/*.tsx`, `**/*.stories.tsx`).
-
-Selecting only the most specific rule is wrong: there is no "most specific wins" selection, all matching rules apply. Loading every convention file brings in irrelevant rules. Requiring explicit links is wrong: subfolder `CLAUDE.md` files and scoped rules load without them.
-
-## Scenario: Developer Productivity with Claude
-
-### Question 41
-
-You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
-
-A platform team adds an MCP server to Claude Code with a tool called `api_migration_risk`. The tool can compare OpenAPI specs, generated SDKs, route handlers, serialization code, and release notes to identify which downstream services may break after an endpoint change. In practice, when engineers ask, “Will renaming `customerStatus` in `/v2/accounts` break any clients?”, the agent usually searches the repo with Grep and returns matching files. The current MCP tool description is: “Finds API changes.” What is the best way to improve the agent’s tool selection?
-
-- **A.** Split the MCP tool into separate tools for routes, schemas, generated clients, and changelog entries, so the agent has more specific operations to choose from for each artifact type.
-- **B.** Add a project-level instruction telling the agent to prefer the API migration MCP server before using Bash or Grep for any question that mentions endpoints, clients, or schemas.
-- **C.** Remove access to the built-in Grep tool for repositories that use the API migration server, so the agent must call the MCP tool whenever engineers ask about endpoint or schema changes.
-- **D.** Rewrite the MCP tool's name, description and input schema to explain its API compatibility analysis across clients and versions, and the migration-risk summary it returns.
-
-#### Correct answer to Question 41: D
-
-The agent picks tools based on their metadata. A description like "Finds API changes" does not communicate the tool's value, so the agent falls back to Grep. Rewriting name, description and input schema to explain what it analyzes and what it returns makes it the natural choice.
-
-Splitting the tool into narrower ones fragments the capability without fixing the poor description. A project instruction to prefer the server is a workaround that does not address the cause. Removing Grep takes away a useful tool and forces behavior rigidly.
+The flow is fixed and predictable, and each phase's output feeds the next. That is the textbook case for prompt chaining (a sequential pipeline). Dynamic decomposition is for open-ended tasks where the steps aren't known in advance. The two approaches aren't equivalent, and you don't need to predefine every case to use chaining.
 
 ## Scenario: Customer Support Resolution Agent
 
-### Question 42
+### Question 41
 
 You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
-Your Claude Agent SDK support agent handles subscription disputes for a streaming service. In a pilot, it correctly resolves most “I forgot to cancel” cases, but it sometimes calls process_refund after a user says their account was taken over, the card was charged from a new country, and two recent password reset attempts failed. You want to preserve high first-contact resolution for ordinary billing issues while preventing risky refunds from being issued automatically. Which design is the best approach?
+A support team is tuning a Claude Agent SDK workflow for a new “case closer” agent. In one pilot conversation, `lookup_order` receives a warehouse API maintenance response, `process_refund` receives a card-network hard decline, and `get_customer` receives an account record that has been merged into another profile. Which MCP tool error-handling configuration would best support reliable retry, alternate-path, and escalation decisions?
 
-- **A.** Update the system prompt to say, “Be careful with fraud, suspicious accounts, and unusual refund requests; escalate anything risky,” and allow the agent to decide whether process_refund is appropriate in each conversation.
-- **B.** Name observable escalation triggers in the prompt and add a PreToolUse guard on process_refund that blocks refunds on signals like unauthorized-charge claims, fraud flags or repeated failed identity checks.
-- **C.** Require a supervisor approval step for every process_refund call, regardless of customer history, refund amount, dispute reason, or account risk indicators, so no refund can be issued autonomously by the agent.
-- **D.** Accept that some fraud-related refund attempts will slip through because ambiguous support conversations cannot be reliably classified, and focus post-launch monitoring on reversing incorrect refunds after they occur.
+- **A.** Let backend SDK exceptions propagate out of the MCP tool unchanged so the Agent SDK receives the original stack trace, exception class, and default framework error message.
+- **B.** Return HTTP 200-style tool results for every backend outcome, with fields such as `refundStatus: blocked` or `orderLookupStatus: unavailable` for the agent to interpret from the normal result payload.
+- **C.** Have each tool return a plain-language string such as `payment service is down` or `account cannot be changed` whenever something goes wrong, and rely on the agent prompt to parse the text.
+- **D.** Define a shared MCP error response contract for all tools that sets `isError: true` with `errorCategory`, `isRetryable`, a stable code, and a concise explanation for next steps.
 
-#### Correct answer to Question 42: B
+#### Correct answer to question 41: D
 
-Combine two levels: prompt rules with observable triggers (guiding the model) and a deterministic PreToolUse guard on `process_refund` that blocks risky refunds and redirects to `escalate_to_human`. Ordinary cases stay automated.
-
-A generic "be careful with fraud" prompt is vague and unenforceable. Supervisor approval for every refund destroys first-contact resolution. Accepting that some fraud slips through accepts preventable losses.
-
-## Scenario: Multi-Agent Research System
-
-### Question 43
-
-You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
-
-A coordinator agent assigns a web-investigation subagent to verify whether a startup’s report about “low-carbon cement credits” is supported by public sources. Initial searches may uncover alternate program names, regional policy differences, or sources that contradict the report’s terminology. Which design is the best approach for this subagent’s search workflow?
-
-- **A.** Configure the coordinator to generate a broad batch of likely searches at the start, have the subagent run all of them in parallel, and summarize whatever comes back.
-- **B.** Configure the web-investigation subagent with search and fetch tools, pass it the claim and citation requirements, and let it iterate on queries until it has enough evidence.
-- **C.** Configure the coordinator to call the web-investigation subagent once per query, review each returned result itself, and re-prompt the subagent with the next query when needed.
-- **D.** Configure the web-investigation subagent to follow a fixed sequence: search the exact claim text, fetch the top three pages, extract snippets, and return without revising the plan.
-
-#### Correct answer to Question 43: B
-
-Web research is exploratory: results reveal alternate names and contradictions that call for new queries. The subagent needs its tools, the goal and the citation requirements, plus the autonomy to iterate until it has enough evidence.
-
-Generating all searches up front fixes the queries before learning anything from the results. Calling the subagent once per query turns the coordinator into a micromanager and wastes its context. A fixed search-and-fetch sequence cannot adapt.
-
-## Scenario: Developer Productivity with Claude
-
-### Question 44
-
-You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
-
-A developer productivity team integrates an MCP server into Claude Code with a tool named `ci_failure_triage`. The tool can inspect CI logs, recent commits, flaky-test records, dependency changes, and code ownership to explain why a test suite likely failed. However, when engineers ask questions such as “Why did `InventoryReconcileTest` start failing after yesterday’s merge?”, the agent usually runs Grep over the repository and pasted logs, then returns scattered matches. The current tool description is only: “Looks up test failures.” What is the best approach to improve the agent’s tool selection?
-
-- **A.** Rewrite the tool metadata to say `ci_failure_triage` correlates failing tests with recent commits, flaky-test history, ownership and dependency changes, returning ranked hypotheses with evidence.
-- **B.** Remove the built-in Grep tool from the agent profile whenever the CI MCP server is enabled, so test-debugging requests cannot be satisfied by ordinary text search across logs and source files.
-- **C.** Add a project-level instruction that says, “For any failing test question, call `ci_failure_triage` before using built-in tools,” while keeping the MCP tool name, description, and schema unchanged.
-- **D.** Replace `ci_failure_triage` with several narrower MCP tools such as `get_flaky_tests`, `find_recent_commits`, `lookup_test_owner`, and `scan_ci_logs`, each with the same short description format.
-
-#### Correct answer to Question 44: A
-
-The tool exists but the agent does not choose it because the description ("Looks up test failures") is too poor. Describing what it correlates and what it returns (ranked hypotheses, evidence, next commands) improves tool selection.
-
-Removing Grep when the CI server is enabled takes away a tool that is still useful. A project instruction to call the tool first imposes a rule without making the tool understandable. Replacing it with narrower tools fragments it, with descriptions just as poor.
+A shared error contract (`isError: true`, `errorCategory`, `isRetryable`, a stable code, and an explanation) lets the agent tell a temporary outage (retry), a hard decline (alternate path or communicate it), and a merged account (escalation or alternative lookup) apart. Raw exceptions, fake 200 results, or free text all force unreliable interpretation.
 
 ## Scenario: Code Generation with Claude Code
 
-### Question 45
+### Question 42
 
 You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
 
-Your team uses a Claude Code slash command, `/gen-validator`, to create Kotlin validators for checkout API payloads. The generated classes compile and match the project structure, but they repeatedly disagree with product rules for edge cases such as zero-value gift card orders, absent currency fields, and mutually exclusive discount types. Which prompt improvement is the best next step to make the generated validators more consistently correct?
+Mateo works in a data-platform repository that includes a committed `.mcp.json` for a metrics MCP server everyone uses during debugging. He wants Claude Code to also connect to a Confluence MCP server backed by his own account so he can pull notes from a private architecture space while planning refactors. The rest of the team should not inherit this server or need his Confluence setup. Where should he configure this MCP server?
 
-- **A.** Revise `/gen-validator` with representative request/response examples and a few executable tests for boundary amounts, missing currency codes and discounts.
-- **B.** Require `/gen-validator` to enter plan mode for every validator task and approve a step-by-step implementation outline before any code is generated.
-- **C.** Update `CLAUDE.md` with stricter naming conventions for validator classes, helper methods, and error constants so generated files match the team’s style guide.
-- **D.** Increase the maximum repository context loaded by `/gen-validator` so Claude Code can inspect more controllers, DTOs, and prior validator files before writing code.
+- **A.** Create a project-local `.mcp.local.json` file and put the Confluence MCP server definition there.
+- **B.** Commit the Confluence MCP server to the repository's `.mcp.json` alongside the shared metrics server.
+- **C.** Store the Confluence MCP server in `.claude/mcp-personal.json` under the repository root.
+- **D.** Add the Confluence MCP server to the user-level configuration in `~/.claude.json`.
 
-#### Correct answer to Question 45: A
+#### Correct answer to question 42: D
 
-The code is structurally correct but violates product rules on edge cases: the model does not know the expected semantics. Concrete examples and executable tests on boundary cases (zero amounts, missing currency, conflicting discounts) define the expected behavior unambiguously.
+Personal configurations that shouldn't be shared go in user scope (`~/.claude.json`), or the local scope that Claude Code stores there as well. Committing to `.mcp.json` imposes the server on the team. `.mcp.local.json` and `.claude/mcp-personal.json` are not standard MCP configuration files.
 
-Mandatory plan mode adds process but not knowledge of the rules. Stricter naming conventions in `CLAUDE.md` touch only style. Loading more repository context adds files that do not contain the missing product rules.
+## Scenario: Structured Data Extraction
+
+### Question 43
+
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
+
+A commercial insurance platform uses Claude to extract quote data from broker PDFs into a JSON object with fields such as `base_premium`, `policy_fee`, `broker_fee`, and `annual_total`. A downstream binding system rejects records when `annual_total` does not equal the deterministic sum of the fee fields. In one batch, several PDFs show a printed annual total that differs from the calculated sum by small but material amounts, and the values may affect legally binding policy documents. What is the best approach for this extraction workflow?
+
+- **A.** Store the reported premium, fees and total as extracted, add a calculated total and mismatch flag, and route material differences to underwriting review.
+- **B.** Add more few-shot examples showing correct premium-plus-fee arithmetic so Claude learns to output totals that match the schema before records are submitted.
+- **C.** Replace the extracted total with the sum of the extracted premium and fees whenever the JSON schema's arithmetic check fails, then pass the corrected record downstream.
+- **D.** Send any inconsistent record to a second Claude call and treat the second model's chosen total as authoritative if it returns valid JSON.
+
+#### Correct answer to question 43: A
+
+Don't silently "fix" source data that has legal value. Store the extracted values exactly as printed, add the calculated total and a mismatch flag, and send material differences to human review. Overwriting the total, teaching the model to "make the numbers add up", or trusting a second model hides real discrepancies.
 
 ## Scenario: Claude Code for Continuous Integration
 
-### Question 46
+### Question 44
 
 You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
 
-A CI workflow runs Claude Code after each pull request to suggest pytest coverage for modified Python services. The tests are syntactically valid, but reviewers repeatedly comment that they ignore the project’s fixture conventions, use different test name phrasing, avoid parametrized cases, and miss the usual boundary-condition checks. What is the best prompting approach to make the generated tests match the team’s established test style?
+A fintech team is adding Claude Code to its CI checks for pull requests that modify transaction-processing services. The team wants separate assessments for database migration safety, race-condition risk, test coverage impact, and logging/metrics completeness, with each assessment using its own rubric and the final result posted as one concise comment on the pull request. Which architecture should they choose?
 
-- **A.** Add a broader testing section to CLAUDE.md describing the repository’s quality standards, then let the CI job rely on that global guidance when creating tests.
-- **B.** Include representative pytest files or snippets in the CI prompt, and ask Claude Code to follow their fixture usage, naming, parametrization style and coverage depth.
-- **C.** Write a concise paragraph in the prompt explaining that tests should be idiomatic, readable, isolated, and cover normal, boundary, and failure cases.
-- **D.** Tell Claude Code to inspect the repository and make the new tests look like the existing test suite without providing any selected examples in the prompt.
+- **A.** Create a shared Claude Code review room where schema, concurrency, test, and observability personas all inspect the same conversation history and collaboratively edit a single findings list.
+- **B.** Configure one comprehensive pull-request reviewer agent with a long checklist covering schema migrations, concurrency hazards, test impact, and observability requirements, and have it produce the complete verdict alone.
+- **C.** Use a coordinator agent that receives the pull request diff, dispatches separate focused reviews to schema-migration, concurrency, test-impact, and observability subagents in isolated contexts, then merges their findings into one PR comment.
+- **D.** Run the pull request through a fixed sequence where one agent first evaluates schema migrations, passes its notes to a concurrency reviewer, then continues through test-impact and observability reviewers before posting the final comment.
 
-#### Correct answer to Question 46: B
+#### Correct answer to question 44: C
 
-To replicate a specific style (fixtures, naming, parametrization, coverage depth), selected examples in the prompt are the most effective technique: they show concretely what generic descriptions cannot convey.
+Independent assessments with distinct rubrics call for a coordinator that delegates to specialized subagents in isolated contexts (no cross-contamination), then aggregates the results into one comment. A shared room introduces bias, one reviewer with a long checklist dilutes attention, and a sequential chain makes the reviews depend on each other.
 
-A broader testing section in `CLAUDE.md` or a paragraph about idiomatic tests describes quality in abstract terms that do not capture the team's conventions. Asking Claude to inspect the repository on its own does not tell it which examples are representative.
+## Scenario: Claude Code for Continuous Integration
+
+### Question 45
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
+A platform team is adding Claude Code to a release-gating workflow for a service repository. For each pull request, they want independent checks for API compatibility, test adequacy, deployment-risk indicators, and coding style, each using a different rubric, before posting a single concise approval/blocking summary in the PR. Which architecture should they choose?
+
+- **A.** Place all Claude Code reviewers in the same long-lived conversation so API, testing, deployment, and style reviewers can see and respond to one another’s intermediate notes before posting feedback.
+- **B.** A coordinator agent receives the PR diff, launches separate subagents for API compatibility, test adequacy, deployment risk and style with isolated prompts, then merges findings into one comment.
+- **C.** Run a single Claude Code review chain where API compatibility findings are produced first, then test adequacy, then deployment-risk, then style, with each stage editing the previous stage’s conclusions.
+- **D.** Create one general-purpose Claude Code reviewer with a comprehensive rubric covering API compatibility, test adequacy, deployment-risk, and style, and have it produce the final PR comment directly.
+
+#### Correct answer to question 45: B
+
+Independent checks with different rubrics mean parallel subagents with isolated prompts and contexts, coordinated by an agent that merges the findings into one summary. Shared conversations, chains that edit earlier conclusions, or a single general-purpose reviewer lose the independence and focus.
+
+## Scenario: Code Generation with Claude Code
+
+### Question 46
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
+A data platform team is adding a Claude Code slash command, `/generate-migration`, that creates a draft database migration checklist for any branch in the `warehouse-core` repository. The command should be available to all contributors after they clone the repo and pull the latest changes. Where should the command definition be placed?
+
+- **A.** .claude/commands/generate-migration.md at the repository root, then commit it with the rest of the project files.
+- **B.** ~/.claude/commands/generate-migration.md on the lead developer’s machine, then ask teammates to copy it locally.
+- **C.** .claude/generate-migration.md at the repository root, then commit it so the team receives it.
+- **D.** tools/claude-commands/generate-migration.md at the repository root, then document the folder in the README.
+
+#### Correct answer to question 46: A
+
+Project slash commands live in `.claude/commands/` in the repository and are committed, so everyone gets them with a pull. `~/.claude/commands/` is personal. `.claude/generate-migration.md` or a custom folder are not recognized as commands.
 
 ## Scenario: Structured Data Extraction
 
@@ -901,237 +854,203 @@ A broader testing section in `CLAUDE.md` or a paragraph about idiomatic tests de
 
 You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
-A finance team is using Claude to extract vendor name, invoice total, tax amount, and purchase order number into a JSON schema from expense receipts. The intake folder contains a mix of emailed PDF receipts, photographed paper slips with glare, and old scanned invoices with faded text; the accounts payable system needs to decide which extracted records can be posted automatically and which need review. Which approach is best?
+A healthcare analytics team uses Claude to extract discharge-note data into a JSON object with required fields `diagnosis`, `medicationChanges`, `followUpAction`, and `riskFlags`. The JSON always validates against the schema, but a review of notes from three hospital systems shows `followUpAction` is often returned as `null` even when clinicians clearly mention it in free text, tables, or section headers with different wording. What is the best next intervention to improve extraction accuracy?
 
-- **A.** Add an ingestion stage that detects document type and quality, runs OCR when needed, and records the steps applied with each extraction.
-- **B.** Configure the pipeline to decline any receipt image below a minimum resolution or contrast threshold, accepting only clean digital PDFs for automated JSON extraction.
-- **C.** Require vendors to resubmit only high-resolution, upright, machine-generated receipts and exclude preprocessing details from the supplier payment system.
-- **D.** Send all uploaded files directly to Claude without OCR or image correction so the fastest path is always used before JSON schema validation runs.
+- **A.** Change the schema so `followUpAction` is optional and allow an empty string whenever the note does not use the exact heading expected by the downstream system.
+- **B.** Add a preprocessing step that searches for a fixed set of phrases near `followUpAction` and copies the following sentence into the JSON before validation runs.
+- **C.** Add several reviewed examples showing how to extract the same fields from different report formats, including label variants such as "discharge plan" or "next steps".
+- **D.** Automatically call Claude again whenever `followUpAction` is blank, using the same prompt and schema until the field is populated or three attempts have been made.
 
-#### Correct answer to Question 47: A
+#### Correct answer to question 47: C
 
-Inputs of varying quality call for a preprocessing stage: detect type and quality, apply OCR/cleanup when needed, and record the steps and quality signals. These signals then feed the decision between automatic posting and review.
-
-Declining low-quality images or requiring vendors to resubmit excludes legitimate documents instead of handling them. Sending everything without OCR skips preprocessing and loses the signals needed to calibrate confidence.
-
-## Scenario: Multi-Agent Research System
-
-### Question 48
-
-You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
-
-In your multi-agent research system, the report-generation subagent receives candidate citations from upstream agents and must produce a structured bibliography section with fields for citation text, source reliability, evidence role, and whether the source should be included. The JSON usually validates, but reviewers find that blog posts are sometimes treated like peer-reviewed papers, inaccessible sources are included without warnings, and sources with only tangential relevance are not downgraded. You want to improve the subagent’s consistency using few-shot prompting. Which approach is best?
-
-- **A.** Add a compact set of annotated examples of well-formed, rejected and ambiguous bibliography entries, with the exact structured output expected for each.
-- **B.** Show only polished bibliography entries from previous high-scoring reports so the subagent imitates the best final outputs without being exposed to mistakes.
-- **C.** Replace examples with a detailed JSON schema describing fields such as source_type, citation_status, confidence, and rejection_reason, then rely on validation to enforce quality.
-- **D.** Provide a library of raw source snippets and citation metadata that represent typical inputs, but omit the completed bibliography records to avoid overfitting the format.
-
-#### Correct answer to Question 48: A
-
-Effective few-shot examples cover not only ideal cases but also edge cases and negative cases: well-formed entries, downgraded or rejected entries, ambiguous sources, each with the exact expected output. This teaches the decision criteria.
-
-Showing only polished entries teaches nothing about when to downgrade or reject. A detailed JSON schema validates structure but not judgment. Raw snippets without completed entries provide inputs without the expected outputs, so they do not demonstrate the behavior.
-
-## Scenario: Code Generation with Claude Code
-
-### Question 49
-
-You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
-
-A team defines a custom Claude Code skill in `.claude/skills/dependency-review/SKILL.md` for investigating transitive package updates before editing code:
-
-```yaml
----
-name: dependency-review
-description: Inspect lockfile changes and identify risky package upgrades
-context: fork
----
-```
-
-A developer invokes this skill midway through a long feature implementation session. What does the `context: fork` setting do?
-
-- **A.** It lets the dependency-review skill append all investigation notes directly into the active conversation, so later prompts automatically include every detail it inspected.
-- **B.** It runs the dependency-review skill in a separate sub-agent context, so its exploratory file reads and intermediate findings do not become part of the main session history.
-- **C.** It creates a temporary Git fork of the repository, so the dependency-review skill can test package changes without touching the developer's working tree.
-- **D.** It starts the dependency-review skill as a concurrent worker, so the developer can continue issuing unrelated Claude Code commands while it runs in parallel.
-
-#### Correct answer to Question 49: B
-
-`context: fork` runs the skill in an isolated subagent context: exploratory reads and intermediate findings stay out of the main conversation, which receives only the final result. Useful in long sessions to avoid filling the context.
-
-Appending all notes to the active conversation describes the opposite behavior. A temporary Git fork confuses the term with Git. A concurrent worker is also wrong: the fork is about context isolation, not running in parallel with the main session.
-
-## Scenario: Code Generation with Claude Code
-
-### Question 50
-
-You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
-
-A backend team is adding a shared “log-inspector” MCP server so Claude Code can query sanitized production traces while developers debug service regressions. The server setup should be picked up by anyone who clones the service repository and should go through pull request review with the rest of the project configuration. Where should this MCP server configuration be placed?
-
-- **A.** Ask each engineer to add the MCP server entry to their personal `~/.claude.json` file during onboarding.
-- **B.** Add the MCP server details to `.claude/rules/api.md` so they load when developers work on API-related files.
-- **C.** Commit a `.mcp.json` with the shared MCP server definition at the root of the repository or under `.claude/`.
-- **D.** Create a `.mcp/servers.json` folder structure in the repository and store the shared MCP endpoint details there.
-
-#### Correct answer to Question 50: C
-
-A shared MCP server that must reach whoever clones the repo, with review, goes in a `.mcp.json` committed to the project.
-
-A personal `~/.claude.json` entry is unshared and unreviewed. Rules files such as `.claude/rules/api.md` are not for MCP configuration. A `.mcp/servers.json` folder is a path Claude Code does not recognize.
-
-## Scenario: Multi-Agent Research System
-
-### Question 51
-
-You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
-
-In a multi-agent research system, the synthesis subagent calls an MCP trend-extraction tool after the web and document-analysis subagents gather evidence for a report on coastal flood insurance. The tool returns `isError: false`, but several extracted themes cite nonexistent source IDs, two trend labels contradict the underlying notes, and the confidence field is replaced with free-text comments. What is the best way to handle this failure mode?
-
-- **A.** Add a coordinator hook that inspects every downstream MCP response, repairs questionable theme data centrally, and overrides subagent decisions whenever output quality looks poor.
-- **B.** Configure the tool wrapper to retry the same trend-extraction call three times automatically before the synthesis subagent is allowed to inspect the payload.
-- **C.** Abort the research run and return a user-facing outage message because malformed theme data means the system can no longer produce a trustworthy report.
-- **D.** Treat the result as suspect but nonfatal context, then choose whether to rerun with narrower inputs, request passages, or keep only verifiable themes.
-
-#### Correct answer to Question 51: D
-
-The tool returned `isError: false` but the content is semantically unreliable. The subagent with domain context should treat it as suspect but nonfatal and adapt its strategy (rerun with narrower inputs, request supporting passages, keep only verifiable themes).
-
-A coordinator hook that repairs data centrally lacks the specific context. Retrying the same call three times will likely produce the same problem. Aborting the whole run is excessive when the problem can be recovered locally.
-
-## Scenario: Claude Code for Continuous Integration
-
-### Question 52
-
-You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
-
-A CI team is piloting Claude Code reviews for a repository that includes a latency-sensitive inference service, Terraform modules, audit logging code, and a large integration-test suite. Pull requests often contain changes that touch several of these areas at once, and the team wants concise PR comments that identify real defects without flooding authors with overlapping findings. Which architecture is the best fit?
-
-- **A.** Assign the pull request to one general Claude Code reviewer with access to all repository tools and a single broad checklist covering security, performance, tests, and maintainability.
-- **B.** Run a fixed sequence where a style agent reviews first, then a security agent, then a performance agent, and finally a test agent, with each stage passing only its approved comments to the next stage.
-- **C.** Route the diff to security, performance, test-quality and maintainability agents with scoped tools and rubrics; a coordinator then merges findings, removes duplicates and checks interactions.
-- **D.** Launch separate security, performance, test-quality, and maintainability agents in parallel, then post each agent's JSON output directly to the pull request as separate review threads.
-
-#### Correct answer to Question 52: C
-
-PRs that touch several domains benefit from specialized agents with scoped tools and rubrics, plus a coordinator that merges, deduplicates and checks cross-domain interactions: in-depth coverage with concise comments.
-
-A single generalist reviewer with a broad checklist is less thorough. A fixed sequence of agents loses parallelism and filters prematurely. Posting each agent's output directly adds duplicates and noise to the pull request.
-
-## Scenario: Claude Code for Continuous Integration
-
-### Question 53
-
-You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
-
-A release pipeline now runs separate Claude Code agents for migration review, API contract checks, and changelog drafting before a merge can proceed. The migration reviewer needs database diff tools, the API reviewer needs schema and endpoint inspection tools, and the changelog writer only needs repository read access. Which configuration choice best enforces these role boundaries?
-
-- **A.** Define separate Task configurations for each reviewer agent and set each Task's allowedTools to only the commands, MCP tools, or file operations required for that agent's CI responsibility.
-- **B.** Create a shared naming convention such as qaTools, securityTools, and docsTools in the workflow design, then tell each reviewer agent to use only the group matching its assigned label.
-- **C.** Put a strict instruction in the system prompt for each reviewer agent stating that it must never call tools unrelated to its review category during pull-request checks.
-- **D.** Give every reviewer agent the complete CI toolset, but describe its role narrowly so the model chooses only the capabilities that fit the requested analysis.
-
-#### Correct answer to Question 53: A
-
-Role boundaries are enforced through configuration, not prompts: a separate Task configuration per agent with an `allowedTools` list limited to what is needed (least privilege).
-
-A naming convention or a strict system prompt instruction relies on rules the model may not follow. Giving every agent the full toolset grants full access and hopes the role description is enough.
+The value is in the document but appears under different labels and formats. Few-shot examples showing extraction from varied formats ("discharge plan", "next steps", "follow-up instructions") teach how to generalize. Making the field optional hides the problem, fixed phrases are fragile, and retrying with the same prompt doesn't change the result.
 
 ## Scenario: Structured Data Extraction
 
-### Question 54
+### Question 48
 
 You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
-A healthcare revenue team uses Claude to extract procedure dates, payer names, denial reasons, and appeal deadlines from insurance letters into a JSON-validated workflow. New payer portals have started generating letters with different section headings and more free-text policy language, but the extracted objects still usually satisfy the schema. Which monitoring strategy is most appropriate for detecting whether extraction reliability is degrading over time?
+A grants-management platform uses Claude to extract applicant details from scanned foundation applications into JSON validated by a schema. The schema accepts an `organizationType` enum with values such as `NONPROFIT_501C3`, `GOVERNMENT`, and `EDUCATIONAL_INSTITUTION`, but Claude handles this field inconsistently: “registered 501(c)(3),” “public charity,” and “NPO tax-exempt status confirmed” are sometimes omitted, sometimes copied verbatim, and sometimes normalized correctly. The relevant wording is usually present in the document. What is the best prompt-engineering change to improve consistency for this field?
 
-- **A.** Track field- and segment-level confidence continuously by vendor, document type and language; alert on sustained drops and route sampled records to validation.
-- **B.** Compare a small batch of extracted records with human annotations twice per year and adjust prompts only if the sampled error rate is higher than expected.
-- **C.** Run a complete regression test against a frozen benchmark set at the end of each release cycle and use the result as the primary signal of extraction health.
-- **D.** Monitor only JSON Schema pass rates and production exception counts, assuming extraction accuracy remains steady unless the schema or Claude prompt is changed.
+- **A.** Set temperature to 0 and keep the current prompt unchanged so identical source wording always produces the same `organizationType` value.
+- **B.** Move the workflow to the newest available Claude model so the extractor has more general reasoning capacity when it encounters unfamiliar nonprofit terminology.
+- **C.** Change the JSON schema so `organizationType` is always required and fails validation whenever the field is missing from the extracted object.
+- **D.** Add representative few-shot examples mapping excerpts to JSON, showing how terms like "NPO" or "501(c)(3)" populate `organizationType`.
 
-#### Correct answer to Question 54: A
+#### Correct answer to question 48: D
 
-Degradation shows up as semantically wrong but still schema-valid values. Continuous monitoring of field-level confidence metrics, segmented by vendor/type/language, with alerts and sampled human or benchmark validation, catches drift early.
+Inconsistent mapping to an enum from varied phrasings is solved with few-shot examples showing excerpt-to-JSON mappings with the approved enum values. Temperature 0 only makes the error deterministic, a newer model doesn't define the mapping, and a required field can push the model toward invented values.
 
-Comparing a small batch twice a year is too infrequent to catch changes. A frozen benchmark at each release does not include the new letter formats. Monitoring only schema pass rates and exceptions checks the structure, which keeps passing even as content degrades.
+## Scenario: Multi-Agent Research System
 
-## Scenario: Developer Productivity with Claude
+### Question 49
 
-### Question 55
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
-You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+In a multi-agent research system, the synthesis subagent calls an MCP tool named `buildEvidenceBundle` to retrieve source snippets for a report section. During testing, the tool sometimes receives a short-lived 503 from the internal search index or a socket timeout from the citation cache, and it also sometimes receives invalid arguments such as an empty `topic`, an unsupported `source_set`, or `max_sources: 0`. Which error-handling design is the best approach for this tool?
 
-A Claude Code agent has added a “regional invoice export” option to an internal billing app. The work changed a Python API endpoint, a SQLAlchemy query helper, a Vue component, a feature-flag YAML file, and the operator guide that lists export limitations. What is the best next step before the agent tells the engineer the feature is finished?
+- **A.** Have the coordinator rerun any failed MCP tool call three times with the same arguments, then mark the evidence bundle unavailable if all attempts produce any kind of error.
+- **B.** Have the tool keep returning a generic `ToolError`, but add prompt guidance telling the research subagents to inspect the report plan carefully and retry calls that seem temporarily broken.
+- **C.** Have the MCP tool classify errors as `transient_infrastructure` or `invalid_request`; retry socket timeouts and 503s internally with bounded backoff, and return structured validation errors naming the field.
+- **D.** Have the MCP tool return every failure immediately with the raw provider message, and require the coordinator agent to infer whether a retry, parameter change, or user-facing warning is appropriate.
 
-- **A.** Summarize the files the agent edited, note that the new code follows the existing patterns, and mark the feature complete because the implementation steps were successfully applied.
-- **B.** Ask the engineer to pull the branch, run the dashboard locally, and confirm the export results manually because they know the expected workflow better than the agent.
-- **C.** Add one new regression test for the export edge case, save it beside the existing tests, and report that the feature is verified because coverage was added for the main behavior.
-- **D.** Use Bash to run the project's relevant unit and integration tests and the build or type-check for affected packages, and review changed docs before reporting completion.
+#### Correct answer to question 49: C
 
-#### Correct answer to Question 55: D
+Different errors need different handling. Transient errors (503s, timeouts) should be retried inside the tool with bounded exponential backoff. Invalid input should not be retried; return a structured error naming the field and the correction so the agent can fix the call. Generic retries with the same arguments, generic errors, or raw messages don't allow correct recovery.
 
-Before declaring completion, the agent must verify concretely: run the relevant unit and integration tests, the build or type-check of the affected packages, and review docs/config for consistency.
+## Scenario: Structured Data Extraction
 
-Summarizing the edits and marking the feature complete declares success without verification. Asking the engineer to test locally delegates checks the agent can run itself. Adding a single regression test treats one test as full verification.
+### Question 50
 
-## Scenario: Developer Productivity with Claude
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
-### Question 56
+A controller’s office is using Claude to extract pension plan disclosures from scanned actuarial reports into JSON for a footnote automation tool. The output includes fields such as `beginning_obligation`, `service_cost`, `benefit_payments`, `ending_obligation`, `discount_rate`, `currency`, and `source_location`. The team needs a validation design that can support financial-reporting reliability and audit traceability before the data is marked approved. Which approach is best?
 
-You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+- **A.** Load all schema-valid extractions into the reporting queue and rely on the external audit team to identify any inaccurate balances during their normal year-end testing.
+- **B.** Require the extracted JSON to pass a strict schema with required numeric fields, ISO dates, currency codes, and no additional properties before loading it into the financial close system.
+- **C.** Accept records when Claude returns a high confidence score and valid citations, and only rerun extraction for outputs below the confidence threshold set by the reporting team.
+- **D.** Validate the schema, then run finance checks (sign, range, roll-forward totals), reconcile each value to cited source text or cells, and sample periodically for manual review.
 
-A Claude Agent SDK assistant helped a platform team understand how warehouse inventory events flow through a .NET service, including projections, retry queues, and generated DTOs. The investigation was saved under a session ID after the agent produced a dependency map and TODO list. Two days later, the team wants to continue generating boilerplate handlers, and the build system reports that only `src/Inventory/OrderProjector.cs` and `schemas/warehouse_events.json` changed since the saved run. What is the best approach for resuming the work?
+#### Correct answer to question 50: D
 
-- **A.** Resume the saved session and ask the agent to reread every file it inspected during the first warehouse-event analysis before doing any new work.
-- **B.** Resume the saved session and pass it the list of changed artifacts, so the agent re-checks those areas before extending its earlier map.
-- **C.** Start a brand-new session and have the agent rediscover the event pipeline from scratch, ignoring the previously saved investigation notes.
-- **D.** Resume the saved session without mentioning file changes, relying on the agent’s previous notes about projections and event schemas to remain valid.
-
-#### Correct answer to Question 56: B
-
-Resuming the session preserves the analysis work; telling the agent which files changed lets it update only the affected areas, efficiently and without relying on stale information.
-
-Rereading every file wastes time and context. A brand-new session throws away useful work. Resuming without mentioning the changes risks building on assumptions they have invalidated.
-
-## Scenario: Developer Productivity with Claude
-
-### Question 57
-
-You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
-
-A Claude Agent SDK assistant has completed a deep pass over a warehouse inventory system, using Read, Grep, Bash, and an MCP database schema server to identify concurrency hotspots, audit-log requirements, fragile stored procedures, and downstream reporting dependencies. The architects now want Claude to explore three different remediation plans: introducing event sourcing, tightening the existing relational schema, and adding a read-model/cache layer. They need every plan to begin from the same discovery work, but they do not want assumptions or findings from one plan to leak into the others. Which workflow should they use?
-
-- **A.** Resume the original session and ask Claude to evaluate all three proposals sequentially in the same thread, inserting separators between the event-sourcing, schema-hardening, and cache analyses.
-- **B.** Resume the original session for the event-sourcing design, then open fresh sessions with exported notes for the schema-hardening and cache proposals so the first path retains the complete history.
-- **C.** Fork the post-discovery session into one branch per design (event sourcing, schema hardening, read-model/cache), so each branch inherits the same investigation but evolves independently.
-- **D.** Start three brand-new sessions and paste a short written summary of the earlier findings into each before asking Claude to analyze the event-sourcing, schema-hardening, and cache proposals.
-
-#### Correct answer to Question 57: C
-
-Forking from the post-discovery state gives every branch the same complete investigation, but each evolves independently: no contamination between alternatives.
-
-Evaluating the three proposals sequentially in one thread mixes the analyses and lets assumptions leak. Resuming for one design and exporting notes for the others favors one branch and loses detail in the rest. Three new sessions with a short summary replace the full context with a summary.
+Financial data that needs to be auditable calls for layered validation: schema, domain checks (sign, range), arithmetic reconciliation of the roll-forward, tracing each value back to its source, and periodic sampling for human review. A schema alone, the model's self-reported confidence, or relying on the external auditor are not enough.
 
 ## Scenario: Customer Support Resolution Agent
 
-### Question 58
+### Question 51
 
 You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
 
-A support agent uses an MCP tool named `apply_account_credit` to resolve billing complaints by issuing courtesy credits. In staging, failed calls look identical to the agent whether the customer has exceeded the courtesy-credit limit, the invoice is already closed, or the billing ledger is temporarily unavailable. What is the best design for the tool’s error response so the agent can handle these cases reliably?
+A customer says, “My annual plan renewed yesterday, but I never received the premium kit. If you can’t ship it today, refund the renewal—but don’t close my workspace.” The support agent first calls the MCP tool get_customer and receives: workspace is active, annual renewal is paid, premium kit entitlement exists only for plans renewed before a cutoff date, shipping address was changed yesterday, account is flagged for manual review after two recent chargeback disputes, and policy says refunds on reviewed accounts require either verified ownership or human escalation. What should the agent do next in the agentic workflow?
 
-- **A.** Implement automatic retries inside `apply_account_credit` for database locks and return only success or a generic failure after the retry limit is reached.
-- **B.** Return a typed error from `apply_account_credit`, such as `{ code, category, retryable, user_message, correlation_id }`, marking ledger outages retryable and explaining policy denials safely.
-- **C.** Add a separate `check_credit_eligibility` tool that the agent must call before `apply_account_credit`, while keeping `apply_account_credit` failures as generic exceptions.
-- **D.** Return a single natural-language `error` string from `apply_account_credit`, such as “credit could not be posted,” and let Claude decide from the wording whether the customer should be told to wait or be denied.
+- **A.** Bypass additional model reasoning and apply a rules table that refunds any customer with active membership, blocks anyone with address changes, and escalates only when the refund amount exceeds a preset threshold.
+- **B.** Continue the original planned sequence by calling process_refund next, because the workflow began as a refund request and intermediate account-risk details should not change the tool order.
+- **C.** Use the returned entitlement, address and fraud-review details as updated context, and let Claude decide whether to refund, look up carrier evidence, ask a clarifying question, or escalate per the policy.
+- **D.** Configure the MCP orchestrator to inspect the get_customer JSON and automatically select the next tool from fields such as membership_status, address_changed, and fraud_review without returning the data to Claude.
 
-#### Correct answer to Question 58: B
+#### Correct answer to question 51: C
 
-For the agent to react correctly it must distinguish the cases: a typed error with code, category, retryability, a customer-safe message and a correlation ID. Transient outages are marked as retryable; policy denials come with an explanation.
+The agentic loop is built on the fact that each tool result becomes new context for the model. Claude then decides the next step dynamically based on the policy and the new risk factors. Keeping to a predetermined sequence, fixed rules tables, or orchestration that keeps the data away from the model all lose the reasoning the situation requires.
 
-Internal retries that return a generic failure collapse every case into one. An eligibility tool adds a step but leaves failures indistinguishable. A single natural-language error string forces the agent to infer the cause from ambiguous text.
+## Scenario: Customer Support Resolution Agent
+
+### Question 52
+
+You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
+
+A Claude Agent SDK support agent is helping a customer who says, “I was promised an $18 credit after last month’s outage, but my new invoice still shows the full amount.” The agent successfully uses `get_customer` and `lookup_order`-style billing tools to verify the account, the affected service period, and that the customer qualifies for the outage credit. When it calls an MCP tool to apply the billing adjustment, the tool returns a structured timeout error from the invoicing service and no adjustment ID. What is the best response strategy for the agent?
+
+- **A.** Stop discussing the account findings and immediately transfer the customer to a billing specialist because any failed MCP tool call means the automated agent should no longer participate.
+- **B.** Confirm the subscription is eligible for the promised credit per the records, explain the credit failed because the billing tool timed out, and offer one retry or an escalation.
+- **C.** Tell the customer that the $18 credit has been added because the account and invoice data prove they qualify, and note that the adjustment should appear on the next billing cycle.
+- **D.** Keep the chat open and continue calling the billing adjustment tool until it returns a confirmation, telling the customer that the system is still processing and that no other action is needed yet.
+
+#### Correct answer to question 52: B
+
+Be transparent: report what was verified (eligibility), state clearly that applying the credit didn't complete (a timeout, so no adjustment ID), and offer concrete options (one retry or an escalation with the context attached). Claiming the credit was applied is false, retrying indefinitely is wrong, and abandoning the conversation throws away the work already done.
+
+## Scenario: Structured Data Extraction
+
+### Question 53
+
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
+
+A nonprofit platform uses Claude to extract strict JSON records from large government grant packets, including indirect cost rates, reporting deadlines, allowable expense categories, subrecipient requirements, and special award conditions. Packets often include revised budgets and attachments where the same field may be repeated with a different value. Which architecture is the best approach for maintaining extraction quality as packet size grows?
+
+- **A.** Extract only from the executive summary, first budget page, and first award letter, since those areas usually contain the highest-value fields and reduce the chance of conflicting values.
+- **B.** Split each grant packet into coherent sections (narrative, budget tables, award terms, appendices), run schema-guided extraction on each, then merge the partial JSON, flagging conflicting duplicate fields.
+- **C.** Send the entire grant packet in one request with a stricter system prompt, requiring Claude to return one complete JSON object and to pay equal attention to every page regardless of document length.
+- **D.** First ask Claude to create a concise summary of the full packet, then run the JSON extraction only against that summary to reduce token usage and normalize the document.
+
+#### Correct answer to question 53: B
+
+For long documents with repeated values, a single huge prompt suffers from attention dilution and summaries lose detail. Split the document into coherent sections, extract with the schema from each one, then merge with rules that flag conflicting duplicate values. Extracting only from the first pages ignores revisions and attachments.
+
+## Scenario: Developer Productivity with Claude
+
+### Question 54
+
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+
+A Claude Agent SDK tool is assigned to reorganize a legacy CSV import module used by an operations dashboard. The module has no tests, but support engineers warn that odd behaviors around blank columns, duplicate headers, and malformed timestamps may be relied on by old customer exports. The requested work is only to simplify the implementation, not alter outputs. Which approach should the agent take?
+
+- **A.** Have Claude inspect the importer's current behavior, generate characterization tests for its CSV quirks, run them on the unchanged code, then refactor and rerun the same tests before proposing.
+- **B.** Use Claude to rewrite the importer into smaller functions immediately, compare the new code visually with the old code, and ask it to summarize any logic it believes stayed equivalent.
+- **C.** Use Claude to produce a refactor branch and a checklist of risky cases for the owning team, then wait for maintainers to decide whether they want to add tests before merging.
+- **D.** Use Claude to run the TypeScript compiler, ESLint, and formatting checks on the rewritten importer, then accept the refactor if all static checks pass cleanly.
+
+#### Correct answer to question 54: A
+
+For a pure refactor of untested code with undocumented behaviors, write characterization tests first that capture the current behavior (quirks included). Check that they pass on the original code, then refactor and run them again. Visual comparison, waiting for others, or relying only on static checks doesn't guarantee behavior is preserved.
+
+## Scenario: Claude Code for Continuous Integration
+
+### Question 55
+
+You are integrating Claude Code into your Continuous Integration/Continuous Deployment (CI/CD) pipeline. The system runs automated code reviews, generates test cases, and provides feedback on pull requests. You need to design prompts that provide actionable feedback and minimize false positives.
+
+A team adds a Claude Code step to its release pipeline that checks database migration pull requests by calling an internal MCP server named `schema-diff`. The check must run in the hosted CI environment and also work for any developer who clones the repository and runs the same Claude Code command locally. Where should the MCP server configuration be placed?
+
+- **A.** Commit the `schema-diff` MCP server definition in the repository’s `.mcp.json` so the pipeline and local checkouts load the same tool configuration.
+- **B.** Add the `schema-diff` MCP server definition to the lead engineer’s `~/.claude.json` and have the CI job authenticate as that account.
+- **C.** Document the `schema-diff` endpoint and required arguments in `CLAUDE.md` so Claude Code can infer how to start the MCP server.
+- **D.** Create a `.mcp-ci.json` file containing the `schema-diff` server and configure the pull request workflow to run Claude Code from the repository root.
+
+#### Correct answer to question 55: A
+
+Project-scoped `.mcp.json` committed to the repo means CI and every local clone load the same configuration. Personal configs (`~/.claude.json`) and borrowed accounts aren't reproducible, CLAUDE.md doesn't configure MCP servers, and a non-standard `.mcp-ci.json` isn't loaded automatically.
+
+## Scenario: Code Generation with Claude Code
+
+### Question 56
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
+A team maintains a large TypeScript monorepo and adds a Claude Code command, `/audit-inventory-change`, for changes to the warehouse allocation engine. The proposed workflow runs one pass only on the modified allocation files for invariants, edge cases, and missing tests, then a second pass over order fulfillment, stock reservation, and event publishing paths for integration regressions. What is the best conceptual reason to structure the review this way?
+
+- **A.** Use separate passes: first contained issues in the touched modules, then architectural and integration risks with surrounding context.
+- **B.** Use repeated passes over the same files with the same checklist so Claude has more opportunities to catch anything it missed the first time.
+- **C.** Use multiple passes mainly so several Claude Code sessions can run at the same time and finish the review faster than a single reviewer would.
+- **D.** Use a single prompt that asks Claude to inspect style, logic, security, tests, dependencies, and rollout risks across the entire repository in one run.
+
+#### Correct answer to question 56: A
+
+Splitting the review into a local pass (invariants and tests in the modified files) and an integration pass (fulfillment, reservation, events) lets each one focus on a different kind of risk, with the right context. Repeating the same checklist adds nothing, parallelism isn't the conceptual reason, and one prompt over the whole repo dilutes attention.
+
+## Scenario: Code Generation with Claude Code
+
+### Question 57
+
+You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
+
+A team adds a Claude Code slash command, `/scan-review-flags`, that reads reviewer comments in source files and outputs CSV columns `fileArea`, `risk`, `ticket`, and `action`. It works for comments such as `// REVIEW(auth): risk=medium ticket=SEC-18 rotate token secret`, but it produces inconsistent CSV when comments have no risk tag, mention two tickets, say both “low risk” and “blocking,” or span several lines. What is the best prompt engineering change to improve consistency across typical and edge-case comments?
+
+- **A.** Add a compact few-shot section mapping raw comment snippets to the exact CSV rows, including blank tags, multiple ticket IDs and status words.
+- **B.** Configure the command to run the same extraction prompt three times and keep the response that appears most complete based on token length.
+- **C.** Add a prominent instruction saying to be extremely careful, avoid assumptions, and always preserve consistency when interpreting unusual comments.
+- **D.** Replace the current prompt with a longer prose description of every column, why the report matters, and how downstream analytics will consume it.
+
+#### Correct answer to question 57: A
+
+Edge cases (no tags, multiple tickets, contradictory status words, wrapped comments) are best defined with few-shot examples that pair raw input with the exact expected CSV output. "Be careful" instructions don't specify the expected behavior, longer prose doesn't help, and picking the longest of three responses isn't a quality criterion.
+
+## Scenario: Developer Productivity with Claude
+
+### Question 58
+
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
+
+A team is building a Claude Agent SDK assistant that helps engineers modernize old services. While proposing refactors, the assistant must confirm the current Jira epic scope, acceptance criteria, and unresolved dependency tickets associated with the module being changed. What is the best approach for giving Claude access to this Jira information in a production developer workflow?
+
+- **A.** Connect Claude Code to the existing Jira MCP server and expose the needed ticket, epic, and dependency lookups as structured tools for the agent.
+- **B.** Add a scheduled job that exports relevant Jira tickets to JSON files in the repository so the agent can read them with the Read and Grep tools.
+- **C.** Let the agent run Bash commands that call Jira’s REST API with curl whenever it needs ticket, epic, or dependency details.
+- **D.** Build a new internal Jira MCP server from scratch so the agent can query ticket, epic, and dependency data through custom tools.
+
+#### Correct answer to question 58: A
+
+If an existing Jira MCP server is already available, use it. It exposes structured, up-to-date tools with authentication handled for you. JSON exports go stale, curl over Bash is fragile and less controlled, and rebuilding a server from scratch is wasted effort.
 
 ## Scenario: Multi-Agent Research System
 
@@ -1139,34 +1058,31 @@ Internal retries that return a generic failure collapse every case into one. An 
 
 You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
-A multi-agent research system was interrupted while preparing a compensation benchmark for machine learning engineers. After restarting the coordinator with `--resume`, the product lead changes the assignment: compare only European fintech companies, normalize salaries to EUR, ignore data older than 18 months, and rank sources by auditability. Which context-management approach should the coordinator use before sending more work to its salary-data, document-analysis, synthesis, and report subagents?
+The document-analysis subagent in your research system must repeatedly apply the same source-quality rubric: classify study design, note sample-size concerns, detect conflicts of interest, and assign an evidence-strength label. You want this rubric to be maintainable and reusable by future analysis subagents without making it an external service. Which Claude Code configuration is the best fit?
 
-- **A.** Abandon the resumed session and start a completely new coordinator run because interrupted sessions cannot be trusted to preserve enough context for reliable downstream research.
-- **B.** Resume the coordinator session and invoke the market-data and report-writing subagents normally, relying on them to read the coordinator’s latest messages and align with the new scope.
-- **C.** Use fork_session from the original coordinator state and spawn the subagents from the fork, expecting the branch to carry the revised requirements into their work automatically.
-- **D.** Resume the coordinator session, summarize the existing findings, and include the new European-only scope, salary-normalization rule, source limits and ranking rubric in each later subagent call.
+- **A.** Package the checklist as a Claude Code skill in `.claude/skills/quality-rubric/` and have the analysis subagent invoke it.
+- **B.** Add a `PostToolUse` hook that runs after every document retrieval call and applies the quality rubric to whatever content was returned.
+- **C.** Create a custom slash command in `.claude/commands/review-quality.md` so the coordinator can run the same source-quality review whenever a research task begins.
+- **D.** Expose the rubric as an MCP tool so every agent can call the source-quality evaluator through the MCP server interface.
 
-#### Correct answer to Question 59: D
+#### Correct answer to question 59: A
 
-Subagents do not automatically inherit the coordinator's history. After resuming the session, the coordinator must pass explicitly, in every invocation, a summary of the findings and the new requirements (scope, normalization, source limits, ranking).
+A reusable rubric that applies when needed, maintained in a versioned file, is exactly what a skill is for (`.claude/skills/<name>/SKILL.md`). A hook would run it on every retrieval indiscriminately, a slash command is for explicit invocation by the user, and an MCP tool would be the external service the scenario says to avoid.
 
-Starting a completely new run throws away the existing context. Invoking the subagents normally assumes they read the coordinator's messages, which they do not. Forking the coordinator does not inject the new requirements into the subagents.
-
-## Scenario: Structured Data Extraction
+## Scenario: Multi-Agent Research System
 
 ### Question 60
 
-You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
+You are building a multi-agent research system using the Claude Agent SDK. A coordinator agent delegates to specialized subagents: one searches the web, one analyzes documents, one synthesizes findings, and one generates reports. The system researches topics and produces comprehensive, cited reports.
 
-A legal operations team uses Claude to extract contract terms into a JSON object validated by a schema requiring `counterpartyName`, `leaseStart`, `renewalWindow`, and `terminationNoticeDays`. The JSON is always well formed and includes every required key, but review of commercial leases from different property managers shows `renewalWindow` is frequently `null` even though attorneys can find it in paragraphs, tables, and footnotes using wording such as "extension option," "holdover renewal," or "tenant may extend." What is the best next intervention to improve extraction accuracy?
+The report-generation subagent calls two MCP tools: `fetchCitationMetadata`, which queries an external bibliography service, and `renderSourceTable`, which formats evidence rows for the final report. In staging, `fetchCitationMetadata` occasionally gets connection resets from the bibliography API, while `renderSourceTable` sometimes receives arguments such as `rows: []`, `sort_by: "impact_score"` when that field is absent, or a malformed DOI string. Which error-handling design is the best approach for these tools?
 
-- **A.** Add few-shot examples showing how to fill `leaseStart`, `renewalWindow` and `terminationNoticeDays` from varied layouts, keeping schema validation.
-- **B.** Add a preprocessing script that uses regular expressions for phrases such as "renewal term" and "auto-renews" and copies the next sentence into `renewalWindow`.
-- **C.** Make `renewalWindow` optional in the JSON schema so contracts with unusual wording can pass downstream processing without being flagged for review.
-- **D.** When `renewalWindow` is blank, automatically resubmit the same prompt up to three times and accept the first response that contains a non-empty value.
+- **A.** Apply the same retry wrapper to all failed tool calls, using three delayed attempts before returning an error summary, so temporary outages and bad parameters follow one consistent failure path.
+- **B.** Return every failure to the coordinator as a generic structured error, including the raw exception and tool name, and let the coordinator decide whether to retry, revise inputs, or ask another subagent to continue.
+- **C.** Add system-prompt guidance telling subagents to infer whether a failed call was caused by bad input or an outage, and to rewrite future tool calls based on the wording of any returned exception.
+- **D.** Have each tool classify failures into categories, retry transient store or network errors internally with bounded backoff, and return validation errors with fields like `expected_format` and `suggested_fix`.
 
-#### Correct answer to Question 60: A
+#### Correct answer to question 60: D
 
-The field exists in the documents but is expressed with varied wording and positions (paragraphs, tables, footnotes). Few-shot examples covering layouts and synonyms teach the model to recognize it, while schema validation keeps catching omissions.
+Classify the errors. Transient errors (connection resets) get internal retries with bounded backoff. Validation errors (empty rows, nonexistent field, malformed DOI) get immediate structured errors with `invalid_parameter`, `expected_format`, and `suggested_fix`. One uniform retry, generic errors, or asking the agent to infer the cause don't allow correct recovery.
 
-Regex preprocessing is fragile and does not handle synonyms and tables. Making `renewalWindow` optional hides the problem. Resubmitting until a value appears hopes for a different answer and may accept invented content.
