@@ -747,6 +747,10 @@ function renderIntro() {
       <button class="button" type="button" data-action="show-guide" ${sourceReady ? "" : "disabled"}>
         Inizia la simulazione <span aria-hidden="true">→</span>
       </button>
+      <aside class="sim-toast" role="note" aria-label="Avviso sulla simulazione">
+        <span class="sim-toast-icon" aria-hidden="true">i</span>
+        <p><strong>Questa è una simulazione, non l’esame ufficiale.</strong>Formato, domande e livello di difficoltà sono pensati per avvicinarsi il più possibile alla prova reale, ma l’esito ottenuto qui non ha alcun valore ai fini della certificazione e non garantisce il superamento dell’esame.</p>
+      </aside>
     </div>
     <aside class="exam-panel" aria-label="Dettagli della prova">
       <div class="panel-kicker">Formato della sessione</div>
