@@ -63,10 +63,10 @@
     // Link per segnalare errori o lasciare un feedback, uguale in tutte le pagine
     const feedback = document.createElement("a");
     feedback.className = "feedback-link";
-    feedback.href = "https://github.com/moris88/corsi-di-formazione/issues";
+    feedback.href = "https://forms.gle/FVrJ6skGrEWvtrHE7";
     feedback.target = "_blank";
     feedback.rel = "noopener noreferrer";
-    feedback.title = "Segnala un errore o lascia un feedback su GitHub";
+    feedback.title = "Segnala un errore o lascia un feedback";
     feedback.setAttribute("aria-label", `${feedback.title} (si apre in una nuova scheda)`);
     feedback.innerHTML =
       '<span class="feedback-icon" aria-hidden="true">!</span><span class="feedback-text">Segnala / Feedback</span>';

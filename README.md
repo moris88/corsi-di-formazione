@@ -54,7 +54,7 @@ La cartella `dist/` viene rigenerata da zero a ogni build e non è versionata: d
 
 ## Segnalazioni e feedback
 
-Hai trovato un errore o hai un suggerimento? [Apri una issue su GitHub](https://github.com/moris88/corsi-di-formazione/issues). Lo stesso link è presente in ogni pagina del portale, nel pulsante **Segnala / Feedback**.
+Hai trovato un errore o hai un suggerimento? [Apri una segnalazione](https://forms.gle/FVrJ6skGrEWvtrHE7). Lo stesso link è presente in ogni pagina del portale, nel pulsante **Segnala / Feedback**.
 
 ## Nota
 

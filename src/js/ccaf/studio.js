@@ -14,7 +14,8 @@ const documents = [
     title: "Prerequisiti tecnici · Il pre-corso",
     group: "Orientamento",
     path: "../../assets/ccaf/guide/prerequisiti.md",
-    description: "I concetti di base dati per scontati dal corso: JSON, YAML, HTTP, database, OCR e altro.",
+    description:
+      "I concetti di base dati per scontati dal corso: JSON, YAML, HTTP, database, OCR e altro.",
     index: "P0",
   },
   {
@@ -30,8 +31,10 @@ const documents = [
     title: "Dominio 1 · Architettura agentica e orchestrazione",
     group: "Domini d’esame",
     path: "../../assets/ccaf/appunti/d1-spiegato.md",
-    description: "Spiegazione passo passo dell’architettura agentica e dell’orchestrazione.",
-    slidesPdf: "../../assets/ccaf/appunti/presentazioni/Dominio 1 – Architettura agentica e orchestrazione.pdf",
+    description:
+      "Spiegazione passo passo dell’architettura agentica e dell’orchestrazione.",
+    slidesPdf:
+      "../../assets/ccaf/appunti/presentazioni/Dominio 1 – Architettura agentica e orchestrazione.pdf",
     index: "01",
   },
   {
@@ -40,7 +43,8 @@ const documents = [
     group: "Domini d’esame",
     path: "../../assets/ccaf/appunti/d2-spiegato.md",
     description: "Spiegazione passo passo di design degli strumenti e MCP.",
-    slidesPdf: "../../assets/ccaf/appunti/presentazioni/Dominio 2 – Design dei tool e integrazione MCP.pdf",
+    slidesPdf:
+      "../../assets/ccaf/appunti/presentazioni/Dominio 2 – Design dei tool e integrazione MCP.pdf",
     index: "02",
   },
   {
@@ -48,8 +52,10 @@ const documents = [
     title: "Dominio 3 · Configurazione e workflow di Claude Code",
     group: "Domini d’esame",
     path: "../../assets/ccaf/appunti/d3-spiegato.md",
-    description: "Spiegazione passo passo di configurazione e workflow di Claude Code.",
-    slidesPdf: "../../assets/ccaf/appunti/presentazioni/Dominio 3 – Configurazione e workflow di Claude Code.pdf",
+    description:
+      "Spiegazione passo passo di configurazione e workflow di Claude Code.",
+    slidesPdf:
+      "../../assets/ccaf/appunti/presentazioni/Dominio 3 – Configurazione e workflow di Claude Code.pdf",
     index: "03",
   },
   {
@@ -57,8 +63,10 @@ const documents = [
     title: "Dominio 4 · Prompt engineering e output strutturato",
     group: "Domini d’esame",
     path: "../../assets/ccaf/appunti/d4-spiegato.md",
-    description: "Spiegazione passo passo di prompt engineering e output strutturato.",
-    slidesPdf: "../../assets/ccaf/appunti/presentazioni/Dominio 4 – Prompt engineering e output strutturato.pdf",
+    description:
+      "Spiegazione passo passo di prompt engineering e output strutturato.",
+    slidesPdf:
+      "../../assets/ccaf/appunti/presentazioni/Dominio 4 – Prompt engineering e output strutturato.pdf",
     index: "04",
   },
   {
@@ -67,7 +75,8 @@ const documents = [
     group: "Domini d’esame",
     path: "../../assets/ccaf/appunti/d5-spiegato.md",
     description: "Spiegazione passo passo di contesto e affidabilità.",
-    slidesPdf: "../../assets/ccaf/appunti/presentazioni/Dominio 5 – Contesto e affidabilità.pdf",
+    slidesPdf:
+      "../../assets/ccaf/appunti/presentazioni/Dominio 5 – Contesto e affidabilità.pdf",
     index: "05",
   },
   {
@@ -75,7 +84,8 @@ const documents = [
     title: "Dominio 1 · Architettura agentica e orchestrazione",
     group: "Domini approfonditi",
     path: "../../assets/ccaf/appunti/domains/d1-agentic-architecture.md",
-    description: "Approfondimento tecnico completo su loop agentico, sistemi multi-agente, hook e sessioni.",
+    description:
+      "Approfondimento tecnico completo su loop agentico, sistemi multi-agente, hook e sessioni.",
     index: "D1",
   },
   {
@@ -83,7 +93,8 @@ const documents = [
     title: "Dominio 2 · Progettazione degli strumenti e integrazione MCP",
     group: "Domini approfonditi",
     path: "../../assets/ccaf/appunti/domains/d2-tool-design-mcp.md",
-    description: "Approfondimento tecnico completo su descrizioni e schemi dei tool, errori, tool_choice e MCP.",
+    description:
+      "Approfondimento tecnico completo su descrizioni e schemi dei tool, errori, tool_choice e MCP.",
     index: "D2",
   },
   {
@@ -91,7 +102,8 @@ const documents = [
     title: "Dominio 3 · Configurazione e workflow di Claude Code",
     group: "Domini approfonditi",
     path: "../../assets/ccaf/appunti/domains/d3-claude-code-config.md",
-    description: "Approfondimento tecnico completo su CLAUDE.md, rules, skill, plan mode, subagenti e CI/CD.",
+    description:
+      "Approfondimento tecnico completo su CLAUDE.md, rules, skill, plan mode, subagenti e CI/CD.",
     index: "D3",
   },
   {
@@ -99,7 +111,8 @@ const documents = [
     title: "Dominio 4 · Prompt engineering e output strutturato",
     group: "Domini approfonditi",
     path: "../../assets/ccaf/appunti/domains/d4-prompt-engineering.md",
-    description: "Approfondimento tecnico completo su criteri, few-shot, output strutturato, batch e cache.",
+    description:
+      "Approfondimento tecnico completo su criteri, few-shot, output strutturato, batch e cache.",
     index: "D4",
   },
   {
@@ -107,7 +120,8 @@ const documents = [
     title: "Dominio 5 · Gestione del contesto e affidabilità",
     group: "Domini approfonditi",
     path: "../../assets/ccaf/appunti/domains/d5-context-reliability.md",
-    description: "Approfondimento tecnico completo su contesto, escalation, errori, provenienza e compattazione.",
+    description:
+      "Approfondimento tecnico completo su contesto, escalation, errori, provenienza e compattazione.",
     index: "D5",
   },
   {
@@ -124,7 +138,8 @@ const documents = [
     title: "D1/D3 · Hook e controllo deterministico",
     group: "Approfondimenti",
     path: "../../assets/ccaf/appunti/approfondimenti/hook.md",
-    description: "Prompt vs hook, eventi, exit code, PreToolUse e PostToolUse in Claude Code e nell’Agent SDK.",
+    description:
+      "Prompt vs hook, eventi, exit code, PreToolUse e PostToolUse in Claude Code e nell’Agent SDK.",
     index: "A2",
   },
   {
@@ -132,7 +147,8 @@ const documents = [
     title: "D2 · Errori dei tool MCP",
     group: "Approfondimenti",
     path: "../../assets/ccaf/appunti/approfondimenti/errori_MCP.md",
-    description: "Categorie di errore, risposte strutturate, retry nel tool o nell’agente, il caso “nessun risultato”.",
+    description:
+      "Categorie di errore, risposte strutturate, retry nel tool o nell’agente, il caso “nessun risultato”.",
     index: "A3",
   },
   {
@@ -207,7 +223,8 @@ const documents = [
     title: "Trappole · Dominio 1",
     group: "Trappole d’esame",
     path: "../../assets/ccaf/consigli/consigli_D1.md",
-    description: "Risposte sbagliate ricorrenti su architettura agentica e orchestrazione.",
+    description:
+      "Risposte sbagliate ricorrenti su architettura agentica e orchestrazione.",
     index: "T1",
   },
   {
@@ -215,7 +232,8 @@ const documents = [
     title: "Trappole · Dominio 2",
     group: "Trappole d’esame",
     path: "../../assets/ccaf/consigli/consigli_D2.md",
-    description: "Risposte sbagliate ricorrenti su design degli strumenti e MCP.",
+    description:
+      "Risposte sbagliate ricorrenti su design degli strumenti e MCP.",
     index: "T2",
   },
   {
@@ -223,7 +241,8 @@ const documents = [
     title: "Trappole · Dominio 3",
     group: "Trappole d’esame",
     path: "../../assets/ccaf/consigli/consigli_D3.md",
-    description: "Risposte sbagliate ricorrenti su configurazione e workflow di Claude Code.",
+    description:
+      "Risposte sbagliate ricorrenti su configurazione e workflow di Claude Code.",
     index: "T3",
   },
   {
@@ -231,7 +250,8 @@ const documents = [
     title: "Trappole · Dominio 4",
     group: "Trappole d’esame",
     path: "../../assets/ccaf/consigli/consigli_D4.md",
-    description: "Risposte sbagliate ricorrenti su prompt engineering e output strutturato.",
+    description:
+      "Risposte sbagliate ricorrenti su prompt engineering e output strutturato.",
     index: "T4",
   },
   {
@@ -247,7 +267,8 @@ const documents = [
     title: "Strategie d’esame",
     group: "Trappole d’esame",
     path: "../../assets/ccaf/consigli/strategie_esame.md",
-    description: "Come ragionare sulle domande, trabocchetti ricorrenti e gestione di tempo e ansia.",
+    description:
+      "Come ragionare sulle domande, trabocchetti ricorrenti e gestione di tempo e ansia.",
     index: "T6",
   },
   {
@@ -264,7 +285,8 @@ const documents = [
     title: "Guida ufficiale in inglese · PDF",
     group: "Riferimenti",
     path: "../../assets/ccaf/instructor_CCAF%2BExam%2BGuide_en.pdf",
-    description: "Manuale ufficiale in lingua originale (inglese), in formato PDF.",
+    description:
+      "Manuale ufficiale in lingua originale (inglese), in formato PDF.",
     index: "↗",
     external: true,
   },
@@ -273,7 +295,8 @@ const documents = [
     title: "Politica d’esame Anthropic · PDF",
     group: "Riferimenti",
     path: "../../assets/ccaf/Anthropic%2BCertification%2BExam%2BPolicy.pdf",
-    description: "Regole e policy che si applicano all’esame di certificazione.",
+    description:
+      "Regole e policy che si applicano all’esame di certificazione.",
     index: "↗",
     external: true,
   },
@@ -290,8 +313,9 @@ const documents = [
     id: "feedback",
     title: "Segnala un errore / Lascia un feedback",
     group: "Riferimenti",
-    path: "https://github.com/moris88/corsi-di-formazione/issues",
-    description: "Apri una issue su GitHub per segnalare errori o proporre miglioramenti.",
+    path: "https://forms.gle/FVrJ6skGrEWvtrHE7",
+    description:
+      "Apri una issue per segnalare errori o proporre miglioramenti.",
     index: "!",
     external: true,
     // Mostrato come la pillola "Segnala / Feedback" dell'header (.feedback-link)
