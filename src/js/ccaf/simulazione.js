@@ -1,4 +1,5 @@
 import { confirmDialog } from "../dialog.js";
+import { bankLoaderHtml } from "../loader.js";
 
 const DEFAULT_DURATION_MINUTES = 120;
 let TOTAL_QUESTIONS = 0;
@@ -643,9 +644,13 @@ async function loadPreset(filename) {
   sourceReady = false;
   sourceError = "";
   sourceMessage = `Caricamento ${preset.label}…`;
-  renderIntro();
+  app.innerHTML = bankLoaderHtml("Preparo la simulazione", escapeHtml(preset.label));
   try {
-    const response = await fetch(new URL(preset.file, window.location.href), { cache: "no-store" });
+    // Durata minima, così l'animazione si vede anche quando il file arriva subito
+    const [response] = await Promise.all([
+      fetch(new URL(preset.file, window.location.href), { cache: "no-store" }),
+      new Promise((resolve) => setTimeout(resolve, 1200)),
+    ]);
     if (!response.ok) throw new Error(`Risposta HTTP ${response.status}`);
     setSource(await response.text(), preset.label);
   } catch (_error) {
