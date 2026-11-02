@@ -742,7 +742,7 @@ async function loadDocument(id, options = {}) {
   contentNode.hidden = true;
   contentNode.innerHTML = "";
   statusNode.hidden = false;
-  statusNode.className = "status";
+  statusNode.className = "status loading";
   statusNode.textContent = "Caricamento del documento…";
   tocNode.innerHTML = "";
   mobileTocListNode.innerHTML = "";
@@ -771,6 +771,9 @@ async function loadDocument(id, options = {}) {
     renderedHeadings = rendered.headings;
     statusNode.hidden = true;
     contentNode.hidden = false;
+    contentNode.classList.remove("doc-enter");
+    void contentNode.offsetWidth; // riavvia l'animazione a ogni documento
+    contentNode.classList.add("doc-enter");
     renderToc(rendered.headings);
     updateProgress();
     observeHeadings();
