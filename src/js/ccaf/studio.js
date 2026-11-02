@@ -314,6 +314,7 @@ const progressFill = document.querySelector("#read-progress-fill");
 const _searchInputs = [...document.querySelectorAll("[data-search]")];
 let activeDocumentId = "";
 let renderedHeadings = [];
+const backToTop = document.querySelector("#back-to-top");
 let currentDocumentIndex = -1;
 let observer = null;
 
@@ -777,6 +778,8 @@ function updateProgress() {
   const scrollable = document.documentElement.scrollHeight - window.innerHeight;
   const ratio = scrollable > 0 ? window.scrollY / scrollable : 0;
   progressFill.style.width = `${Math.min(100, Math.max(0, ratio * 100))}%`;
+  // "Torna su" fisso in basso a destra appena si scorre la pagina
+  backToTop.classList.toggle("is-visible", window.scrollY > 200);
 }
 
 function observeHeadings() {
@@ -838,11 +841,24 @@ document.querySelector("#next-doc").addEventListener("click", () => {
   const list = documents.filter((doc) => !doc.external);
   if (currentDocumentIndex < list.length - 1) loadDocument(list[currentDocumentIndex + 1].id);
 });
+// Sezione in lettura: l'ultimo titolo già passato sotto la barra in alto (nessuna se si è ancora all'inizio)
+function currentSectionId() {
+  let current = "";
+  for (const heading of renderedHeadings) {
+    const node = document.getElementById(heading.id);
+    if (node && node.getBoundingClientRect().top <= 120) current = heading.id;
+  }
+  return current;
+}
+
 // Condivide il link al documento aperto (con la sezione nell'hash): menu di condivisione del sistema
 // dove disponibile (mobile), altrimenti copia negli appunti e lo conferma con una finestra di dialogo
 document.querySelector("#share-doc").addEventListener("click", async (event) => {
   const button = event.currentTarget;
-  const url = window.location.href;
+  const section = currentSectionId();
+  const link = new URL(window.location.href);
+  link.hash = section ? encodeURIComponent(section) : "";
+  const url = link.href;
   if (navigator.share && matchMedia("(pointer: coarse)").matches) {
     try {
       await navigator.share({ title: document.title, url });
@@ -868,8 +884,8 @@ document.querySelector("#share-doc").addEventListener("click", async (event) => 
   }
   button.classList.remove("is-done");
 });
-// "Torna su" in fondo all'articolo: riporta all'inizio della pagina
-document.querySelector("#back-to-top").addEventListener("click", () => {
+// "Torna su": riporta all'inizio della pagina
+backToTop.addEventListener("click", () => {
   window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
 });
 // Link tra documenti del portale (./studio.html?doc=<id>#<sezione>): si aprono senza ricaricare
