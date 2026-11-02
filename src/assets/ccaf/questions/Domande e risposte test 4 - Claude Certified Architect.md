@@ -304,6 +304,8 @@ An intermittent bug in a large system calls for an evidence-driven, iterative in
 
 Starting analysis of every subsystem at once scatters effort and floods the context with irrelevant summaries. A fixed reliability checklist is disconnected from the evidence. Mapping every execution path up front is costly and not focused on the actual failure.
 
+## Scenario: Developer Productivity with Claude
+
 ### Question 16
 
 You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
@@ -397,6 +399,8 @@ Streaming a compact header of fast data first lets the agent respond immediately
 
 Removing the slow sections drops information needed for correct decisions. Focusing only on database tuning accepts a poor user experience while waiting for optimizations. Warning customers and then staying silent keeps the user waiting without using the data already available.
 
+## Scenario: Customer Support Resolution Agent
+
 ### Question 21
 
 You are building a customer support resolution agent using the Claude Agent SDK. The agent handles high-ambiguity requests like returns, billing disputes, and account issues. It has access to your backend systems through custom Model Context Protocol (MCP) tools (get_customer, lookup_order, process_refund, escalate_to_human). Your target is 80%+ first-contact resolution while knowing when to escalate.
@@ -432,6 +436,8 @@ A mobile team wants Claude Code to use an internal “test-data” MCP server th
 Project-scoped MCP servers live in a `.mcp.json` file committed to the repository: anyone who clones gets the configuration, and changes go through normal review.
 
 A `.mcp/servers.json` structure is a non-standard path that Claude Code does not read. Rules files such as `.claude/rules/testing.md` contain instructions, not MCP configuration. Each developer's `~/.claude.json` keeps the configuration personal and unshared, with no review.
+
+## Scenario: Code Generation with Claude Code
 
 ### Question 23
 
@@ -564,6 +570,8 @@ The source of truth lives outside the repos, which contain outdated examples. Ex
 
 Pasting the checklist into every prompt depends on manual, error-prone copy-paste. Inferring the rules from component comments or searching files with Glob and Grep relies on repository code, which the scenario says contains old examples and partial notes.
 
+## Scenario: Developer Productivity with Claude
+
 ### Question 30
 
 You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
@@ -656,6 +664,8 @@ A healthcare analytics team uses Claude to extract medication-change events from
 Training data must be high quality: errors propagate into the trained model. You need traceability (source span), calibrated confidence with conservative inclusion thresholds, and periodic human audits.
 
 A good aggregate F1 score can hide specific errors. Lowering the inclusion threshold reduces quality and assumes the model will "generalize away" noise. Reusing the production workflow unchanged validates only JSON shape, which says nothing about whether the content is supported by the note.
+
+## Scenario: Structured Data Extraction
 
 ### Question 35
 
@@ -952,6 +962,8 @@ A developer invokes this skill midway through a long feature implementation sess
 
 Appending all notes to the active conversation describes the opposite behavior. A temporary Git fork confuses the term with Git. A concurrent worker is also wrong: the fork is about context isolation, not running in parallel with the main session.
 
+## Scenario: Code Generation with Claude Code
+
 ### Question 50
 
 You are using Claude Code to accelerate software development. Your team uses it for code generation, refactoring, debugging, and documentation. You need to integrate it into your development workflow with custom slash commands, CLAUDE.md configurations, and understand when to use plan mode vs direct execution.
@@ -1006,6 +1018,8 @@ A CI team is piloting Claude Code reviews for a repository that includes a laten
 PRs that touch several domains benefit from specialized agents with scoped tools and rubrics, plus a coordinator that merges, deduplicates and checks cross-domain interactions: in-depth coverage with concise comments.
 
 A single generalist reviewer with a broad checklist is less thorough. A fixed sequence of agents loses parallelism and filters prematurely. Posting each agent's output directly adds duplicates and noise to the pull request.
+
+## Scenario: Claude Code for Continuous Integration
 
 ### Question 53
 
@@ -1062,6 +1076,8 @@ Before declaring completion, the agent must verify concretely: run the relevant 
 
 Summarizing the edits and marking the feature complete declares success without verification. Asking the engineer to test locally delegates checks the agent can run itself. Adding a single regression test treats one test as full verification.
 
+## Scenario: Developer Productivity with Claude
+
 ### Question 56
 
 You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
@@ -1078,6 +1094,8 @@ A Claude Agent SDK assistant helped a platform team understand how warehouse inv
 Resuming the session preserves the analysis work; telling the agent which files changed lets it update only the affected areas, efficiently and without relying on stale information.
 
 Rereading every file wastes time and context. A brand-new session throws away useful work. Resuming without mentioning the changes risks building on assumptions they have invalidated.
+
+## Scenario: Developer Productivity with Claude
 
 ### Question 57
 

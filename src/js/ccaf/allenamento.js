@@ -860,7 +860,7 @@ app.addEventListener("input", (event) => {
   if (event.target.matches("#count-range")) {
     count = Number(event.target.value);
     app.querySelector("#count-out").textContent = count;
-    app.querySelectorAll(".count-chip").forEach((chip) => {
+    app.querySelectorAll('[data-action="preset"]').forEach((chip) => {
       chip.setAttribute("aria-pressed", String(Number(chip.dataset.count) === count));
     });
     const btn = app.querySelector('[data-action="generate"]');

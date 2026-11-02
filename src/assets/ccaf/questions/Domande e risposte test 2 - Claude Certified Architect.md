@@ -20,6 +20,8 @@ A support agent ends its loop when the response text contains the phrase "Can I 
 
 The loop must end on `stop_reason`, not on the text content. An iteration limit is only a fallback protection.
 
+## Scenario: Customer Support Resolution Agent
+
 ### Question 2
 
 For a customer requesting a refund, the agent must always call `get_customer` as its first tool, before any other action. Which `tool_choice` value guarantees this in the first turn?
@@ -32,6 +34,8 @@ For a customer requesting a refund, the agent must always call `get_customer` as
 #### Correct answer to question 2: C
 
 The named `tool` form is the only one that forces a specific tool. `any` guarantees a call, but lets Claude choose which tool.
+
+## Scenario: Customer Support Resolution Agent
 
 ### Question 3
 
@@ -46,6 +50,8 @@ The team wants to prevent `process_refund` from running if the customer has not 
 
 Financial rules should be enforced deterministically, with a hook before execution. An instruction in the prompt is probabilistic.
 
+## Scenario: Customer Support Resolution Agent
+
 ### Question 4
 
 `process_refund` returns a business error: the requested refund ($180) exceeds the automatic approval limit of $100. How should the agent react?
@@ -58,6 +64,8 @@ Financial rules should be enforced deterministically, with a hook before executi
 #### Correct answer to question 4: B
 
 Business errors are not solved by retrying: they must be explained or passed to a person.
+
+## Scenario: Customer Support Resolution Agent
 
 ### Question 5
 
@@ -72,6 +80,8 @@ A customer writes in capital letters, "I'M FURIOUS!!!", about a duplicate $5 cha
 
 Emotion and tone are not the same as complexity. The case is simple and the agent can resolve it.
 
+## Scenario: Customer Support Resolution Agent
+
 ### Question 6
 
 After the conversation was compacted, the agent refers to order number 67890 as "a recent order" and can no longer confirm the exact amount of $149.99. Which solution would have prevented this?
@@ -84,6 +94,8 @@ After the conversation was compacted, the agent refers to order number 67890 as 
 #### Correct answer to question 6: B
 
 A summary turns exact numbers into paraphrases. The fact block keeps them verbatim.
+
+## Scenario: Customer Support Resolution Agent
 
 ### Question 7
 
@@ -98,6 +110,8 @@ The agent calls `lookup_order` and receives a 503 error (service unreachable). I
 
 A service error is not an empty result. Saying "it does not exist" when the search was never performed is a silent suppression of the error.
 
+## Scenario: Customer Support Resolution Agent
+
 ### Question 8
 
 From customer messages, the agent must extract the order number, but customers often do not provide it. The schema requires an `order_number` string field, mandatory. What happens, and what is the fix?
@@ -110,6 +124,8 @@ From customer messages, the agent must extract the order number, but customers o
 #### Correct answer to question 8: C
 
 If information can be missing and everything is mandatory, the model tends to invent it. The value `null` correctly represents absence.
+
+## Scenario: Customer Support Resolution Agent
 
 ### Question 9
 
@@ -139,6 +155,8 @@ A developer wants their personal working preferences (for example, detailed expl
 
 The user file applies to all projects and stays personal. `CLAUDE.local.md` applies to a single project only.
 
+## Scenario: Code Generation with Claude Code
+
 ### Question 11
 
 A team must rewrite the authentication system, which involves fifteen files and has several valid approaches. Which mode should they use to start?
@@ -151,6 +169,8 @@ A team must rewrite the authentication system, which involves fifteen files and 
 #### Correct answer to question 11: A
 
 Changes across several files with architectural decisions require a plan before action.
+
+## Scenario: Code Generation with Claude Code
 
 ### Question 12
 
@@ -165,6 +185,8 @@ A skill deploys to production. The team wants Claude never to trigger it on its 
 
 `disable-model-invocation: true` prevents Claude from invoking the skill, leaving its use only to the user.
 
+## Scenario: Code Generation with Claude Code
+
 ### Question 13
 
 A skill with the steps "1. Analyze, 2. Verify, 3. Summarize" is invoked at the start of the session. Ten turns later, Claude seems to have forgotten step 2. What is the most likely cause and the fix?
@@ -177,6 +199,8 @@ A skill with the steps "1. Analyze, 2. Verify, 3. Summarize" is invoked at the s
 #### Correct answer to question 13: C
 
 The skill body is not reread in later turns. Rules that must hold for the whole session belong in a file that is always loaded.
+
+## Scenario: Code Generation with Claude Code
 
 ### Question 14
 
@@ -205,6 +229,8 @@ A developer must understand the architecture of a forty-file codebase, without f
 #### Correct answer to question 15: A
 
 `Explore` is a read-only subagent that returns only the summary, leaving the main context clean.
+
+## Scenario: Developer Productivity with Claude
 
 ### Question 16
 
@@ -264,6 +290,8 @@ A coordinator must launch three subagents that work in parallel: one searches th
 
 Parallelism is obtained by sending multiple `Agent` calls in the same response.
 
+## Scenario: Multi-Agent Research System
+
 ### Question 20
 
 A synthesis subagent returns a discursive text in which it is unclear which claim comes from which source, or when. Which output format is most useful to the coordinator?
@@ -276,6 +304,8 @@ A synthesis subagent returns a discursive text in which it is unclear which clai
 #### Correct answer to question 20: D
 
 Separating content from metadata lets the coordinator evaluate the reliability of each claim.
+
+## Scenario: Multi-Agent Research System
 
 ### Question 21
 
@@ -290,6 +320,8 @@ Two subagents report different values for the same metric: a press release says 
 
 Conflicting data must be annotated, not silently resolved.
 
+## Scenario: Multi-Agent Research System
+
 ### Question 22
 
 A synthesis states "the unemployment rate is 3.7%" without dates. A reader compares it with another value from the following month and concludes the two data points contradict each other. What is the fix?
@@ -302,6 +334,8 @@ A synthesis states "the unemployment rate is 3.7%" without dates. A reader compa
 #### Correct answer to question 22: B
 
 Without dates, two values that are each correct for different periods look contradictory. Dates clarify the reference period.
+
+## Scenario: Multi-Agent Research System
 
 ### Question 23
 
@@ -316,6 +350,8 @@ The coordinator must research "creative industries", but the subtasks only cover
 
 The coordinator must evaluate the quality of the synthesis and relaunch the work when coverage is insufficient.
 
+## Scenario: Multi-Agent Research System
+
 ### Question 24
 
 Only one source mentions a planned acquisition. Which phrasing in the synthesis correctly communicates the level of certainty?
@@ -328,6 +364,8 @@ Only one source mentions a planned acquisition. Which phrasing in the synthesis 
 #### Correct answer to question 24: D
 
 Syntheses must distinguish levels of certainty and state when a single source supports a claim.
+
+## Scenario: Multi-Agent Research System
 
 ### Question 25
 
@@ -342,6 +380,8 @@ A researcher wants to test two analysis strategies starting from the same base, 
 
 `--fork-session` creates an independent branch, with a new ID, starting from the same base.
 
+## Scenario: Multi-Agent Research System
+
 ### Question 26
 
 A research conversation has become long. The team wants to summarize it in a controlled way, keeping the last turns verbatim, and to keep working while the summary is written. Which approach fits best?
@@ -354,6 +394,8 @@ A research conversation has become long. The team wants to summarize it in a con
 #### Correct answer to question 26: B
 
 On-request compaction lets you control which turns are summarized and continue working in the background.
+
+## Scenario: Multi-Agent Research System
 
 ### Question 27
 
@@ -383,6 +425,8 @@ A developer registers an MCP server that must be available only in their own wor
 
 The local scope is the default and is not shared. `.mcp.json` would be shared with the team.
 
+## Scenario: Developer Productivity with Claude
+
 ### Question 29
 
 An MCP server requires a database password, and the `.mcp.json` file is shared via Git with the team. How should the credential be handled?
@@ -396,6 +440,8 @@ An MCP server requires a database password, and the `.mcp.json` file is shared v
 
 The shared file contains only the placeholder, while the secret stays in the environment, outside the repository.
 
+## Scenario: Developer Productivity with Claude
+
 ### Question 30
 
 A team wants to connect Claude to a remote MCP server on the internet that requires OAuth authentication. Which transport should be used?
@@ -408,6 +454,8 @@ A team wants to connect Claude to a remote MCP server on the internet that requi
 #### Correct answer to question 30: D
 
 Among remote transports, `http` (streamable-http) is the only one that supports OAuth.
+
+## Scenario: Developer Productivity with Claude
 
 ### Question 31
 
@@ -452,6 +500,8 @@ A custom subagent has `permissionMode: plan` in its frontmatter. The parent sess
 
 Permission modes propagate downward and cannot be loosened or changed by the subagent.
 
+## Scenario: Developer Productivity with Claude
+
 ### Question 34
 
 A very long session on a large codebase shows signs of degradation: Claude makes assumptions instead of verifying, and forgets earlier findings. What is the most effective mitigation?
@@ -465,6 +515,8 @@ A very long session on a large codebase shows signs of degradation: Claude makes
 
 A notes file keeps findings outside the conversation, so compression does not erase them.
 
+## Scenario: Developer Productivity with Claude
+
 ### Question 35
 
 An agent sent some orders to the warehouse before payment was confirmed, even though the rule was written in the system prompt. What is the most robust solution?
@@ -477,6 +529,8 @@ An agent sent some orders to the warehouse before payment was confirmed, even th
 #### Correct answer to question 35: B
 
 A critical rule must be enforced programmatically, not left to instructions alone.
+
+## Scenario: Developer Productivity with Claude
 
 ### Question 36
 
@@ -506,6 +560,8 @@ A CI pipeline that runs Claude Code for automatic pull request review hangs, wai
 
 `-p` is required for non-interactive mode. Without it, Claude Code waits for input that never arrives.
 
+## Scenario: Claude Code for Continuous Integration
+
 ### Question 38
 
 The pipeline must produce a final result readable by a program and verify that it matches a schema. Which combination of flags is correct?
@@ -518,6 +574,8 @@ The pipeline must produce a final result readable by a program and verify that i
 #### Correct answer to question 38: D
 
 `--output-format json` makes the result machine-readable, and `--json-schema` validates it.
+
+## Scenario: Claude Code for Continuous Integration
 
 ### Question 39
 
@@ -532,6 +590,8 @@ The team wants two checks: a blocking review before merge, which the developer w
 
 The Batch API can take up to 24 hours: it suits what is not urgent, not a check that blocks the merge.
 
+## Scenario: Claude Code for Continuous Integration
+
 ### Question 40
 
 A batch of requests finishes, and the results arrive in random order. How is each response matched to the correct request?
@@ -544,6 +604,8 @@ A batch of requests finishes, and the results arrive in random order. How is eac
 #### Correct answer to question 40: B
 
 Order is not guaranteed: `custom_id` is the correlation key.
+
+## Scenario: Claude Code for Continuous Integration
 
 ### Question 41
 
@@ -558,6 +620,8 @@ A developer asks the same Claude Code session that has just written a feature to
 
 Whoever wrote the code is less critical of their own choices. The review should be done in a separate session.
 
+## Scenario: Claude Code for Continuous Integration
+
 ### Question 42
 
 The automatic review system generates too many false positives: it flags problems that developers consider irrelevant. What is the most effective fix?
@@ -570,6 +634,8 @@ The automatic review system generates too many false positives: it flags problem
 #### Correct answer to question 42: A
 
 Explicit criteria with exclusions and borderline examples reduce false positives.
+
+## Scenario: Claude Code for Continuous Integration
 
 ### Question 43
 
@@ -584,6 +650,8 @@ The team wants to limit the spending of the CI pipeline, which uses Claude Code 
 
 `--max-budget-usd` imposes a spending limit, while `--max-turns` limits the number of steps.
 
+## Scenario: Claude Code for Continuous Integration
+
 ### Question 44
 
 A PR modifies forty files, and a single review pass misses problems across different files. Which strategy is most suitable?
@@ -596,6 +664,8 @@ A PR modifies forty files, and a single review pass misses problems across diffe
 #### Correct answer to question 44: B
 
 Multi-pass review avoids losing attention and also checks integration between files.
+
+## Scenario: Claude Code for Continuous Integration
 
 ### Question 45
 
@@ -625,6 +695,8 @@ An extraction from invoices uses `strict: true`. Which schema requirement must b
 
 These two requirements are needed to enable strict mode.
 
+## Scenario: Structured Data Extraction
+
 ### Question 47
 
 An invoice extraction returns a `total_amount` that does not match the sum of the line items, although it is a valid number that conforms to the schema. What is the explanation and the fix?
@@ -637,6 +709,8 @@ An invoice extraction returns a `total_amount` that does not match the sum of th
 #### Correct answer to question 47: A
 
 The schema guarantees conformance, not the correctness of the values.
+
+## Scenario: Structured Data Extraction
 
 ### Question 48
 
@@ -651,6 +725,8 @@ An extraction from ambiguous documents must classify the invoice type, but the d
 
 The `"unclear"` option prevents the model from inventing a classification.
 
+## Scenario: Structured Data Extraction
+
 ### Question 49
 
 The schema of an extraction in strict mode contains `"quantity": {"type": "integer", "minimum": 1}`. What should be done?
@@ -663,6 +739,8 @@ The schema of an extraction in strict mode contains `"quantity": {"type": "integ
 #### Correct answer to question 49: B
 
 Strict mode does not support some constraints such as `minimum`, `maximum` and `pattern`.
+
+## Scenario: Structured Data Extraction
 
 ### Question 50
 
@@ -677,6 +755,8 @@ On Fable 5.1, a call with a forced `tool_choice` on an extraction tool returns a
 
 On recent models the forced form is not accepted: direct structured output is the recommended path.
 
+## Scenario: Structured Data Extraction
+
 ### Question 51
 
 An extraction system reports an overall accuracy of 96%. A manager asks whether it is ready for production. What analysis is needed before answering?
@@ -689,6 +769,8 @@ An extraction system reports an overall accuracy of 96%. A manager asks whether 
 #### Correct answer to question 51: D
 
 An aggregate figure can hide very poor performance on specific document types.
+
+## Scenario: Structured Data Extraction
 
 ### Question 52
 
@@ -703,6 +785,8 @@ An extraction system assigns a confidence score to each field. A manager asks wh
 
 Without calibration on labeled data, the score has no meaning.
 
+## Scenario: Structured Data Extraction
+
 ### Question 53
 
 An extraction from unstructured documents often fails in ambiguous cases. How many examples should be included in the prompt, and how should they be designed?
@@ -715,6 +799,8 @@ An extraction from unstructured documents often fails in ambiguous cases. How ma
 #### Correct answer to question 53: D
 
 A few targeted examples, with the reasoning behind the choices, teach the criterion without saturating the context.
+
+## Scenario: Structured Data Extraction
 
 ### Question 54
 
@@ -744,6 +830,8 @@ A conversational application uses server-side compaction, but on every turn it a
 
 Extracting only the text silently destroys the compaction state, and the problem only shows up after many turns.
 
+## Scenario: Conversational AI Architecture Patterns
+
 ### Question 56
 
 An application uses on-request compaction. In the next request it places the `compaction` block at the beginning, but leaves after it the messages that the block summarizes. What is the correct rule?
@@ -756,6 +844,8 @@ An application uses on-request compaction. In the next request it places the `co
 #### Correct answer to question 56: A
 
 Leaving the summarized messages after the block sends them twice. Leaving them before the block causes an explicit error.
+
+## Scenario: Conversational AI Architecture Patterns
 
 ### Question 57
 
@@ -770,6 +860,8 @@ In a conversation with Opus 5.5 and thinking enabled, a rule must be added to th
 
 A system message appended at the end does not modify the prefix already used for thinking.
 
+## Scenario: Conversational AI Architecture Patterns
+
 ### Question 58
 
 A harness uses both `clear_tool_uses` and `clear_thinking` in the same context-management request. Which statement is correct?
@@ -783,6 +875,8 @@ A harness uses both `clear_tool_uses` and `clear_thinking` in the same context-m
 
 When the two edits are used together, `clear_thinking` must come first.
 
+## Scenario: Conversational AI Architecture Patterns
+
 ### Question 59
 
 An application reads `response.content` without checking `stop_reason`. Occasionally it receives an HTTP `200` response with `stop_reason: "refusal"`. What is the most appropriate fix?
@@ -795,6 +889,8 @@ An application reads `response.content` without checking `stop_reason`. Occasion
 #### Correct answer to question 59: D
 
 A refusal arrives with status 200: it must be recognized through `stop_reason`, otherwise it is treated as a successful response.
+
+## Scenario: Conversational AI Architecture Patterns
 
 ### Question 60
 
