@@ -1620,3 +1620,11 @@ body.exam-focus .topbar {
   border-radius: 50%;
   font: 700 12px / 1 var(--serif);
 }
+/* Documenti ufficiali nella schermata "Come affrontare la simulazione" */
+.guide-docs {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}

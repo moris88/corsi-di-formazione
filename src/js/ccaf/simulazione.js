@@ -825,6 +825,10 @@ function renderExamGuide() {
       <strong>Soglia ufficiale: 720 su 1000.</strong>
       <span>È un punteggio scalare: la percentuale corretta mostrata da questa simulazione è un risultato grezzo e non equivale direttamente al punteggio ufficiale né garantisce il superamento.</span>
     </aside>
+    <div class="guide-docs" aria-label="Documenti ufficiali">
+      <a class="button secondary" href="../../assets/ccaf/Anthropic-Certification-Exam-Policy.pdf" target="_blank" rel="noopener">Politica d’esame Anthropic (PDF)</a>
+      <a class="button secondary" href="../../assets/ccaf/Certification-Terms-and-Conditions.pdf" target="_blank" rel="noopener">Termini e condizioni (PDF)</a>
+    </div>
     <div class="guide-actions">
       <button class="button secondary" type="button" data-action="back-to-intro">Torna alla selezione</button>
       <button class="button" type="button" data-action="start">Inizia la prova <span aria-hidden="true">→</span></button>

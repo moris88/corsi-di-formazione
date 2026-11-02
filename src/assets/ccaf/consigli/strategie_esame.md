@@ -201,7 +201,7 @@ Impara a riconoscerle: escono in quasi ogni domanda.
 
 ## 9. Il giorno dell'esame
 
-- Leggi la *Exam Policy* (`Anthropic+Certification+Exam+Policy.pdf`) qualche giorno prima: requisiti tecnici, documento, ambiente.
+- Leggi la *Exam Policy* (`Anthropic-Certification-Exam-Policy.pdf`) qualche giorno prima: requisiti tecnici, documento, ambiente.
 - Prepara l'ambiente in anticipo (connessione, stanza, webcam se richiesta).
 - Dormi bene: con domande lunghe e simili la stanchezza fa sbagliare la lettura, non la conoscenza.
 - Durante l'esame, se una domanda ti blocca: **segnala, rispondi provvisoriamente, passa oltre**.
