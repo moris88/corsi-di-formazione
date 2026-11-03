@@ -1029,8 +1029,17 @@
     width: 100%;
   }
   .review-head {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
+    gap: 12px;
+  }
+  .filter-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .filter-button {
+    padding: 9px 10px;
+    font-size: 12px;
   }
   .result-stat + .result-stat {
     padding-left: 10px;
@@ -1045,11 +1054,25 @@
     font-size: 9px;
     letter-spacing: 0.06em;
   }
+  /* Griglia compatta su due righe: la nuova simulazione (azione principale) sopra, a tutta larghezza */
   .results-actions {
-    justify-content: stretch;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    padding-top: 10px;
   }
   .results-actions .button {
     width: 100%;
+    min-width: 0;
+    padding-inline: 6px;
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: normal;
+    text-align: center;
+  }
+  .results-actions .button:last-child {
+    grid-column: 1 / -1;
+    order: -1;
   }
 }
 :root[data-theme="dark"] .progress-track,
