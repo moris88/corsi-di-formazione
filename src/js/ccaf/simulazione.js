@@ -64,6 +64,10 @@ const BUILTIN_TESTS = [
     file: "../../assets/ccaf/questions/Domande e risposte test 12 - Claude Certified Architect.md",
     label: "Test 12 EN · Avanzato",
   },
+  {
+    file: "../../assets/ccaf/questions/Domande e risposte test 13 - Claude Certified Architect.md",
+    label: "Test 13 EN · Inferno",
+  },
 ];
 let selectedPreset = BUILTIN_TESTS[0].file;
 // Test importati dall'utente in questa sessione della pagina: compaiono nel select come "Test importato n.X"
@@ -650,6 +654,34 @@ function renderStatsScreen() {
   window.scrollTo({ top: 0 });
 }
 
+// Animazione a schermo intero quando si sceglie un test di livello "inferno"; clic o Esc la chiudono
+function playInfernoIntro() {
+  document.querySelector(".inferno-intro")?.remove();
+  const overlay = document.createElement("div");
+  overlay.className = "inferno-intro";
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.innerHTML = `
+    <div class="inferno-flames">${"<span></span>".repeat(14)}</div>
+    <div class="inferno-embers">${"<i></i>".repeat(24)}</div>
+    <div class="inferno-text">
+      <strong>Inferno</strong>
+      <p>Lasciate ogni speranza, voi ch’entrate</p>
+    </div>`;
+  const close = () => {
+    overlay.classList.add("is-leaving");
+    document.removeEventListener("keydown", onKey);
+    setTimeout(() => overlay.remove(), 600);
+  };
+  const onKey = (event) => {
+    if (event.key === "Escape") close();
+  };
+  overlay.addEventListener("click", close);
+  document.addEventListener("keydown", onKey);
+  document.body.append(overlay);
+  announce("Livello inferno selezionato.");
+  setTimeout(close, 3200);
+}
+
 function announce(message) {
   announcer.textContent = message;
 }
@@ -762,7 +794,13 @@ function formatGuideSource() {
 }
 
 // Badge della difficoltà come nella legenda del popup; i test importati sono sempre "Custom"
-const DIFFICULTY_NAMES = { facile: "Facile", medio: "Medio", difficile: "Difficile", avanzato: "Avanzato" };
+const DIFFICULTY_NAMES = {
+  facile: "Facile",
+  medio: "Medio",
+  difficile: "Difficile",
+  avanzato: "Avanzato",
+  inferno: "Inferno",
+};
 function difficultyBadge() {
   if (!sourceReady) return "—";
   const level = importedTests.some((test) => test.file === selectedPreset) ? "custom" : testDifficulty;
@@ -830,8 +868,10 @@ function renderExamGuide() {
   if (!sourceReady || questionBank.length === 0) return;
   setFocusMode(false);
   if (topStatus) topStatus.textContent = "Istruzioni d’esame";
+  const inferno = testDifficulty === "inferno";
   app.innerHTML = `
-  <section class="screen guide-screen" aria-labelledby="guide-title">
+  <section class="screen guide-screen${inferno ? " is-inferno" : ""}" aria-labelledby="guide-title">
+    ${inferno ? `<div class="guide-embers" aria-hidden="true">${"<i></i>".repeat(18)}</div>` : ""}
     <div class="guide-heading">
       <div class="eyebrow">Prima di iniziare · ${escapeHtml(testTitle)}</div>
       <h1 id="guide-title">Come affrontare<br><span>la simulazione</span></h1>
@@ -861,6 +901,14 @@ function renderExamGuide() {
         </ul>
       </section>
     </div>
+    ${
+      inferno
+        ? `<aside class="guide-inferno-warning" role="note">
+      <strong>Livello Inferno.</strong>
+      <span>Questa prova è volutamente più dura dell’esame reale: scenari lunghi, vincoli nascosti e quattro opzioni tutte credibili. Un punteggio basso qui è normale; conta capire perché ogni distrattore è sbagliato.</span>
+    </aside>`
+        : ""
+    }
     <aside class="guide-note" role="note">
       <strong>Soglia ufficiale: 720 su 1000.</strong>
       <span>È un punteggio scalare: la percentuale corretta mostrata da questa simulazione è un risultato grezzo e non equivale direttamente al punteggio ufficiale né garantisce il superamento.</span>
@@ -871,7 +919,7 @@ function renderExamGuide() {
     </div>
     <div class="guide-actions">
       <button class="button secondary" type="button" data-action="back-to-intro">Torna alla selezione</button>
-      <button class="button" type="button" data-action="start">Inizia la prova <span aria-hidden="true">→</span></button>
+      <button class="button" type="button" data-action="start">${inferno ? "Entra nell’inferno" : "Inizia la prova"} <span aria-hidden="true">→</span></button>
     </div>
   </section>`;
 }
@@ -888,6 +936,9 @@ function shuffle(items) {
 // Modalità concentrazione: durante la prova l'header è nascosto e la pagina occupa tutto lo schermo
 function setFocusMode(on) {
   document.body.classList.toggle("exam-focus", on);
+  // Livello del test sul body durante la prova: "inferno" accende l'effetto fuoco
+  if (on && testDifficulty) document.body.dataset.level = testDifficulty;
+  else delete document.body.dataset.level;
   if (!on) {
     hideExamLock();
     navigator.keyboard?.unlock?.();
@@ -1487,6 +1538,7 @@ function openToolsDialog() {
           <div><dt><span class="difficulty-tag" data-level="medio">Medio</span></dt><dd>Scenari realistici con distrattori plausibili su un singolo concetto.</dd></div>
           <div><dt><span class="difficulty-tag" data-level="difficile">Difficile</span></dt><dd>Più concetti insieme, trappole tipiche d’esame, opzioni simili tra loro.</dd></div>
           <div><dt><span class="difficulty-tag" data-level="avanzato">Avanzato</span></dt><dd>Vicino all’esame reale: più vincoli da combinare, un dettaglio decisivo, risposte lunghe e tutte credibili.</dd></div>
+          <div><dt><span class="difficulty-tag" data-level="inferno">Inferno</span></dt><dd>Oltre l’esame reale: scenari lunghi pieni di vincoli, eccezioni ai principi, opzioni tutte in parte giuste e una sola che regge ogni vincolo.</dd></div>
           <div><dt><span class="difficulty-tag" data-level="custom">Custom</span></dt><dd>Test importato: la difficoltà non è nota a priori.</dd></div>
         </dl>
       </section>
@@ -1614,7 +1666,11 @@ app.addEventListener("change", async (event) => {
     if (imported) {
       selectedPreset = imported.file;
       setSource(imported.raw, imported.name);
-    } else if (event.target.value) loadPreset(event.target.value);
+    } else if (event.target.value) {
+      if (/inferno/i.test(BUILTIN_TESTS.find((test) => test.file === event.target.value)?.label || ""))
+        playInfernoIntro();
+      loadPreset(event.target.value);
+    }
     return;
   }
   if (event.target.matches('input[name="answer"]') && exam) {
