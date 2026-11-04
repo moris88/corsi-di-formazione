@@ -1415,6 +1415,34 @@ function printResults() {
   window.print();
 }
 
+// Diavoletto in cima ai risultati dei test "inferno": arrabbiato se la prova è superata, ride se non lo è
+function renderDevil(passed) {
+  const brows = passed
+    ? '<path class="devil-brow" d="M38 50 L54 58"/><path class="devil-brow" d="M82 50 L66 58"/>'
+    : '<path class="devil-brow" d="M38 52 Q46 46 54 52"/><path class="devil-brow" d="M66 52 Q74 46 82 52"/>';
+  const eyes = passed
+    ? '<circle class="devil-eye" cx="47" cy="65" r="5"/><circle class="devil-eye" cx="73" cy="65" r="5"/>'
+    : '<path class="devil-eye-closed" d="M40 64 Q47 58 54 64"/><path class="devil-eye-closed" d="M66 64 Q73 58 80 64"/><circle class="devil-tear" cx="38" cy="72" r="3"/><circle class="devil-tear" cx="82" cy="72" r="3"/>';
+  const mouth = passed
+    ? '<path class="devil-mouth-line" d="M46 90 Q60 80 74 90"/>'
+    : '<path class="devil-mouth" d="M42 80 Q60 104 78 80 Z"/>';
+  const steam = passed
+    ? '<g class="devil-steam"><path d="M22 30 q-6 -8 0 -16 q6 -8 0 -16"/><path d="M98 30 q6 -8 0 -16 q-6 -8 0 -16"/></g>'
+    : "";
+  return `<figure class="result-devil is-${passed ? "angry" : "laughing"}">
+      <svg viewBox="0 0 120 130" role="img" aria-label="${passed ? "Diavoletto arrabbiato" : "Diavoletto che ride"}">
+        ${steam}
+        <g class="devil-body">
+          <path class="devil-horn" d="M30 42 Q18 22 24 8 Q34 26 44 34 Z"/>
+          <path class="devil-horn" d="M90 42 Q102 22 96 8 Q86 26 76 34 Z"/>
+          <ellipse class="devil-face" cx="60" cy="70" rx="38" ry="40"/>
+          ${brows}${eyes}${mouth}
+        </g>
+      </svg>
+      <figcaption>${passed ? "Il diavoletto è furioso: questa volta l’inferno non ti ha preso." : "Il diavoletto se la ride… prenditi la rivincita!"}</figcaption>
+    </figure>`;
+}
+
 function renderResults(automatic = false) {
   if (!completedExam) return;
   setFocusMode(false);
@@ -1441,12 +1469,13 @@ function renderResults(automatic = false) {
     }))
     .filter((entry) => reviewFilter === "all" || statusFor(entry.item, entry.question) === reviewFilter);
   app.innerHTML = `
-  <section class="screen results-screen" aria-labelledby="results-title">
+  <section class="screen results-screen${testDifficulty === "inferno" ? " is-inferno" : ""}" aria-labelledby="results-title">
     ${renderPrintSummary(counts, estimate, percentage, passed)}
     <div class="results-head">
       <div><div class="eyebrow">Sessione completata${automatic ? " · Tempo esaurito" : ""}</div><h1 id="results-title">Revisione<br><span>dei risultati</span></h1><p>La simulazione è conclusa. Esamina ogni risposta e usa i filtri per concentrarti sui quesiti da ripassare.</p></div>
       <div class="score-block"><strong class="score-number">${counts.correct}<span class="score-small">/${TOTAL_QUESTIONS}</span></strong><span class="score-caption">Risposte corrette · ${percentage}%</span></div>
     </div>
+    ${testDifficulty === "inferno" ? renderDevil(passed) : ""}
     <div class="result-stats" aria-label="Riepilogo dei risultati">
       <div class="result-stat"><strong>${counts.correct}</strong><span>Corrette</span></div>
       <div class="result-stat"><strong>${counts.wrong}</strong><span>Errate</span></div>
