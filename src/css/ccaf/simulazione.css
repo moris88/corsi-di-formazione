@@ -248,20 +248,20 @@
   text-shadow: 0 0 6px rgb(255 120 30 / 0.8);
 }
 
-/* Effetto fuoco durante la prova di un test "inferno": fiamme a fondo pagina e bagliore ai bordi.
+/* Effetto fuoco durante la prova e nei risultati di un test "inferno": fiamme a fondo pagina e bagliore ai bordi.
    Solo decorativo: non intercetta i clic e lascia spazio sotto il contenuto */
-body.exam-focus[data-level="inferno"] {
+:is(body.exam-focus[data-level="inferno"], body:has(.results-screen.is-inferno)) {
   padding-bottom: 96px;
 }
-body.exam-focus[data-level="inferno"]::before,
-body.exam-focus[data-level="inferno"]::after {
+:is(body.exam-focus[data-level="inferno"], body:has(.results-screen.is-inferno))::before,
+:is(body.exam-focus[data-level="inferno"], body:has(.results-screen.is-inferno))::after {
   content: "";
   position: fixed;
   inset: auto 0 0;
   pointer-events: none;
   z-index: 0;
 }
-body.exam-focus[data-level="inferno"]::before {
+:is(body.exam-focus[data-level="inferno"], body:has(.results-screen.is-inferno))::before {
   height: 110px;
   background:
     radial-gradient(40px 90px at 6% 100%, rgb(255 200 60 / 0.85), transparent 70%),
@@ -277,14 +277,14 @@ body.exam-focus[data-level="inferno"]::before {
   filter: blur(2px);
   animation: inferno-flicker 1.6s ease-in-out infinite alternate;
 }
-body.exam-focus[data-level="inferno"]::after {
+:is(body.exam-focus[data-level="inferno"], body:has(.results-screen.is-inferno))::after {
   inset: 0;
   box-shadow:
     inset 0 -40px 80px -30px rgb(255 80 20 / 0.55),
     inset 0 0 60px rgb(180 30 10 / 0.25);
   animation: inferno-glow 2.4s ease-in-out infinite alternate;
 }
-body.exam-focus[data-level="inferno"] #app {
+:is(body.exam-focus[data-level="inferno"], body:has(.results-screen.is-inferno)) #app {
   position: relative;
   z-index: 1;
 }
@@ -469,14 +469,14 @@ body.exam-focus[data-level="inferno"] #app {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  body.exam-focus[data-level="inferno"]::before,
-  body.exam-focus[data-level="inferno"]::after {
+  :is(body.exam-focus[data-level="inferno"], body:has(.results-screen.is-inferno))::before,
+  :is(body.exam-focus[data-level="inferno"], body:has(.results-screen.is-inferno))::after {
     animation: none;
   }
 }
 @media print {
-  body.exam-focus[data-level="inferno"]::before,
-  body.exam-focus[data-level="inferno"]::after {
+  :is(body.exam-focus[data-level="inferno"], body:has(.results-screen.is-inferno))::before,
+  :is(body.exam-focus[data-level="inferno"], body:has(.results-screen.is-inferno))::after {
     display: none;
   }
 }
@@ -2340,6 +2340,127 @@ body.exam-focus .topbar {
 }
 @media print {
   .guide-embers {
+    display: none;
+  }
+}
+
+/* Diavoletto in fondo ai risultati */
+.result-devil {
+  margin: 1.5rem auto;
+  text-align: center;
+}
+.result-devil svg {
+  width: 8rem;
+  height: auto;
+  overflow: visible;
+}
+.result-devil figcaption {
+  margin-top: 0.5rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+.devil-horn {
+  fill: #7a1f12;
+}
+.devil-face {
+  fill: #d8432b;
+  stroke: #7a1f12;
+  stroke-width: 3;
+}
+.devil-brow,
+.devil-eye-closed,
+.devil-mouth-line {
+  fill: none;
+  stroke: #2a0a05;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.devil-eye,
+.devil-mouth {
+  fill: #2a0a05;
+}
+.devil-tear {
+  fill: #7cc7ff;
+}
+.devil-steam path {
+  fill: none;
+  stroke: #9a9a9a;
+  stroke-width: 3;
+  stroke-linecap: round;
+  animation: devil-steam 1.2s ease-out infinite;
+}
+.devil-body {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.is-angry .devil-body {
+  animation: devil-shake 0.35s ease-in-out infinite;
+}
+.is-angry .devil-face {
+  animation: devil-fume 1.4s ease-in-out infinite alternate;
+}
+.is-laughing .devil-body {
+  animation: devil-laugh 0.5s ease-in-out infinite;
+}
+.is-laughing .devil-tear {
+  animation: devil-tear 1s ease-in infinite;
+}
+@keyframes devil-shake {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0);
+  }
+  25% {
+    transform: translateX(-3px) rotate(-3deg);
+  }
+  75% {
+    transform: translateX(3px) rotate(3deg);
+  }
+}
+@keyframes devil-fume {
+  to {
+    fill: #a51d0d;
+  }
+}
+@keyframes devil-steam {
+  from {
+    opacity: 0.9;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+}
+@keyframes devil-laugh {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(4deg);
+  }
+}
+@keyframes devil-tear {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+:root[data-theme="dark"] .result-devil figcaption {
+  color: var(--primary);
+}
+@media (prefers-reduced-motion: reduce) {
+  .result-devil * {
+    animation: none !important;
+  }
+}
+@media print {
+  .result-devil {
     display: none;
   }
 }
