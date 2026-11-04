@@ -22,10 +22,11 @@ let minutesPerQuestion = 2;
 let timerId = null;
 
 // Difficoltà dei test (come nelle etichette di simulazione.html).
-// Un file può sovrascriverla con "difficulty: facile|medio|difficile|avanzato" nel frontmatter.
-const DIFFICULTIES = ["avanzato", "difficile", "medio", "facile"];
+// Un file può sovrascriverla con "difficulty: facile|medio|difficile|avanzato|inferno" nel frontmatter.
+const DIFFICULTIES = ["inferno", "avanzato", "difficile", "medio", "facile"];
 const DIFFICULTY_LABELS = {
   casuale: "Casuale (tutti)",
+  inferno: "Inferno",
   avanzato: "Avanzato",
   difficile: "Difficile",
   medio: "Medio",
@@ -44,6 +45,7 @@ const TEST_DIFFICULTY = {
   10: "difficile",
   11: "avanzato",
   12: "avanzato",
+  13: "inferno",
 };
 let session = null;
 
