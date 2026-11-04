@@ -547,3 +547,81 @@
     animation: none !important;
   }
 }
+
+.feedback-explanation {
+  margin-top: 0.5rem;
+}
+
+.feedback-note {
+  margin-top: 0.5rem;
+  font-size: 0.85em;
+  opacity: 0.75;
+}
+
+.feedback-theory {
+  margin-top: 0.75rem;
+  font-size: 0.92em;
+}
+
+.feedback-theory a {
+  color: var(--primary);
+}
+
+/* Domanda di livello "inferno": unica eccezione cromatica, come in simulazione (rosso fuoco su nero) */
+.inferno-badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid #c2410c;
+  border-radius: 999px;
+  font: 700 0.75rem var(--mono);
+  color: #ffd27a;
+  background: linear-gradient(180deg, #8f1d0b, #2a0a04);
+  text-shadow: 0 0 6px rgb(255 120 30 / 0.8);
+}
+
+.screen.is-inferno {
+  border-color: #c2410c;
+  box-shadow:
+    0 0 0 1px rgb(194 65 12 / 0.35),
+    0 0 28px rgb(255 90 20 / 0.28);
+  animation: inferno-pulse 2.4s ease-in-out infinite alternate;
+}
+
+.screen.is-inferno .question-heading {
+  color: #b9300f;
+}
+
+/* Bagliore di fuoco a fondo pagina, solo decorativo */
+body:has(.screen.is-inferno)::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  box-shadow:
+    inset 0 -40px 80px -30px rgb(255 80 20 / 0.5),
+    inset 0 0 60px rgb(180 30 10 / 0.2);
+}
+
+@keyframes inferno-pulse {
+  from {
+    box-shadow:
+      0 0 0 1px rgb(194 65 12 / 0.3),
+      0 0 18px rgb(255 90 20 / 0.2);
+  }
+  to {
+    box-shadow:
+      0 0 0 1px rgb(194 65 12 / 0.5),
+      0 0 34px rgb(255 90 20 / 0.38);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen.is-inferno {
+    animation: none;
+  }
+}
+
+:root[data-theme="dark"] .screen.is-inferno .question-heading {
+  color: #ff8a4c;
+}
