@@ -783,11 +783,75 @@ fetch("../../assets/ccaf/guida-formato.md")
   .then((response) => (response.ok ? response.text() : ""))
   .then((text) => {
     formatGuideText = text;
-    document.querySelectorAll(".format-guide").forEach((box) => {
+    document.querySelectorAll(".format-guide:not(.ai-prompt)").forEach((box) => {
       box.innerHTML = renderGuideMarkdown(text).html;
     });
   })
   .catch(() => {});
+
+// Prompt suggerito per far generare all'IA una banca quesiti importabile
+const AI_PROMPT = `Genera una banca quesiti per la simulazione dell'esame "Claude Certified Architect — Foundations" (CCA-F), rispettando ESATTAMENTE il formato del modello riportato qui sotto.
+
+Requisiti:
+- Lingua delle domande: inglese, come l'esame reale (puoi tradurre in inglese anche le intestazioni del modello, es. "### Question N" e "#### Correct answer to question N: X").
+- Frontmatter YAML con title e duration_minutes.
+- Raggruppa le domande sotto intestazioni "## Scenario: ..." realistiche, coprendo i domini D1–D5.
+- Ogni domanda ha quattro opzioni A–D e la riga "####" della risposta corretta, seguita da una spiegazione che motivi la risposta giusta e perché le altre sono sbagliate.
+- Difficoltà MOLTO ALTA, livello "Avanzato": vicino all'esame reale, con più vincoli da combinare, un dettaglio decisivo nello scenario, risposte lunghe e tutte credibili. Nessuna opzione deve essere scartabile a colpo d'occhio.
+- Distribuisci la risposta corretta in modo uniforme tra A, B, C e D.
+- Numero di domande: 60.
+
+Output OBBLIGATORIO: un file Markdown scaricabile con estensione .md (es. test-ccaf.md), non testo nella chat. Il file deve contenere solo il test, senza commenti prima o dopo.
+
+Modello da seguire:
+
+---
+title: "[Titolo del test]"
+duration_minutes: 120
+---
+
+# [Titolo del test]
+
+## Scenario: [Titolo dello scenario]
+
+### Domanda 1
+
+[Testo della domanda]
+
+- **A.** [Testo dell'opzione A]
+- **B.** [Testo dell'opzione B]
+- **C.** [Testo dell'opzione C]
+- **D.** [Testo dell'opzione D]
+
+#### Risposta corretta alla domanda 1: [RISPOSTA_CORRETTA]
+
+[Spiegazione facoltativa]
+
+### Domanda 2
+
+[Testo della domanda]
+
+- **A.** [Testo dell'opzione A]
+- **B.** [Testo dell'opzione B]
+- **C.** [Testo dell'opzione C]
+- **D.** [Testo dell'opzione D]
+
+#### Risposta corretta alla domanda 2: [RISPOSTA_CORRETTA]
+
+[Spiegazione facoltativa]`;
+
+// Copia il prompt negli appunti e conferma sul pulsante per un paio di secondi
+async function copyAiPrompt(button) {
+  try {
+    await navigator.clipboard.writeText(AI_PROMPT);
+    button.textContent = "Copiato!";
+  } catch {
+    button.textContent = "Copia non riuscita";
+  }
+  setTimeout(() => {
+    button.textContent = "Copia il prompt";
+  }, 2000);
+}
 
 function formatGuideSource() {
   return formatGuideText;
@@ -1528,6 +1592,7 @@ function openToolsDialog() {
       if (event.target === toolsDialog) toolsDialog.close();
       else if (event.target.closest('[data-action="choose-source"]'))
         toolsDialog.querySelector("#source-file")?.click();
+      else if (event.target.closest('[data-action="copy-ai-prompt"]')) copyAiPrompt(event.target.closest("button"));
     });
     toolsDialog.addEventListener("change", (event) => {
       if (event.target.matches("#source-file")) {
@@ -1548,9 +1613,21 @@ function openToolsDialog() {
       <h2 class="site-dialog-title" id="tools-dialog-title">Gestione dei test</h2>
       <section class="tools-section">
         <h3>Importa</h3>
-        <p class="site-dialog-message">Carica una banca quesiti in formato Markdown dal tuo computer.</p>
+        <p class="site-dialog-message">Carica una banca quesiti in formato Markdown dal tuo computer. Il file non viene salvato: se aggiorni la pagina andrà perso e dovrai ricaricare le domande.</p>
         <button class="button secondary" type="button" data-action="choose-source">Importa un altro Markdown</button>
         <input class="file-input" type="file" accept=".md,text/markdown,text/plain" id="source-file" aria-label="Seleziona il file Markdown con i quesiti">
+        <details class="format-help">
+          <summary>Formato per creare un altro test</summary>
+          <p>Usa un titolo, scenari facoltativi, quesiti numerati, quattro opzioni A–D e la riga della risposta corretta.</p>
+          <p><a class="button secondary" href="../../assets/ccaf/template-test.md" download="template-test.md">Scarica il template (template-test.md)</a></p>
+          <div class="format-guide">${renderGuideMarkdown(formatGuideSource()).html}</div>
+        </details>
+        <details class="format-help">
+          <summary>Prompt per far generare un test all’IA</summary>
+          <p>Copia questo prompt in Claude (o in un’altra IA): contiene già il modello del formato e otterrai un file .md pronto da importare.</p>
+          <p><button class="button secondary" type="button" data-action="copy-ai-prompt">Copia il prompt</button></p>
+          <div class="format-guide ai-prompt"><pre>${escapeHtml(AI_PROMPT)}</pre></div>
+        </details>
       </section>
       <section class="tools-section">
         <h3>Esporta</h3>
@@ -1571,13 +1648,7 @@ function openToolsDialog() {
           <div><dt><span class="difficulty-tag" data-level="custom">Custom</span></dt><dd>Test importato: la difficoltà non è nota a priori.</dd></div>
         </dl>
       </section>
-      <details class="format-help">
-        <summary>Formato per creare un altro test</summary>
-        <p>Usa un titolo, scenari facoltativi, quesiti numerati, quattro opzioni A–D e la riga della risposta corretta.</p>
-        <p><a class="button secondary" href="../../assets/ccaf/template-test.md" download="template-test.md">Scarica il template (template-test.md)</a></p>
-        <div class="format-guide">${renderGuideMarkdown(formatGuideSource()).html}</div>
-      </details>
-      <form method="dialog" class="site-dialog-actions"><button class="button secondary" type="submit">Chiudi</button></form>
+      <form method="dialog" class="site-dialog-actions tools-dialog-close"><button class="button secondary" type="submit">Chiudi</button></form>
     </div>`;
   toolsDialog.showModal();
 }
