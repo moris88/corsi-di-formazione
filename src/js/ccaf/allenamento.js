@@ -1,5 +1,6 @@
 import { confirmDialog } from "../dialog.js";
 import { bankLoaderHtml } from "../loader.js";
+import { clearSession, loadSavedSession, saveSession } from "./trainingSession.js";
 
 // I test vengono scoperti automaticamente: "questions/Domande e risposte test N - ..."
 // finché non si incontrano due numeri consecutivi mancanti.
@@ -429,8 +430,21 @@ function renderSetup() {
   const available = Math.min(filteredPool().length, MAX_QUESTIONS);
   const value = Math.max(1, Math.min(count, available));
   const marathon = mode === "maratona";
+  const saved = loadSavedSession(pool);
   app.innerHTML = `
   <section class="screen train-setup" aria-labelledby="page-title">
+    ${
+      saved
+        ? `<div class="train-card train-saved" role="status">
+      <h2>Allenamento interrotto</h2>
+      <p class="hint">${saved.session.marathon ? "Maratona" : "Allenamento"} del ${new Date(saved.savedAt).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}: domanda ${saved.session.index + 1}${saved.session.marathon ? "" : ` di ${saved.session.items.length}`}, ✓ ${saved.session.correct} · ✗ ${saved.session.wrong}.${saved.session.pausedAt ? " Riprende in pausa, con il tempo fermo all’ultimo salvataggio." : ""}</p>
+      <div class="count-row">
+        <button class="button" type="button" data-action="restore">Riprendi <span aria-hidden="true">→</span></button>
+        <button class="button secondary" type="button" data-action="discard">Scarta</button>
+      </div>
+    </div>`
+        : ""
+    }
     <div>
       <div class="eyebrow">Allenamento · prima della simulazione</div>
       <h1 id="page-title">Domande<br><span>casuali</span></h1>
@@ -600,6 +614,7 @@ function generate() {
 /* ---------- Quesito con correzione immediata ---------- */
 
 function renderQuestion() {
+  saveSession(session, minutesPerQuestion);
   const item = session.items[session.index];
   const q = item.question;
   const total = session.items.length;
@@ -798,8 +813,15 @@ function startTimer() {
   if (session.marathon) session.questionDeadline = Date.now() + MARATHON_MS;
   else if (!timedMode) return;
   else session.deadline ??= Date.now() + session.items.length * minutesPerQuestion * 60000;
+  runTimer();
+}
+
+// Avvia il conteggio senza toccare le scadenze (usato anche alla ripresa di una sessione salvata)
+function runTimer() {
+  stopTimer();
   timerId = setInterval(() => {
     if (session.pausedAt || (session.marathon && session.confirmed)) return;
+    saveSession(session, minutesPerQuestion);
     const left = timeLeft();
     const node = document.querySelector("#train-timer");
     if (node) {
@@ -816,8 +838,20 @@ function startTimer() {
   }, 1000);
 }
 
+function restoreSession() {
+  const saved = loadSavedSession(pool);
+  if (!saved) return renderSetup();
+  session = saved.session;
+  minutesPerQuestion = saved.minutesPerQuestion || minutesPerQuestion;
+  mode = session.marathon ? "maratona" : "classica";
+  if (session.marathon || session.deadline) runTimer();
+  renderQuestion();
+  announce("Allenamento ripreso da dove eri rimasto.");
+}
+
 function renderSummary() {
   stopTimer();
+  clearSession();
   // Una pausa in corso non deve consumare il tempo avanzato
   if (session.deadline && !session.timeUp) session.remaining = timeLeft();
   session.pausedAt = null;
@@ -1142,7 +1176,11 @@ app.addEventListener("click", async (event) => {
   } else if (action === "pause") pause();
   else if (action === "resume") resume();
   else if (action === "add") addQuestions(Number(control.dataset.count));
-  else if (action === "generate") generate();
+  else if (action === "restore") restoreSession();
+  else if (action === "discard") {
+    clearSession();
+    renderSetup();
+  } else if (action === "generate") generate();
   else if (action === "confirm") confirmAnswer();
   else if (action === "next") nextQuestion();
   else if (action === "quit") renderSummary();
@@ -1212,6 +1250,7 @@ app.addEventListener("change", (event) => {
     renderSetup();
   } else if (event.target.matches('input[name="answer"]') && session && !session.confirmed) {
     session.items[session.index].answer = event.target.value;
+    saveSession(session, minutesPerQuestion);
     const btn = app.querySelector('[data-action="confirm"]');
     if (btn) btn.disabled = false;
   }
