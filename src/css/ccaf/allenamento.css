@@ -248,6 +248,23 @@
   color: var(--coral);
   border-color: var(--coral);
 }
+.button.train-pause {
+  padding: 4px 12px;
+  font-size: 0.85rem;
+}
+.train-marathon {
+  flex: 1 1 200px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+}
+.train-paused {
+  text-align: center;
+  padding: 48px 16px;
+  border: 1px dashed var(--line-dark);
+  margin-bottom: 18px;
+}
 .time-custom {
   display: flex;
   align-items: center;
