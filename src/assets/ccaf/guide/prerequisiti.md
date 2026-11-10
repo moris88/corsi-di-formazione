@@ -272,7 +272,25 @@ Termini collegati:
 
 ### Idempotenza (D2, D5)
 
-Un'operazione è **idempotente** se eseguirla una o più volte produce lo stesso risultato. Leggere un ordine è idempotente; "addebita 50 €" no: ripeterla per errore addebita due volte. Prima di fare retry automatici su un'azione, chiediti sempre se è idempotente.
+Un'operazione è **idempotente** se eseguirla una volta o più volte lascia il sistema nello **stesso stato**: la seconda esecuzione non cambia nulla rispetto alla prima.
+
+| Operazione | Idempotente? | Perché |
+| --- | --- | --- |
+| Leggere l'ordine A-101 | Sì | Leggere non modifica niente |
+| Impostare lo stato dell'ordine a "spedito" | Sì | Dopo la prima volta è già "spedito" |
+| Cancellare l'ordine A-101 | Sì | Dopo la prima volta non c'è più nulla da cancellare |
+| Addebitare 50 € al cliente | **No** | Ogni esecuzione addebita altri 50 € |
+| Aggiungere 1 al contatore delle scorte | **No** | Ogni esecuzione aggiunge 1 |
+
+**Perché conta.** Il problema nasce con i retry (vedi il paragrafo precedente). Se una richiesta va in **timeout**, non sai se è fallita *prima* o *dopo* aver fatto il lavoro: magari il pagamento è stato eseguito e si è persa solo la risposta. Ripeterla è sicuro solo se l'operazione è idempotente; altrimenti rischi un doppio addebito.
+
+**Come rendere sicura un'operazione non idempotente:**
+
+- **Chiave di idempotenza**: chi chiama genera un identificativo unico per l'operazione (per esempio `rimborso-A-101`) e lo invia a ogni tentativo. Il servizio ricorda le chiavi già viste: se la riceve una seconda volta, restituisce il risultato precedente invece di ripetere l'azione. Molti sistemi di pagamento funzionano così.
+- **Controllare prima di agire**: verificare lo stato attuale (il rimborso esiste già?) prima di eseguire l'azione.
+- **Non fare retry automatici**: segnalare l'errore e lasciare decidere a una persona o a una logica di livello superiore.
+
+**Nell'esame.** Quando progetti uno strumento per un agente (D2) o la gestione degli errori (D5), distingui le azioni che si possono ripetere senza danni da quelle che no. Un buon errore restituito dallo strumento dice anche se è **ripetibile** (per esempio `retryable: true` per un timeout su una lettura). Un agente che rifà da solo un rimborso o un pagamento dopo un errore ambiguo è quasi sempre la risposta sbagliata.
 
 ### Webhook (D2, D5)
 
