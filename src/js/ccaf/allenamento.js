@@ -20,6 +20,10 @@ let difficultyChoice = "casuale";
 let timedMode = false;
 let minutesPerQuestion = 2;
 let timerId = null;
+// "classica" = numero fisso di domande; "maratona" = domande casuali senza fine, 2 minuti ciascuna
+let mode = "classica";
+const MARATHON_MS = 2 * 60000;
+const EXTRA_PRESETS = [5, 10, 20];
 
 // Difficoltà dei test (come nelle etichette di simulazione.html).
 // Un file può sovrascriverla con "difficulty: facile|medio|difficile|avanzato|inferno" nel frontmatter.
@@ -424,17 +428,30 @@ function renderSetup() {
   }
   const available = Math.min(filteredPool().length, MAX_QUESTIONS);
   const value = Math.max(1, Math.min(count, available));
+  const marathon = mode === "maratona";
   app.innerHTML = `
   <section class="screen train-setup" aria-labelledby="page-title">
     <div>
       <div class="eyebrow">Allenamento · prima della simulazione</div>
       <h1 id="page-title">Domande<br><span>casuali</span></h1>
-      <p class="intro-copy">${timedMode ? `Con tempo: ${formatMinutes(minutesPerQuestion)} a domanda.` : "Senza tempo."} Ogni risposta viene subito segnata come corretta o errata.</p>
+      <p class="intro-copy">${marathon ? "Maratona: 2 min a domanda, senza fine." : timedMode ? `Con tempo: ${formatMinutes(minutesPerQuestion)} a domanda.` : "Senza tempo."} Ogni risposta viene subito segnata come corretta o errata.</p>
       <div class="stats" aria-label="Banche disponibili">
         <div class="stat"><strong>${pool.length}</strong><span>Domande totali</span></div>
         <div class="stat"><strong>${loadedTests.length}</strong><span>Test caricati</span></div>
-        <div class="stat"><strong id="time-stat">${timedMode ? formatMinutes(minutesPerQuestion * value) : "∞"}</strong><span>Tempo</span></div>
+        <div class="stat"><strong id="time-stat">${marathon ? "2 min" : timedMode ? formatMinutes(minutesPerQuestion * value) : "∞"}</strong><span>${marathon ? "A domanda" : "Tempo"}</span></div>
       </div>
+    </div>
+    <div class="train-card">
+      <h2>Modalità</h2>
+      <div class="count-row" role="group" aria-label="Modalità di allenamento">
+        <button type="button" class="count-chip" data-action="mode" data-mode="classica" aria-pressed="${!marathon}">Classica</button>
+        <button type="button" class="count-chip" data-action="mode" data-mode="maratona" aria-pressed="${marathon}">Maratona</button>
+      </div>
+      <p class="hint">${
+        marathon
+          ? "Domande casuali (tra la difficoltà e gli scenari scelti) una dietro l’altra, senza fine: una domanda può anche ripresentarsi. Hai 2 minuti per ognuna: allo scadere conta come errata e passi automaticamente alla successiva. Dopo la conferma il tempo si ferma finché non vai avanti. Puoi mettere in pausa; la maratona finisce solo quando premi Termina, e vedi il riepilogo con le statistiche."
+          : "Un numero fisso di domande, con o senza tempo."
+      }</p>
     </div>
     <div class="train-card">
       <h2>Difficoltà</h2>
@@ -448,7 +465,7 @@ function renderSetup() {
           .join("")}
       </div>
     </div>
-    <div class="train-card">
+    <div class="train-card" ${marathon ? "hidden" : ""}>
       <h2>Quante domande?</h2>
       <p class="hint">Pescate a caso da ${difficultyChoice === "casuale" ? "tutti i test" : `i test ${DIFFICULTY_LABELS[difficultyChoice].toLowerCase()}`} (${testsIn(
         difficultyPool(),
@@ -468,9 +485,9 @@ function renderSetup() {
         <output id="count-out" for="count-range">${value}</output>
       </div>
     </div>
-    <div class="train-card">
+    <div class="train-card" ${marathon ? "hidden" : ""}>
       <h2>Tempo</h2>
-      <p class="hint">Con il tempo attivo, il limite totale è calcolato in base al numero di domande. Allo scadere l’allenamento termina e vedi il riepilogo.</p>
+      <p class="hint">Con il tempo attivo, il limite totale è calcolato in base al numero di domande e puoi mettere in pausa. Allo scadere l’allenamento termina e vedi il riepilogo; se finisci prima, puoi aggiungere altre domande e il loro tempo si somma a quello avanzato.</p>
       <div class="count-row" role="group" aria-label="Modalità tempo">
         <button type="button" class="count-chip" data-action="timed" data-timed="false" aria-pressed="${!timedMode}">Senza tempo</button>
         <button type="button" class="count-chip" data-action="timed" data-timed="true" aria-pressed="${timedMode}">Con tempo</button>
@@ -500,7 +517,7 @@ function renderSetup() {
     <div class="train-actions is-sticky">
       <button class="button secondary" type="button" data-action="stats">Statistiche</button>
       <a class="button secondary" href="simulazione.html">Vai alla simulazione vera</a>
-      <button class="button" type="button" data-action="generate" ${available ? "" : "disabled"}>Genera ${value} domande <span aria-hidden="true">→</span></button>
+      <button class="button" type="button" data-action="generate" ${available ? "" : "disabled"}>${marathon ? "Inizia la maratona" : `Genera ${value} domande`} <span aria-hidden="true">→</span></button>
     </div>
   </section>`;
   count = value;
@@ -508,14 +525,24 @@ function renderSetup() {
 
 /* ---------- Animazione di generazione ---------- */
 
+const toItem = (q) => ({ question: q, optionOrder: shuffle(["A", "B", "C", "D"]), answer: null });
+
+// Maratona: ogni domanda è pescata a caso, quindi può ripetersi
+function randomItem() {
+  const candidates = filteredPool();
+  return toItem(candidates[Math.floor(Math.random() * candidates.length)]);
+}
+
 function generate() {
-  const drawn = shuffle(filteredPool())
-    .slice(0, count)
-    .map((q) => ({
-      question: q,
-      optionOrder: shuffle(["A", "B", "C", "D"]),
-      answer: null,
-    }));
+  if (mode === "maratona") {
+    session = { items: [randomItem()], index: 0, confirmed: false, correct: 0, wrong: 0, startedAt: Date.now() };
+    session.marathon = true;
+    startTimer();
+    renderQuestion();
+    announce("Maratona iniziata: 2 minuti a domanda.");
+    return;
+  }
+  const drawn = shuffle(filteredPool()).slice(0, count).map(toItem);
   session = { items: drawn, index: 0, confirmed: false, correct: 0, wrong: 0, startedAt: Date.now() };
   startTimer();
 
@@ -583,20 +610,40 @@ function renderQuestion() {
   const done = session.confirmed;
   const isRight = item.answer === q.correctLetter;
   const right = displayed.find((o) => o.letter === q.correctLetter);
-  const last = session.index === total - 1;
+  const last = !session.marathon && session.index === total - 1;
+  const timed = session.marathon || session.deadline;
+  const progress = `
+    <div class="train-progress">
+      ${session.marathon ? `<span class="train-marathon">Maratona</span>` : `<progress value="${session.index + (done ? 1 : 0)}" max="${total}" aria-label="Avanzamento"></progress>`}
+      ${timed ? `<span class="train-timer${timeLeft() <= 60000 ? " low" : ""}" id="train-timer" role="timer" aria-label="Tempo rimasto">${timerText(timeLeft())}</span>` : ""}
+      ${timed && !(session.marathon && done) ? `<button class="button secondary train-pause" type="button" data-action="${session.pausedAt ? "resume" : "pause"}">${session.pausedAt ? "Riprendi" : "Pausa"}</button>` : ""}
+      <span class="train-score"><span class="ok">✓ ${session.correct}</span> · <span class="ko">✗ ${session.wrong}</span></span>
+    </div>`;
+
+  if (session.pausedAt) {
+    app.innerHTML = `
+  <section class="screen" aria-labelledby="pause-title">
+    ${progress}
+    <div class="train-paused">
+      <h1 id="pause-title">In pausa</h1>
+      <p class="intro-copy">Il tempo è fermo e la domanda è nascosta. Riprendi quando sei pronto.</p>
+      <button class="button" type="button" data-action="resume">Riprendi <span aria-hidden="true">→</span></button>
+    </div>
+    <div class="train-actions">
+      <button class="button secondary" type="button" data-action="quit">Termina</button>
+    </div>
+  </section>`;
+    return;
+  }
 
   app.innerHTML = `
   <section class="screen${q.difficulty === "inferno" ? " is-inferno" : ""}" aria-labelledby="question-title">
-    <div class="train-progress">
-      <progress value="${session.index + (done ? 1 : 0)}" max="${total}" aria-label="Avanzamento"></progress>
-      ${session.deadline ? `<span class="train-timer" id="train-timer" role="timer" aria-label="Tempo rimasto">${timerText(session.deadline - Date.now())}</span>` : ""}
-      <span class="train-score"><span class="ok">✓ ${session.correct}</span> · <span class="ko">✗ ${session.wrong}</span></span>
-    </div>
+    ${progress}
     <div class="question-meta">
       <div class="scenario-chip" title="${escapeHtml(q.scenario)}">${escapeHtml(q.scenario)}</div>
       <span class="source-tag">Test ${q.test} · domanda ${q.id}${q.difficulty && q.difficulty !== "inferno" ? ` · ${DIFFICULTY_LABELS[q.difficulty]}` : ""}</span>${q.difficulty === "inferno" ? `<span class="inferno-badge">🔥 Domanda inferno</span>` : ""}
     </div>
-    <h1 class="question-heading" id="question-title">Domanda ${session.index + 1}<span>di ${total}</span></h1>
+    <h1 class="question-heading" id="question-title">Domanda ${session.index + 1}${session.marathon ? "" : `<span>di ${total}</span>`}</h1>
     ${q.context ? `<div class="scenario-context">${markdownToHtml(q.context)}</div>` : ""}<div class="question-prompt">${markdownToHtml(q.prompt)}</div>
     <div class="answer-label">${done ? "Correzione" : "Seleziona una risposta e conferma"}</div>
     <div class="answer-list" role="radiogroup" aria-label="Opzioni di risposta">
@@ -645,7 +692,9 @@ function renderQuestion() {
 
 function confirmAnswer() {
   const item = session.items[session.index];
-  if (!item.answer || session.confirmed) return;
+  if (!item.answer || session.confirmed || session.pausedAt) return;
+  // In maratona il tempo della domanda si ferma alla conferma
+  if (session.marathon) session.frozenLeft = session.questionDeadline - Date.now();
   session.confirmed = true;
   recordAnswer(item.question, item.answer === item.question.correctLetter);
   if (item.answer === item.question.correctLetter) session.correct++;
@@ -656,13 +705,62 @@ function confirmAnswer() {
 }
 
 function nextQuestion() {
-  if (session.index === session.items.length - 1) {
+  if (session.marathon) {
+    session.items.push(randomItem());
+    session.questionDeadline = Date.now() + MARATHON_MS;
+  } else if (session.index === session.items.length - 1) {
     renderSummary();
     return;
   }
   session.index++;
   session.confirmed = false;
   renderQuestion();
+}
+
+// Maratona: allo scadere dei 2 minuti la domanda senza risposta conta come errata
+function skipQuestion() {
+  const item = session.items[session.index];
+  item.answer = null;
+  item.timedOut = true;
+  recordAnswer(item.question, false);
+  session.wrong++;
+  nextQuestion();
+  announce("Tempo scaduto: domanda segnata come errata.");
+}
+
+function pause() {
+  if (!session || session.pausedAt) return;
+  session.pausedAt = Date.now();
+  renderQuestion();
+  announce("Allenamento in pausa.");
+}
+
+// Alla ripresa le scadenze si spostano in avanti della durata della pausa
+function resume() {
+  if (!session?.pausedAt) return;
+  const paused = Date.now() - session.pausedAt;
+  if (session.deadline) session.deadline += paused;
+  if (session.questionDeadline) session.questionDeadline += paused;
+  session.pausedAt = null;
+  renderQuestion();
+  announce("Allenamento ripreso.");
+}
+
+// Aggiunge domande non ancora uscite; il loro tempo si somma a quello avanzato
+function addQuestions(n) {
+  const used = new Set(session.items.map((it) => it.question.key));
+  const extra = shuffle(filteredPool().filter((q) => !used.has(q.key)))
+    .slice(0, n)
+    .map(toItem);
+  if (!extra.length) return;
+  session.items.push(...extra);
+  session.index++;
+  session.confirmed = false;
+  if (session.remaining != null)
+    session.deadline = Date.now() + session.remaining + extra.length * minutesPerQuestion * 60000;
+  startTimer();
+  renderQuestion();
+  announce(`Aggiunte ${extra.length} domande.`);
 }
 
 /* ---------- Riepilogo ---------- */
@@ -688,18 +786,29 @@ function stopTimer() {
   timerId = null;
 }
 
+// Tempo rimasto: in maratona quello della domanda corrente, altrimenti quello totale
+function timeLeft() {
+  const now = session.pausedAt ?? Date.now();
+  if (session.marathon) return session.confirmed ? session.frozenLeft : session.questionDeadline - now;
+  return session.deadline - now;
+}
+
 function startTimer() {
   stopTimer();
-  if (!timedMode) return;
-  session.deadline = Date.now() + session.items.length * minutesPerQuestion * 60000;
+  if (session.marathon) session.questionDeadline = Date.now() + MARATHON_MS;
+  else if (!timedMode) return;
+  else session.deadline ??= Date.now() + session.items.length * minutesPerQuestion * 60000;
   timerId = setInterval(() => {
-    const left = session.deadline - Date.now();
+    if (session.pausedAt || (session.marathon && session.confirmed)) return;
+    const left = timeLeft();
     const node = document.querySelector("#train-timer");
     if (node) {
       node.textContent = timerText(left);
       node.classList.toggle("low", left <= 60000);
     }
-    if (left <= 0) {
+    if (left > 0) return;
+    if (session.marathon) skipQuestion();
+    else {
       session.timeUp = true;
       renderSummary();
       announce("Tempo scaduto.");
@@ -709,12 +818,21 @@ function startTimer() {
 
 function renderSummary() {
   stopTimer();
+  // Una pausa in corso non deve consumare il tempo avanzato
+  if (session.deadline && !session.timeUp) session.remaining = timeLeft();
+  session.pausedAt = null;
   const answered = session.items.filter((_it, i) => i < session.index || session.confirmed);
   const wrongItems = answered.filter((it) => it.answer !== it.question.correctLetter);
   const pct = answered.length ? Math.round((session.correct / answered.length) * 100) : 0;
+  // Domande aggiuntive solo se l'allenamento classico è finito prima dello scadere del tempo
+  const finished =
+    !session.marathon && !session.timeUp && session.confirmed && session.index === session.items.length - 1;
+  const used = new Set(session.items.map((it) => it.question.key));
+  const left = finished ? filteredPool().filter((q) => !used.has(q.key)).length : 0;
+  const extraChoices = [...EXTRA_PRESETS.filter((p) => p < left), ...(left && left <= 20 ? [left] : [])];
   app.innerHTML = `
   <section class="screen train-summary" aria-labelledby="sum-title">
-    <div class="eyebrow">${session.timeUp ? "Tempo scaduto" : "Allenamento concluso"}</div>
+    <div class="eyebrow">${session.timeUp ? "Tempo scaduto" : session.marathon ? "Maratona conclusa" : "Allenamento concluso"}</div>
     <h1 id="sum-title">Riepilogo<br><span>${pct}% corrette</span></h1>
     <div class="stats">
       <div class="stat"><strong>${answered.length}</strong><span>Risposte</span></div>
@@ -728,16 +846,23 @@ function renderSummary() {
             .map((it) => {
               const q = it.question;
               const right = q.options.find((o) => o.letter === q.correctLetter);
-              return `<details class="review-entry"><summary><span class="review-status wrong">T${q.test} · Q${q.id}</span><span class="review-summary-text">${escapeHtml(q.prompt.replace(/[`*_>#]/g, "").slice(0, 160))}…</span></summary><div class="review-body"><div class="scenario-chip">${escapeHtml(q.scenario)}</div>${q.context ? `<div class="scenario-context">${markdownToHtml(q.context)}</div>` : ""}<div class="review-question">${markdownToHtml(q.prompt)}</div><div class="review-choice correct"><strong>Corretta:</strong> ${inlineMarkdown(right.text)}</div></div></details>`;
+              return `<details class="review-entry"><summary><span class="review-status wrong">T${q.test} · Q${q.id}${it.timedOut ? " · tempo scaduto" : ""}</span><span class="review-summary-text">${escapeHtml(q.prompt.replace(/[`*_>#]/g, "").slice(0, 160))}…</span></summary><div class="review-body"><div class="scenario-chip">${escapeHtml(q.scenario)}</div>${q.context ? `<div class="scenario-context">${markdownToHtml(q.context)}</div>` : ""}<div class="review-question">${markdownToHtml(q.prompt)}</div><div class="review-choice correct"><strong>Corretta:</strong> ${inlineMarkdown(right.text)}</div></div></details>`;
             })
             .join("")}</div>`
+        : ""
+    }
+    ${
+      extraChoices.length
+        ? `<div class="train-card"><h2>Continua</h2><p class="hint">Aggiungi altre domande non ancora uscite${session.remaining != null ? `: al tempo avanzato (${timerText(session.remaining)}) si somma ${formatMinutes(minutesPerQuestion)} per ogni domanda` : ""}.</p><div class="count-row" role="group" aria-label="Domande da aggiungere">${extraChoices
+            .map((n) => `<button type="button" class="count-chip" data-action="add" data-count="${n}">+${n}</button>`)
+            .join("")}</div></div>`
         : ""
     }
     <div class="train-actions">
       ${wrongItems.length ? `<button class="button secondary" type="button" data-action="retry-wrong">Rifai le ${wrongItems.length} sbagliate</button>` : ""}
       <button class="button secondary" type="button" data-action="setup">Cambia impostazioni</button>
       <button class="button secondary" type="button" data-action="stats">Statistiche</button>
-      <button class="button" type="button" data-action="generate">Nuovo allenamento <span aria-hidden="true">↻</span></button>
+      <button class="button" type="button" data-action="generate">${mode === "maratona" ? "Nuova maratona" : "Nuovo allenamento"} <span aria-hidden="true">↻</span></button>
     </div>
   </section>`;
   window.scrollTo({ top: 0 });
@@ -1011,7 +1136,13 @@ app.addEventListener("click", async (event) => {
   } else if (action === "timed") {
     timedMode = control.dataset.timed === "true";
     renderSetup();
-  } else if (action === "generate") generate();
+  } else if (action === "mode") {
+    mode = control.dataset.mode;
+    renderSetup();
+  } else if (action === "pause") pause();
+  else if (action === "resume") resume();
+  else if (action === "add") addQuestions(Number(control.dataset.count));
+  else if (action === "generate") generate();
   else if (action === "confirm") confirmAnswer();
   else if (action === "next") nextQuestion();
   else if (action === "quit") renderSummary();
