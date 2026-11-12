@@ -313,9 +313,9 @@ const documents = [
     id: "feedback",
     title: "Segnala un errore / Lascia un feedback",
     group: "Riferimenti",
-    path: "https://forms.gle/FVrJ6skGrEWvtrHE7",
+    path: "https://forms.gle/wuPM9cL7cqiaPzQJ8",
     description:
-      "Compila il modulo per segnalare errori o proporre miglioramenti, senza bisogno di account.",
+      "Segnala errori, proponi miglioramenti o compila il questionario facoltativo. Serve un account Google, per poterti rispondere via email.",
     index: "!",
     external: true,
     // Mostrato come la pillola "Segnala / Feedback" dell'header (.feedback-link)

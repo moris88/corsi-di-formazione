@@ -355,6 +355,41 @@ h1 {
   gap: 10px;
   margin-top: 22px;
 }
+/* Popup "Segnala / Feedback" (src/js/theme.js): un riquadro cliccabile per ogni modulo */
+.feedback-dialog {
+  width: min(500px, calc(100vw - 32px));
+}
+.feedback-choices {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+.feedback-choice {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--primary);
+  border-radius: 6px;
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.feedback-choice:hover,
+.feedback-choice:focus-visible {
+  background: var(--primary-pale);
+  border-color: var(--primary);
+}
+.feedback-choice strong {
+  color: var(--primary-dark);
+}
+.feedback-choice span {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
 @keyframes site-dialog-in {
   from {
     opacity: 0;

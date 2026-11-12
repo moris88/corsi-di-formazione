@@ -41,7 +41,7 @@ Su **Vercel** `vercel.json` esegue `npm run build` e instrada ogni richiesta all
 
 ## Segnalazioni e feedback
 
-Hai trovato un errore o hai un suggerimento? [Apri una segnalazione](https://forms.gle/FVrJ6skGrEWvtrHE7). Lo stesso link è presente in ogni pagina, nel pulsante **Segnala / Feedback**.
+Hai trovato un errore o hai un suggerimento? [Apri una segnalazione](https://forms.gle/wuPM9cL7cqiaPzQJ8). Puoi anche compilare il [questionario facoltativo](https://forms.gle/3NvXVDYVc4z3kJVf8). Entrambi i moduli sono disponibili in ogni pagina, dal pulsante **Segnala / Feedback**.
 
 ## Nota
 

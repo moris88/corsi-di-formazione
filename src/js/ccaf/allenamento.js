@@ -1157,22 +1157,28 @@ function setupTrendTooltip(sessions) {
 
 /* ---------- Eventi ---------- */
 
+// Ridisegna la configurazione con una View Transition: le schede che compaiono, spariscono o si spostano si animano invece di scattare
+function updateSetup() {
+  if (reducedMotion || !document.startViewTransition) renderSetup();
+  else document.startViewTransition(renderSetup);
+}
+
 app.addEventListener("click", async (event) => {
   const control = event.target.closest("[data-action]");
   if (!control) return;
   const action = control.dataset.action;
   if (action === "preset") {
     count = Number(control.dataset.count);
-    renderSetup();
+    updateSetup();
   } else if (action === "difficulty") {
     difficultyChoice = control.dataset.difficulty;
-    renderSetup();
+    updateSetup();
   } else if (action === "timed") {
     timedMode = control.dataset.timed === "true";
-    renderSetup();
+    updateSetup();
   } else if (action === "mode") {
     mode = control.dataset.mode;
-    renderSetup();
+    updateSetup();
   } else if (action === "pause") pause();
   else if (action === "resume") resume();
   else if (action === "add") addQuestions(Number(control.dataset.count));

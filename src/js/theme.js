@@ -20,6 +20,21 @@
   const STORAGE_KEY = "ccaf-theme";
   const root = document.documentElement;
   const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+  // Moduli Google Forms proposti dal pulsante "Segnala / Feedback" (il primo è anche il link di riserva)
+  const FEEDBACK_FORMS = [
+    {
+      title: "Segnala un bug o lascia un feedback",
+      description:
+        "Hai trovato un errore nei contenuti, una domanda sbagliata o qualcosa che non funziona? Oppure hai un suggerimento per migliorare il sito? Raccontacelo qui.",
+      url: "https://forms.gle/wuPM9cL7cqiaPzQJ8",
+    },
+    {
+      title: "Questionario (facoltativo)",
+      description:
+        "Poche domande sulla tua esperienza con il sito e con la preparazione all’esame: ci aiutano a capire cosa funziona e cosa migliorare.",
+      url: "https://forms.gle/3NvXVDYVc4z3kJVf8",
+    },
+  ];
 
   function savedTheme() {
     try {
@@ -73,14 +88,12 @@
     actions.prepend(button);
     applyTheme(root.dataset.theme);
 
-    // Link per segnalare errori o lasciare un feedback, uguale in tutte le pagine
+    // Pulsante "Segnala / Feedback", uguale in tutte le pagine: apre la scelta tra i moduli
     const feedback = document.createElement("a");
     feedback.className = "feedback-link";
-    feedback.href = "https://forms.gle/FVrJ6skGrEWvtrHE7";
-    feedback.target = "_blank";
-    feedback.rel = "noopener noreferrer";
-    feedback.title = "Segnala un errore o lascia un feedback";
-    feedback.setAttribute("aria-label", `${feedback.title} (si apre in una nuova scheda)`);
+    feedback.href = FEEDBACK_FORMS[0].url;
+    feedback.title = "Segnala un errore, lascia un feedback o compila il questionario";
+    feedback.setAttribute("aria-haspopup", "dialog");
     feedback.innerHTML =
       '<span class="feedback-icon" aria-hidden="true">!</span><span class="feedback-text">Segnala / Feedback</span>';
     button.after(feedback);
@@ -101,6 +114,41 @@
       home.innerHTML = `<span class="home-icon" aria-hidden="true">⌂</span><span class="home-text">${toPortal ? "Corsi" : "Home"}</span>`;
       button.before(home);
     }
+  });
+
+  // Popup di scelta del modulo: si apre da ogni .feedback-link (header e menu dello studio)
+  function openFeedbackDialog() {
+    const dialog = document.createElement("dialog");
+    dialog.className = "site-dialog feedback-dialog";
+    dialog.setAttribute("aria-labelledby", "feedback-dialog-title");
+    dialog.innerHTML = `
+      <form method="dialog" class="site-dialog-body">
+        <h2 class="site-dialog-title" id="feedback-dialog-title">Segnala / Feedback</h2>
+        <p class="site-dialog-message">Scegli il modulo da compilare: si apre in una nuova scheda e richiede l’accesso con un account Google, così possiamo risponderti via email se serve.</p>
+        <div class="feedback-choices">
+          ${FEEDBACK_FORMS.map(
+            (form) =>
+              `<a class="feedback-choice" href="${form.url}" target="_blank" rel="noopener noreferrer"><strong>${form.title}</strong><span>${form.description}</span></a>`,
+          ).join("")}
+        </div>
+        <div class="site-dialog-actions">
+          <button class="button secondary" value="cancel">Chiudi</button>
+        </div>
+      </form>`;
+    dialog.addEventListener("click", (event) => {
+      // Clic sullo sfondo o su un modulo: la finestra si chiude
+      if (event.target === dialog || event.target.closest(".feedback-choice")) dialog.close();
+    });
+    dialog.addEventListener("close", () => dialog.remove());
+    document.body.append(dialog);
+    dialog.showModal();
+  }
+
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest?.(".feedback-link");
+    if (!link || typeof HTMLDialogElement === "undefined") return;
+    event.preventDefault();
+    openFeedbackDialog();
   });
 
   // Barre di scorrimento coral mentre il contenitore scorre: classe "is-scrolling" tolta poco dopo l'ultimo scroll
