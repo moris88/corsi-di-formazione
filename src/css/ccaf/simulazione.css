@@ -2491,7 +2491,7 @@ body.exam-focus .topbar {
   }
 }
 
-/* "Entra nell'inferno": il demone sale, afferra la schermata, la squarcia e ti trascina dentro (src/js/ccaf/demonGate.js) */
+/* "Entra nell'inferno": il demone sale, afferra la schermata, la squarcia e ti trascina dentro (src/js/ccaf/simulazione/demonGate.js) */
 .demon-gate {
   position: fixed;
   inset: 0;
