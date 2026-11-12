@@ -647,6 +647,39 @@ h1 {
   font-size: 18px;
   line-height: 1;
 }
+/* Portale: colore principale ardesia, anche per l'header; ogni scheda tiene il colore della sua certificazione */
+.page-portal {
+  --primary: #3d4a5c;
+  --primary-dark: #2c3644;
+  --primary-pale: #e8ebef;
+}
+.page-portal .topbar {
+  background: var(--primary);
+  border-bottom-color: var(--primary-dark);
+}
+.page-portal .path {
+  --primary: var(--coral);
+  --primary-dark: var(--coral-dark);
+  --primary-pale: var(--coral-pale);
+}
+/* Scheda GitHub Foundations: colore principale proprio (ridefinisce i token solo nella scheda) */
+.path.path-github {
+  --primary: #6f2e98;
+  --primary-dark: #57237a;
+  --primary-pale: #f1e9f7;
+}
+/* Percorso non ancora disponibile */
+.path-wip {
+  margin: -10px 0 18px;
+  padding: 3px 9px;
+  border: 1px solid var(--primary);
+  border-radius: 999px;
+  color: var(--primary);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
 .material-row {
   display: flex;
   align-items: center;
@@ -1620,6 +1653,9 @@ h1 {
 :root[data-theme="dark"] .path,
 :root[data-theme="dark"] .exam-panel {
   background: rgba(30, 30, 30, 0.9);
+}
+:root[data-theme="dark"] .path-wip {
+  color: #c9a2e4;
 }
 :root[data-theme="dark"] .doc-link:hover,
 :root[data-theme="dark"] .article-content blockquote,
