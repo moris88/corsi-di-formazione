@@ -1,5 +1,6 @@
 import { confirmDialog } from "../dialog.js";
 import { bankLoaderHtml } from "../loader.js";
+import { playDemonGate } from "./demonGate.js";
 import {
   applyStatsBars,
   classifyQuestion,
@@ -876,7 +877,8 @@ function renderIntro() {
   setFocusMode(false);
   if (topStatus) topStatus.textContent = "Simulazione d’esame";
   app.innerHTML = `
-  <section class="screen intro-layout" aria-labelledby="page-title">
+  <section class="screen intro-layout${testDifficulty === "inferno" ? " is-inferno" : ""}" aria-labelledby="page-title">
+    ${testDifficulty === "inferno" ? `<div class="guide-embers" aria-hidden="true">${"<i></i>".repeat(18)}</div>` : ""}
     <div class="intro-copy-block">
       <div class="eyebrow">Sessione di simulazione</div>
       <h1 id="page-title">Simulazione<br><span>d’esame</span></h1>
@@ -1725,7 +1727,8 @@ app.addEventListener("click", async (event) => {
     if (!ok) return;
     // Il tutto schermo va chiesto dentro un gesto dell'utente: il clic su "Inizia ora" lo è ancora
     requestFullscreen();
-    playLaunch();
+    if (testDifficulty === "inferno") playDemonGate(playLaunch);
+    else playLaunch();
   } else if (action === "go" && exam) {
     exam.index = Number(control.dataset.index);
     saveExam();
