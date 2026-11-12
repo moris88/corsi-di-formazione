@@ -1,6 +1,8 @@
 // Statistiche delle simulazioni: classificazione dei quesiti per dominio e argomento
 // e schermata di analisi costruita sullo storico salvato in localStorage.
 
+import { escapeHtml } from "../utils.js";
+
 const PASS_RATIO = 0.72;
 const STUDY = "./studio.html?doc=";
 
@@ -191,13 +193,6 @@ export function classifyQuestion(question) {
   const domains = [...new Set(topics.map((id) => TOPIC_BY_ID.get(id).domain))];
   if (!domains.length) domains.push(SCENARIO_DOMAIN[question.scenario] || "D1");
   return { topics, domains };
-}
-
-function escapeHtml(value) {
-  return String(value).replace(
-    /[&<>"']/g,
-    (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char],
-  );
 }
 
 function pct(ok, total) {
