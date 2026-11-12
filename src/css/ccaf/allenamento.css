@@ -73,6 +73,11 @@
 .train-setup > :nth-child(8) {
   view-transition-name: setup-8;
 }
+/* Anche l'header ha un nome: durante la transizione i blocchi del setup sono disegnati sopra la pagina
+   e, senza questo, scorrerebbero sopra l'header (z-index 20 → il suo gruppo resta in cima) */
+.topbar {
+  view-transition-name: topbar;
+}
 ::view-transition-group(*) {
   animation-duration: 0.28s;
   animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
