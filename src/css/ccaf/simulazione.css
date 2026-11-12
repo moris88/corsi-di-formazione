@@ -2187,24 +2187,43 @@ body.exam-focus .topbar {
   }
 }
 
-/* "Come affrontare la simulazione" per un test inferno: sfondo rovente, braci, titolo in fiamme,
+/* "Come affrontare la simulazione" (e, per lo sfondo, la scelta del test) per un test inferno: sfondo rovente, braci, titolo in fiamme,
    sezioni che emergono dal fuoco e pulsante di avvio incandescente */
-.guide-screen.is-inferno {
+:is(.guide-screen, .intro-layout).is-inferno {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   border-radius: 16px;
   background: radial-gradient(ellipse at 50% 120%, rgb(255 80 20 / 0.28), transparent 60%);
 }
-.guide-screen.is-inferno > * {
+:is(.guide-screen, .intro-layout).is-inferno > * {
   position: relative;
   z-index: 1;
 }
-.guide-screen.is-inferno .guide-embers {
+:is(.guide-screen, .intro-layout).is-inferno .guide-embers {
   position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
+}
+/* Sfondo e braci a tutto schermo: partono dal fondo della finestra, non della sezione */
+:is(.guide-screen, .intro-layout).is-inferno {
+  overflow: visible; /* con hidden la sezione diventa contenitore di scroll e .guide-actions perde lo sticky */
+  background: none;
+}
+:is(.guide-screen, .intro-layout).is-inferno .guide-embers {
+  position: fixed;
+  background: radial-gradient(ellipse at 50% 120%, rgb(255 80 20 / 0.28), transparent 60%);
+}
+/* Pulsanti in fondo alla guida inferno senza la fascia di sfondo */
+.guide-screen.is-inferno .guide-actions {
+  position: sticky; /* la regola "> *" sopra la renderebbe relative */
+  background: none;
+  border-top: 0;
+  box-shadow: none;
+}
+:root[data-theme="dark"] :is(.guide-screen, .intro-layout).is-inferno .guide-embers {
+  background: radial-gradient(ellipse at 50% 120%, rgb(255 80 20 / 0.35), transparent 65%);
 }
 .guide-embers i {
   position: absolute;
@@ -2253,10 +2272,10 @@ body.exam-focus .topbar {
   margin-left: -4%;
   animation-delay: -3.6s;
 }
-.guide-screen.is-inferno .eyebrow {
+:is(.guide-screen, .intro-layout).is-inferno .eyebrow {
   color: #c2410c;
 }
-.guide-screen.is-inferno h1 span {
+:is(.guide-screen, .intro-layout).is-inferno h1 span {
   background: linear-gradient(0deg, #b71c1c, #ff6d00 40%, #ffca28 70%, #ff6d00);
   background-size: 100% 300%;
   -webkit-background-clip: text;
@@ -2285,7 +2304,7 @@ body.exam-focus .topbar {
 .guide-screen.is-inferno .guide-note {
   animation-delay: 0.45s;
 }
-.guide-screen.is-inferno .panel-kicker {
+:is(.guide-screen, .intro-layout).is-inferno .panel-kicker {
   color: #c2410c;
 }
 .guide-inferno-warning {
@@ -2332,16 +2351,13 @@ body.exam-focus .topbar {
     box-shadow: 0 0 22px rgb(255 90 20 / 0.85);
   }
 }
-:root[data-theme="dark"] .guide-screen.is-inferno {
-  background: radial-gradient(ellipse at 50% 120%, rgb(255 80 20 / 0.35), transparent 65%);
-}
-:root[data-theme="dark"] .guide-screen.is-inferno .eyebrow,
-:root[data-theme="dark"] .guide-screen.is-inferno .panel-kicker {
+:root[data-theme="dark"] :is(.guide-screen, .intro-layout).is-inferno .eyebrow,
+:root[data-theme="dark"] :is(.guide-screen, .intro-layout).is-inferno .panel-kicker {
   color: #ff8a3d;
 }
 @media (prefers-reduced-motion: reduce) {
-  .guide-screen.is-inferno *,
-  .guide-screen.is-inferno h1 span {
+  :is(.guide-screen, .intro-layout).is-inferno *,
+  :is(.guide-screen, .intro-layout).is-inferno h1 span {
     animation: none !important;
   }
   .guide-embers {
@@ -2472,5 +2488,161 @@ body.exam-focus .topbar {
 @media print {
   .result-devil {
     display: none;
+  }
+}
+
+/* "Entra nell'inferno": il demone sale, afferra la schermata, la squarcia e ti trascina dentro (src/js/ccaf/simulazione/demonGate.js) */
+.demon-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  pointer-events: none;
+}
+.demon-hell {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 55%, #ffd36b 0%, #ff5a14 18%, #8f1606 45%, #120201 80%);
+  animation: demon-hell 3s ease-in both;
+}
+.demon-door {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50.5%;
+  background:
+    repeating-linear-gradient(115deg, transparent 0 46px, rgb(255 90 20 / 0.22) 47px 49px, transparent 50px 90px),
+    linear-gradient(180deg, #1c0503, #0b0201);
+}
+.demon-door.is-left {
+  left: 0;
+  box-shadow: inset -6px 0 18px rgb(255 90 20 / 0.6);
+  --open: -105%;
+}
+.demon-door.is-right {
+  right: 0;
+  box-shadow: inset 6px 0 18px rgb(255 90 20 / 0.6);
+  --open: 105%;
+}
+.demon-gate .demon-door {
+  animation:
+    demon-door-in 0.5s ease-out both,
+    demon-door-open 0.9s 1.5s cubic-bezier(0.6, 0, 0.4, 1) forwards;
+}
+.demon {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: min(70vw, 460px);
+  height: auto;
+  overflow: visible;
+  transform-origin: 50% 60%;
+  animation: demon-rise 3s ease-in-out both;
+}
+.demon-horn {
+  fill: #3a0905;
+  stroke: #ff6a1a;
+  stroke-width: 2;
+}
+.demon-head {
+  fill: #9e1a0c;
+  stroke: #2a0402;
+  stroke-width: 4;
+}
+.demon-brow {
+  fill: none;
+  stroke: #1a0201;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+.demon-eye {
+  fill: #ffe066;
+  filter: drop-shadow(0 0 6px #ffb300) drop-shadow(0 0 14px #ff3d00);
+  animation: demon-eye 3s steps(1) both;
+}
+.demon-mouth {
+  fill: #1a0201;
+}
+.demon-teeth {
+  fill: none;
+  stroke: #f5e6c8;
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.demon-claw {
+  fill: #6e1208;
+  stroke: #1a0201;
+  stroke-width: 3;
+  animation: demon-grip 3s ease-in-out both;
+}
+.demon-claw.is-left {
+  --pull: -60px;
+}
+.demon-claw.is-right {
+  --pull: 60px;
+}
+@keyframes demon-door-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes demon-door-open {
+  to {
+    transform: translateX(var(--open));
+  }
+}
+@keyframes demon-rise {
+  0% {
+    transform: translate(-50%, 100%);
+  }
+  35%,
+  50% {
+    transform: translate(-50%, 8%);
+  }
+  55% {
+    transform: translate(-50%, 6%) rotate(-2deg);
+  }
+  60% {
+    transform: translate(-50%, 8%) rotate(2deg);
+  }
+  80% {
+    transform: translate(-50%, 8%) scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -10%) scale(6);
+    opacity: 0;
+  }
+}
+@keyframes demon-grip {
+  0%,
+  45% {
+    transform: translateX(0);
+  }
+  80%,
+  100% {
+    transform: translateX(var(--pull));
+  }
+}
+@keyframes demon-eye {
+  0%,
+  30% {
+    opacity: 0.2;
+  }
+  31%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes demon-hell {
+  0%,
+  60% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.6);
+    filter: brightness(1.6);
   }
 }
