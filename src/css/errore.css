@@ -1,0 +1,44 @@
+/* Pagine di errore (404 e aggiornamento): stili condivisi in style.css, layout centrato qui. */
+@import "style.css";
+
+.error-main {
+  min-height: calc(100vh - var(--topbar-height));
+  display: grid;
+  place-items: center;
+  padding: clamp(40px, 8vw, 96px) var(--gutter);
+}
+
+.error-box {
+  max-width: 640px;
+  width: 100%;
+}
+
+.error-code {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(84px, 16vw, 152px);
+  line-height: 1;
+  color: var(--coral);
+}
+
+.error-box h1 {
+  margin: 10px 0 16px;
+  font-family: var(--serif);
+  font-size: clamp(30px, 5vw, 44px);
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.error-box p {
+  margin: 0 0 14px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}

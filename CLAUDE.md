@@ -25,7 +25,7 @@ npm run check      # Biome: lint + formattazione (npm run lint / npm run format 
 - `src/js/theme.js` resta uno **script classico nel `<head>`** (deve applicare il tema prima del rendering): Vite avvisa che non lo può raggruppare, è voluto. Gli script delle pagine sono invece moduli ES (`type="module"`), quindi senza variabili globali condivise.
 - Biome (`biome.json`) controlla `src/` e `vite.config.mjs`, escludendo i Markdown e `src/others/`; formattazione dell'HTML disattivata.
 
-**Server**: `src/server.mjs` viene copiato in `dist/` e serve la cartella in cui si trova: gzip, CSS e JS con hash generati da Vite in `assets/` in cache per un anno (`immutable`), `no-cache` per HTML/MD/CSS/JS, un giorno per immagini e PDF, 404 con la home; `/server.mjs` non è scaricabile. Esporta l'app e chiama `listen` solo se avviato direttamente.
+**Server**: `src/server.mjs` viene copiato in `dist/` e serve la cartella in cui si trova: gzip, CSS e JS con hash generati da Vite in `assets/` in cache per un anno (`immutable`), `no-cache` per HTML/MD/CSS/JS, un giorno per immagini e PDF, 404 con la pagina `404.html` (file in `/assets/` mancanti: 404 semplice, mai in cache); `/server.mjs` non è scaricabile. Esporta l'app e chiama `listen` solo se avviato direttamente.
 
 **Vercel**: `api/index.mjs` riesporta l'app di `dist/server.mjs` come funzione serverless e `vercel.json` (`framework: null`, `buildCommand: npm run build`) instrada con `routes` ogni richiesta a quella funzione, includendo `dist/**` nel suo bundle (`includeFiles`). Il sito pubblica e serve solo `dist/`; `.vercelignore` esclude `dist/` e `node_modules/` (ricreate da Vercel con install e build).
 

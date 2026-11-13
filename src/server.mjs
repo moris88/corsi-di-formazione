@@ -17,7 +17,7 @@ const app = express();
 app.disable("x-powered-by");
 app.use(compression());
 // Il server stesso non va servito come file statico
-app.get(`/${basename(file)}`, (_req, res) => res.status(404).sendFile(join(root, "index.html")));
+app.get(`/${basename(file)}`, (_req, res) => res.status(404).sendFile(join(root, "404.html")));
 app.use(
   express.static(root, {
     extensions: ["html"],
@@ -32,7 +32,15 @@ app.use(
     },
   }),
 );
-app.use((_req, res) => res.status(404).sendFile(join(root, "index.html")));
+// Un file in /assets/ mancante (es. CSS o JS di una versione precedente) non deve ricevere la home come risposta:
+// il browser la rifiuterebbe e la pagina resterebbe senza stili né script. Si risponde con un 404 semplice, mai in cache.
+app.use((req, res) => {
+  if (req.path.startsWith("/assets/")) {
+    res.status(404).type("text/plain").setHeader("Cache-Control", "no-store").send("Not found");
+    return;
+  }
+  res.status(404).sendFile(join(root, "404.html"));
+});
 
 // Solo se avviato con `node dist/server.mjs`, non quando importato da api/index.mjs.
 if (process.argv[1] && resolve(process.argv[1]) === file) {

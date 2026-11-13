@@ -3,6 +3,61 @@
  * La scelta viene salvata in localStorage; senza scelta salvata
  * si segue la preferenza del sistema operativo.
  */
+
+// Aggiornamento del sito mentre una pagina è aperta (o in cache): l'HTML salvato può citare file
+// CSS o JS con l'hash di una versione precedente, che non esiste più. Il file non si carica e la
+// pagina resta rotta. In quel caso si ricarica la pagina: l'HTML viene rivalidato e torna quello nuovo.
+// La prova salvata in sessionStorage evita cicli di ricaricamento (al massimo una volta ogni due minuti).
+(() => {
+  const RELOAD_KEY = "ccaf-asset-reload";
+  const COOLDOWN_MS = 120000;
+  const ERROR_PAGE = "/errore-caricamento.html";
+  const RETURN_KEY = "ccaf-asset-return";
+  const isBuiltAsset = (url) => /\/assets\/[^/]+\.(css|js)$/.test(url || "");
+
+  function reloadOnce() {
+    const onErrorPage = location.pathname.endsWith(ERROR_PAGE);
+    try {
+      const last = Number(sessionStorage.getItem(RELOAD_KEY) || 0);
+      // Già ricaricata da poco e il file manca ancora: si mostra la pagina di aggiornamento
+      if (Date.now() - last < COOLDOWN_MS) {
+        if (!onErrorPage) {
+          // Si salva la pagina che ha fallito, così il pulsante della pagina di aggiornamento la ricarica
+          try {
+            sessionStorage.setItem(RETURN_KEY, location.href);
+          } catch {
+            /* senza sessionStorage il pulsante torna alla home */
+          }
+          location.replace(ERROR_PAGE);
+        }
+        return;
+      }
+      sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+    } catch {
+      return; // senza sessionStorage non si ricarica, per non entrare in un ciclo
+    }
+    location.reload();
+  }
+
+  // Errore di caricamento di un <link> o di uno <script> (non viene propagato, quindi si ascolta in cattura)
+  window.addEventListener(
+    "error",
+    (event) => {
+      const el = event.target;
+      if (el instanceof HTMLLinkElement || el instanceof HTMLScriptElement) {
+        if (isBuiltAsset(el.href || el.src)) reloadOnce();
+      }
+    },
+    true,
+  );
+
+  // Moduli importati dinamicamente (import()) che non si scaricano: il rifiuto della promessa non è un errore di risorsa
+  window.addEventListener("unhandledrejection", (event) => {
+    const message = String(event.reason?.message || "");
+    if (/dynamically imported module|Importing a module script failed/i.test(message)) reloadOnce();
+  });
+})();
+
 // Simulazione d'esame in corso (salvata da js/ccaf/simulazione.js): qualunque pagina del sito
 // riporta subito alla simulazione, come all'esame vero non si può uscire dalla prova.
 (() => {
