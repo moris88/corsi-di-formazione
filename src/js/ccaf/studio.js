@@ -2,7 +2,7 @@ import { alertDialog } from "../dialog.js";
 import { documents } from "./studio/documents.js";
 import { backToTop, contentNode } from "./studio/dom.js";
 import { currentSectionId, loadDocument, updateProgress } from "./studio/reader.js";
-import { applySearch } from "./studio/search.js";
+import { applySearch, renderCatalog } from "./studio/search.js";
 import { state } from "./studio/state.js";
 
 document.querySelectorAll("[data-search]").forEach((input) => {
