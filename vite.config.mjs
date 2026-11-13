@@ -3,7 +3,7 @@ import { dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { minify as minifyHtml } from "html-minifier-terser";
 import { minify } from "terser";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "src");
 const out = resolve(root, "../dist");
@@ -64,12 +64,30 @@ function copyStatic() {
   };
 }
 
-const pages = (await files(root)).filter((file) => extname(file) === ".html");
+const escapeHtml = (text) =>
+  text.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 
-export default defineConfig({
+// Banner della home CCA-F dalle variabili d'ambiente (es. impostate su Vercel): senza titolo il banner è rimosso
+function banner(env) {
+  return {
+    name: "banner",
+    transformIndexHtml(html) {
+      if (!html.includes("%BANNER_TITLE%")) return html;
+      const title = env.BANNER_TITLE?.trim();
+      if (!title) return html.replace(/\s*<aside class="home-alert"[\s\S]*?<\/aside>/, "");
+      return html
+        .replace("%BANNER_TITLE%", escapeHtml(title))
+        .replace("%BANNER_CONTENT%", escapeHtml(env.BANNER_CONTENT?.trim() ?? ""));
+    },
+  };
+}
+
+const pages =(await files(root)).filter((file) => extname(file) === ".html");
+
+export default defineConfig(({ mode }) => ({
   root,
   publicDir: false,
-  plugins: [copyStatic()],
+  plugins: [banner({ ...loadEnv(mode, resolve(root, ".."), "BANNER_"), ...process.env }), copyStatic()],
   server: {
     port: Number(process.env.VITE_PORT) || 3000,
     open: true,
@@ -87,4 +105,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));
