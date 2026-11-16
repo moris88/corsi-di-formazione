@@ -226,6 +226,46 @@
   font-size: 14px;
   line-height: 1.5;
 }
+/* Caratteristiche dei test: accordion sotto la legenda, percentuali allineate a destra */
+.bank-stats .table-scroll {
+  margin: 12px 0 0;
+}
+.bank-stats-table {
+  color: var(--ink);
+  font-size: 13px;
+}
+.bank-stats-table thead th:nth-child(n + 3),
+.bank-stats-table td {
+  text-align: right;
+}
+.bank-stats-table td {
+  font-variant-numeric: tabular-nums;
+}
+.bank-stats-table td:nth-child(2),
+.bank-stats-table .bank-stats-error {
+  text-align: left;
+}
+.bank-stats-table tbody th {
+  padding: 9px 10px;
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+.bank-stats-table tr:last-child th {
+  border-bottom: 0;
+}
+.bank-stats-error {
+  color: var(--muted);
+}
+.bank-stats-notes {
+  margin: 12px 0 0;
+  padding-left: 18px;
+  line-height: 1.5;
+}
+.bank-stats-notes li + li {
+  margin-top: 4px;
+}
 .difficulty-tag {
   display: inline-block;
   min-width: 84px;

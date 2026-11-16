@@ -109,7 +109,6 @@ difficulty: avanzato
 
 [Spiegazione]`;
 
-
 // Copia il prompt negli appunti e conferma sul pulsante per un paio di secondi
 export async function copyAiPrompt(button) {
   try {

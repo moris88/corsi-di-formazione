@@ -1,6 +1,7 @@
 // Popup dell'ingranaggio: importazione di un Markdown, esportazione di un test
 // del workspace e guida al formato. Creato una volta, contenuto rigenerato a ogni apertura.
 import { escapeHtml } from "../../utils.js";
+import { bankStatsSection, bindBankStats } from "./bankStats.js";
 import { AI_PROMPT, copyAiPrompt, formatGuideSource } from "./formatGuide.js";
 import { renderGuideMarkdown } from "./guideMarkdown.js";
 import { importSourceFile } from "./source.js";
@@ -77,8 +78,10 @@ export function openToolsDialog() {
           <div><dt><span class="difficulty-tag" data-level="inferno">Inferno</span></dt><dd>Oltre l’esame reale: scenari lunghi pieni di vincoli, eccezioni ai principi, opzioni tutte in parte giuste e una sola che regge ogni vincolo.</dd></div>
           <div><dt><span class="difficulty-tag" data-level="custom">Custom</span></dt><dd>Test importato: la difficoltà non è nota a priori.</dd></div>
         </dl>
+        ${bankStatsSection()}
       </section>
       <form method="dialog" class="site-dialog-actions tools-dialog-close"><button class="button secondary" type="submit">Chiudi</button></form>
     </div>`;
+  bindBankStats(toolsDialog);
   toolsDialog.showModal();
 }
