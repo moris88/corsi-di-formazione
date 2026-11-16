@@ -188,3 +188,51 @@ estrai → valida (schema + regole semantiche)
 **Perché è sbagliato:** la confidenza grezza auto-dichiarata è mal calibrata.
 
 ✅ **Calibra le soglie su un set di validazione etichettato** prima di usarle per decidere il routing.
+
+---
+
+## 7. Opzioni quasi giuste
+
+Queste trappole riprendono il meccanismo giusto ma sbagliano un dettaglio che lo scenario rende decisivo. Prima di scegliere, verifica l'opzione contro **ogni** vincolo della domanda.
+
+### Trappola 21 — Inviare i batch con una cadenza che rispetta lo SLA "per la maggior parte dei documenti"
+
+**Perché è sbagliato:** conta il caso peggiore: tempo di attesa prima dell'invio + fino a 24 ore di elaborazione.
+
+✅ Cadenza ≤ **SLA − 24 ore**. Con uno SLA di 30 ore, un batch almeno ogni 6 ore.
+
+### Trappola 22 — Provare il batch su un campione controllando solo che superi lo schema
+
+**Perché è sbagliato:** un output valido rispetto allo schema può contenere valori sbagliati.
+
+✅ Campione **rappresentativo** controllato anche nella **qualità dei valori**, prima di inviare l'intero lotto.
+
+### Trappola 23 — Niente cache del prompt su un flusso sincrono "perché ogni richiesta è diversa"
+
+**Perché è sbagliato:** le istruzioni lunghe e identiche ripetute a ogni richiesta sono proprio il prefisso da mettere in cache.
+
+✅ Flusso che qualcuno aspetta → sincrono **con cache** delle istruzioni comuni; lavoro che nessuno aspetta → batch.
+
+### Trappola 24 — Dedurre un valore senza registrare come è stato ottenuto
+
+**Perché è sbagliato:** chi controlla (revisori, audit) non distingue i valori espliciti da quelli calcolati.
+
+✅ Esempi che insegnano la deduzione **e** un campo di stato (esplicito, derivato con la regola usata, assente); `null` solo per le vere assenze.
+
+### Trappola 25 — Few-shot solo per i formati che vanno male
+
+**Perché è sbagliato:** i documenti che mescolano più formati restano senza guida.
+
+✅ Esempi per **ogni struttura**, compresi i casi misti.
+
+### Trappola 26 — Bloccare il merge anche sulle categorie con precisione media
+
+**Perché è sbagliato:** ogni blocco errato ferma il team finché qualcuno non interviene.
+
+✅ Blocca solo sulle categorie **ad alta precisione**, pubblica le altre come commenti e rivaluta la soglia quando cambia la precisione misurata.
+
+### Trappola 27 — Voto a maggioranza tra più esecuzioni "in aggiunta" a criteri espliciti
+
+**Perché è sbagliato:** moltiplica i costi e scarta i problemi reali che compaiono in una sola esecuzione (spesso i più sottili).
+
+✅ **Criteri espliciti e output strutturato** in un'unica esecuzione riducono la variabilità alla fonte.

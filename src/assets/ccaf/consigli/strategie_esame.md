@@ -85,6 +85,12 @@ Impara a riconoscerle: escono in quasi ogni domanda.
 - "Chiedi al cliente di inoltrare il riassunto", "lascia che i developer correggano a mano", "chiedi ai fornitori di avvisarti".
 - Raramente è la risposta migliore.
 
+### 🚩 La "quasi giusta"
+
+- Riprende il meccanismo della risposta corretta, ma sbaglia un dettaglio che lo scenario rende decisivo: ambito troppo ampio o troppo stretto (`--allowedTools Bash` invece di `Bash(npm test)`, ricerca limitata alle cartelle della PR), momento sbagliato (hook `Stop` invece di `PostToolUse`), informazione mancante (data di pubblicazione senza periodo di riferimento), controllo che non lega la verifica al caso giusto.
+- È la trappola più frequente nelle domande difficili: rileggi lo scenario e controlla l'opzione **contro ogni vincolo**, non solo contro il concetto principale.
+- Esempi per dominio nelle sezioni "Opzioni quasi giuste" delle trappole D1–D5.
+
 ---
 
 ## 4. Le coppie da non confondere (domande-trabocchetto classiche)
@@ -108,6 +114,11 @@ Impara a riconoscerle: escono in quasi ogni domanda.
 | `stop_reason` | `tool_use` → esegui i tool e continua; `end_turn` → fine. Mai fare il parsing del testo |
 | Subagent | **Non** ereditano il contesto del coordinatore: tutto va passato esplicitamente nel prompt di delega. Il coordinatore deve avere `Task` negli `allowedTools` |
 | Esecuzione diretta vs plan mode | Fix localizzato con causa nota → diretto; molti file, alternative architetturali, decisioni aperte → plan mode |
+| Hook `PostToolUse` vs `Stop` | `PostToolUse` scatta dopo **ogni** uso di uno strumento (es. formattare ogni file modificato); `Stop` solo quando Claude finisce di rispondere |
+| `--allowedTools Bash` vs `--allowedTools "Bash(npm test)"` | Il primo approva **qualunque** comando; il secondo solo quello che serve |
+| `.claude/rules/` con e senza `paths` | Senza `paths` la regola si carica **sempre**; con `paths` solo sui file corrispondenti |
+| Data di pubblicazione vs periodo di riferimento | Quando è uscita la fonte vs a quando si riferisce il dato: servono **entrambe** per non vedere contraddizioni dove c'è solo un cambiamento nel tempo |
+| Batch e SLA | Conta il caso peggiore: attesa prima dell'invio + fino a 24 h. SLA di 30 h → un batch almeno ogni 6 h |
 
 ---
 
@@ -185,7 +196,8 @@ Impara a riconoscerle: escono in quasi ogni domanda.
 4. **Quale conserva le informazioni?** Escludere, scartare, rendere opzionale o fare la media perde dati.
 5. **Quale usa il meccanismo nativo** di Claude Code / Agent SDK / API invece di un workaround fatto a mano?
 6. **Diffida dei superlativi assoluti** nelle opzioni: "always", "never", "guarantees", "eliminates all". Spesso sono quelle sbagliate (salvo quando descrivono un meccanismo deterministico reale).
-7. **Le opzioni corrette sono spesso le più articolate** e contengono un "e" ("fai X **e** mantieni Y"), perché bilanciano due esigenze. Non è una regola assoluta: usala solo per decidere tra due opzioni equivalenti.
+7. **Non scegliere in base alla lunghezza.** Nelle domande più difficili tutte le opzioni sono lunghe e articolate, e la "quasi giusta" può esserlo più della corretta. Conta se l'opzione bilancia **tutte** le esigenze dello scenario ("fai X **e** mantieni Y"), non quanto è lunga.
+8. **Cerca il vincolo violato.** Tra due opzioni quasi uguali, individua la parola che le distingue (ambito, momento, chi decide, cosa viene conservato) e controlla quale rispetta ogni numero e ogni condizione dello scenario.
 
 ---
 

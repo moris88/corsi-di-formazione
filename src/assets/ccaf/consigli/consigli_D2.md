@@ -234,3 +234,43 @@ Ogni sviluppatore imposta il token localmente.
 ✅ Guida d'esame: se Edit non trova un ancoraggio univoco → **Read + Write**.
 
 ⚠️ **Guida vs docs:** la documentazione attuale suggerisce di allargare `old_string` o usare `replace_all`. Ma se la domanda specifica che l'ancoraggio non può essere reso univoco *e* va cambiata una sola occorrenza, nessuna delle due funziona → Read + Write.
+
+---
+
+## 6. Opzioni quasi giuste
+
+Queste trappole riprendono il meccanismo giusto ma sbagliano un dettaglio che lo scenario rende decisivo. Prima di scegliere, verifica l'opzione contro **ogni** vincolo della domanda.
+
+### Trappola 24 — Dare alla review Grep e Read limitati alle cartelle toccate dalla PR
+
+**Perché è sbagliato:** chi chiama una funzione di cui cambia la firma sta spesso in altre parti del repository.
+
+✅ Grep e Read su **tutto il repository**, usati su richiesta: nessun costo in più per le PR che non cambiano firme.
+
+🔎 "Dopo il merge si rompono chiamate in altri punti del codice."
+
+### Trappola 25 — Preferire Read, Grep e Glob ma pre-approvare `Bash(cat:*)` e `Bash(grep:*)` "come riserva"
+
+**Perché è sbagliato:** resta un percorso non tracciato per le stesse letture, che vanifica permessi per strumento e audit.
+
+✅ Strumenti dedicati per lettura e ricerca; Bash solo per ciò che lo richiede davvero (build, test).
+
+### Trappola 26 — Errori strutturati con `isRetryable`, ma lo stesso messaggio per l'utente in ogni caso
+
+**Perché è sbagliato:** l'agente sa quando riprovare, ma a chi ha la finestra di rimborso scaduta continua a dire "riprova più tardi".
+
+✅ Categoria + `isRetryable` + **motivo comprensibile per l'utente**.
+
+### Trappola 27 — Dividere il lavoro tra sottoagenti specializzati dando a ognuno tutti gli strumenti
+
+**Perché è sbagliato:** la scelta tra 35 strumenti resta confusa come prima.
+
+✅ A ogni sottoagente un **set ristretto e pertinente** al suo gruppo di compiti.
+
+🔎 Server MCP di altri team che non rinomineranno i loro strumenti.
+
+### Trappola 28 — Server MCP sperimentale in `.mcp.json` su un branch personale o con il percorso in una variabile d'ambiente
+
+**Perché è sbagliato:** il branch lo fa sparire quando cambi branch e lo condivide appena viene pubblicato; la variabile d'ambiente lo espone comunque a tutto il team.
+
+✅ **Configurazione a livello utente** finché non è approvato; poi `.mcp.json` di progetto.

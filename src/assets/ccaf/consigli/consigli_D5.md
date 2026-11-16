@@ -206,3 +206,51 @@ Contesto di errore che un sottoagente dovrebbe restituire al coordinatore:
 **Perché è sbagliato:** appiattire peggiora leggibilità e comprensione.
 
 ✅ Formato adatto al contenuto: **tabelle** per dati finanziari e confronti, **prosa** per notizie e narrazione, **elenchi strutturati** per risultati tecnici.
+
+---
+
+## 7. Opzioni quasi giuste
+
+Queste trappole riprendono il meccanismo giusto ma sbagliano un dettaglio che lo scenario rende decisivo. Prima di scegliere, verifica l'opzione contro **ogni** vincolo della domanda.
+
+### Trappola 25 — Retry locali per gli errori temporanei, omettendo i fallimenti definitivi
+
+**Perché è sbagliato:** il coordinatore non sa che mancano dei risultati e non cerca alternative.
+
+✅ Retry locali **limitati**, poi propagazione al coordinatore con risultati parziali e tentativi fatti.
+
+### Trappola 26 — Aggiungere solo la data di pubblicazione e preferire il dato più recente
+
+**Perché è sbagliato:** una fonte pubblicata nel 2024 può riportare dati del 2021; preferire il dato più recente cancella l'andamento nel tempo.
+
+✅ Data di pubblicazione **e periodo di riferimento** del dato (vedi trappola 22).
+
+### Trappola 27 — Una verifica indipendente che controlla solo che le fonti esistano e siano pertinenti
+
+**Perché è sbagliato:** il problema tipico è una fonte esistente e pertinente che però dice qualcosa di diverso o di più debole.
+
+✅ L'agente indipendente confronta **ogni affermazione con l'estratto citato**.
+
+### Trappola 28 — Promessa non verificabile: concedere il massimo previsto dalla policy come compromesso
+
+**Perché è sbagliato:** conferma implicitamente la promessa e chiude il caso senza che nessuno abbia controllato.
+
+✅ Spiega che la promessa non è verificabile e fai **escalation** a chi può controllare i contatti precedenti, senza confermare né negare.
+
+### Trappola 29 — Escalation su richiesta del cliente, ma con un handoff minimo
+
+**Perché è sbagliato:** l'operatore deve rifare verifica e controlli già fatti.
+
+✅ Escalation **immediata** con un handoff completo: verifica, idoneità e azione proposta.
+
+### Trappola 30 — Ripetere le regole critiche in fondo al prompt, rigenerandole a ogni richiesta
+
+**Perché è sbagliato:** il testo che cambia a ogni richiesta rompe il prefisso in cache.
+
+✅ Riepilogo delle regole critiche **all'inizio, nel prefisso statico**, intestazioni chiare e dati del caso delimitati.
+
+### Trappola 31 — Verificare la calibrazione facendo rielaborare un campione dal modello
+
+**Perché è sbagliato:** misura la coerenza del modello, non la correttezza dei valori.
+
+✅ Un piccolo **campione casuale revisionato da persone**, anche tra le estrazioni ad alta confidenza.

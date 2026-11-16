@@ -204,7 +204,8 @@ Regole pratiche:
 - **Correlazione**: i risultati tornano in ordine qualsiasi. Per riconoscere quale risposta appartiene a quale richiesta usi **`custom_id`**, l'etichetta che hai assegnato, mai la posizione nella lista.
 - **Più turni**: un batch non supporta conversazioni a più passaggi. Ogni richiesta deve essere autosufficiente.
 - **Errori**: se 50 richieste su 1.000 falliscono, reinvii **solo quelle 50** (identificate dal `custom_id`), non tutto il lotto.
-- **Prima di scalare**: prova il prompt su un piccolo campione. Meglio scoprire un errore su 20 documenti che su 10.000.
+- **Prima di scalare**: prova il prompt su un piccolo campione rappresentativo e controlla la qualità dei valori, non solo che l'output superi lo schema. Meglio scoprire un errore su 20 documenti che su 10.000.
+- **SLA**: conta il caso peggiore, cioè l'attesa prima dell'invio più le 24 ore massime. Con uno SLA di 30 ore, un batch almeno ogni 6 ore.
 
 Un esempio di `custom_id` ben scelto: `fattura-2026-000123`. Quando il risultato torna, sai subito a quale documento si riferisce e puoi salvarlo nel posto giusto, indipendentemente dall'ordine di arrivo.
 

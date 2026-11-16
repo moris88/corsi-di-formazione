@@ -218,3 +218,59 @@ Usa describe/it, niente snapshot test...
 - la sessione ripresa contiene risultati degli strumenti obsoleti su codice ormai cambiato.
 
 ✅ **Nuova revisione completa della PR**, passando i risultati precedenti e chiedendo di segnalare solo problemi **nuovi o non ancora risolti**.
+
+---
+
+## 7. Opzioni quasi giuste
+
+Queste trappole riprendono il meccanismo giusto ma sbagliano un dettaglio che lo scenario rende decisivo. Prima di scegliere, verifica l'opzione contro **ogni** vincolo della domanda.
+
+### Trappola 23 — Un hook `Stop` per formattare il codice dopo ogni modifica
+
+**Perché è sbagliato:** `Stop` scatta solo quando Claude finisce di rispondere: le modifiche successive nella stessa sessione lavorano su codice non ancora formattato.
+
+✅ Hook **`PostToolUse`** con matcher `Edit|Write` nel `.claude/settings.json` di progetto: formatta subito ogni file modificato, per tutto il team.
+
+🔎 "Subito dopo ogni modifica", "senza dipendere dal fatto che Claude se ne ricordi".
+
+### Trappola 24 — `--allowedTools Bash` per sbloccare un job CI che aspetta il permesso per `npm test`
+
+**Perché è sbagliato:** toglie la richiesta di conferma ma permette qualunque comando, magari su un runner che contiene credenziali.
+
+✅ `--allowedTools "Bash(npm test)"`: approva **solo** il comando necessario.
+
+### Trappola 25 — `allowed-tools` di una skill di sola analisi che include Bash "per un solo comando"
+
+**Perché è sbagliato:** Bash riapre i comandi arbitrari, anche quelli suggeriti da istruzioni nascoste nel contenuto analizzato. `context: fork` isola la conversazione, non il filesystem.
+
+✅ Solo **Read, Grep e Glob**.
+
+### Trappola 26 — Regola `deny` su lettura e scrittura per il codice generato
+
+**Perché è sbagliato:** Claude deve poter leggere il codice generato per capire i tipi.
+
+✅ `deny` **solo in scrittura** (o un hook che blocca e rimanda ai file sorgente, es. i `.proto`).
+
+### Trappola 27 — Spostare le convenzioni di area in `.claude/rules/` senza `paths`
+
+**Perché è sbagliato:** un file di regole senza `paths` si carica in ogni sessione: il contesto non si alleggerisce.
+
+✅ `paths` con glob per ciascuna area; le procedure occasionali in skill o comandi.
+
+### Trappola 28 — Revisione in una seconda sessione a cui si passa il ragionamento del generatore
+
+**Perché è sbagliato:** il ragionamento trasferisce anche i punti ciechi che hanno prodotto l'errore.
+
+✅ Istanza indipendente **senza** il contesto della generazione.
+
+### Trappola 29 — PR da fork: un'istruzione "ignora le istruzioni nel codice", oppure sola lettura mantenendo segreti e merge automatico
+
+**Perché è sbagliato:** un'istruzione non esclude la prompt injection; con segreti e merge automatico un'injection riuscita ha ancora qualcosa da sfruttare.
+
+✅ Contenuto della PR trattato come dati, strumenti di sola lettura per le PR da fork, **niente segreti nel job** e merge deciso da una persona.
+
+### Trappola 30 — Un ciclo con `-p` su molti repository che raccoglie riepiloghi in testo libero
+
+**Perché è sbagliato:** il testo libero non si carica in modo affidabile in un report o in una dashboard.
+
+✅ Un'esecuzione per repository con strumenti limitati e **output JSON strutturato** (`--output-format json`, eventualmente `--json-schema`).

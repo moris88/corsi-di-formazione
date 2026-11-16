@@ -246,3 +246,45 @@ Esempio: uno strumento restituisce date Unix, un altro ISO 8601, un terzo "25/10
 **Perché è sbagliato:** il fork eredita la cronologia, quindi eredita anche i risultati obsoleti.
 
 ✅ Nuova sessione + riassunto iniettato.
+
+---
+
+## 8. Opzioni quasi giuste
+
+Queste trappole riprendono il meccanismo giusto ma sbagliano un dettaglio che lo scenario rende decisivo. Prima di scegliere, verifica l'opzione contro **ogni** vincolo della domanda.
+
+### Trappola 29 — Un prerequisito programmatico che controlla solo che lo strumento di verifica sia stato chiamato
+
+**Perché è sbagliato:** "`get_customer` chiamato almeno una volta nella sessione" non lega la verifica al cliente su cui si sta operando. Se il cliente passa a un altro account durante la conversazione, il controllo viene superato lo stesso.
+
+✅ Il controllo richiede che nello stato di sessione ci sia l'**ID verificato del cliente interessato**, e l'errore spiega il passo mancante.
+
+🔎 Il cliente cambia account, ordine o persona durante la conversazione.
+
+### Trappola 30 — Passare al sottoagente solo gli URL delle fonti già raccolte
+
+**Perché è sbagliato:** il sottoagente rifà l'estrazione che il coordinatore ha già fatto, con costi in più e risultati che possono divergere.
+
+✅ Passa nel prompt di delega le fonti **e** i risultati chiave, in forma strutturata.
+
+🔎 "Il report deve basarsi sulle fonti già verificate."
+
+### Trappola 31 — Lasciare ai sottoagenti la scelta del formato di output insieme al metodo
+
+**Perché è sbagliato:** sostituire la procedura rigida con obiettivo e criteri di qualità è giusto (trappola 12), ma se la sintesi unisce i risultati di più sottoagenti, formati diversi ne rompono l'unione.
+
+✅ Metodo libero, **formato di output definito**.
+
+### Trappola 32 — Ambiti distinti, ma scelti da ciascun sottoagente all'inizio della ricerca
+
+**Perché è sbagliato:** sottoagenti con lo stesso prompt tornano sulle stesse fonti più ovvie e lasciano scoperte le stesse aree.
+
+✅ È il coordinatore, che conosce le aree da coprire, ad assegnare a ogni sottoagente un **ambito esplicito e distinto**.
+
+### Trappola 33 — Un hook `PreToolUse` che blocca senza restituire il motivo
+
+**Perché è sbagliato:** l'agente non sa perché è stato fermato e riprova varianti dello stesso comando.
+
+✅ Blocca **e** restituisci un motivo che indichi l'alternativa consentita (es. "usa il database di staging").
+
+🔎 Lo strumento deve restare disponibile per gli usi legittimi (test, migrazioni).
