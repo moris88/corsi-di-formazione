@@ -45,9 +45,10 @@ Spiegazione facoltativa.
 
 - `title` e `duration_minutes` sono facoltativi. Se mancano, il titolo viene letto dal primo titolo `#` e la durata predefinita è di 120 minuti.
 - `duration_minutes` deve essere un numero intero maggiore di zero.
-- Ogni domanda inizia con `### Domanda N`, dove `N` è un identificatore numerico univoco. I numeri non devono essere consecutivi.
+- `difficulty` (facoltativo) indica il livello: `facile`, `medio`, `difficile`, `avanzato` o `inferno`.
+- Ogni domanda inizia con `### Domanda N` (o `### Question N`, come nelle banche in inglese), dove `N` è un identificatore numerico univoco. I numeri non devono essere consecutivi.
 - Ogni domanda deve contenere testo, quattro opzioni con le etichette `A`, `B`, `C`, `D` e una sola risposta corretta.
-- La risposta corretta si indica con `#### Risposta corretta alla domanda N: X`, usando lo stesso numero della domanda e la lettera corretta. È accettata anche la forma breve `#### Risposta corretta: X`.
+- La risposta corretta si indica con `#### Risposta corretta alla domanda N: X` (o `#### Correct answer to Question N: X`), usando lo stesso numero della domanda e la lettera corretta. È accettata anche la forma breve `#### Risposta corretta: X`.
 - Le spiegazioni dopo la risposta corretta sono facoltative; possono includere elenchi e blocchi di codice.
 - Gli scenari sono facoltativi. Per crearne uno, usa `## Scenario: Nome dello scenario` prima delle domande interessate.
 - Puoi aggiungere tutti gli scenari e le domande che vuoi: la simulazione ricava automaticamente il numero totale dal file.

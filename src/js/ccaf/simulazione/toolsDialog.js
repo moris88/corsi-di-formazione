@@ -54,7 +54,7 @@ export function openToolsDialog() {
         </details>
         <details class="format-help">
           <summary>Prompt per far generare un test all’IA</summary>
-          <p>Copia questo prompt in Claude (o in un’altra IA): contiene già il modello del formato e otterrai un file .md pronto da importare.</p>
+          <p>Copia questo prompt in Claude (o in un’altra IA) e, prima di inviarlo, scegli il livello nella riga “LIVELLO RICHIESTO” (facile, medio, difficile, avanzato o inferno). Contiene già scenari ufficiali, pesi dei domini e modello del formato: otterrai un file .md pronto da importare.</p>
           <p><button class="button secondary" type="button" data-action="copy-ai-prompt">Copia il prompt</button></p>
           <div class="format-guide ai-prompt"><pre>${escapeHtml(AI_PROMPT)}</pre></div>
         </details>
