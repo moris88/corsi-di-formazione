@@ -1,7 +1,5 @@
 # Claude Certified Architect — Certificazione Foundations
 
-> **Aggiornamento:** questa guida è aggiornata a **ottobre 2026**. È prevista una revisione a **dicembre 2026**.
-
 ## Introduzione
 
 La certificazione **Claude Certified Architect — Foundations** attesta che uno specialista è in grado di prendere decisioni ponderate sui compromessi progettuali (trade-off) durante l'implementazione di soluzioni reali basate su Claude. L'esame valuta le conoscenze fondamentali di Claude Code, del Claude Agent SDK, della Claude API e del Model Context Protocol (MCP), le tecnologie principali per la realizzazione di applicazioni di produzione con Claude.
