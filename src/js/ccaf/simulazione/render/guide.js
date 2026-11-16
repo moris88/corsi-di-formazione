@@ -19,26 +19,24 @@ export function renderExamGuide() {
     </div>
     <div class="guide-grid">
       <section class="guide-section" aria-labelledby="procedure-title">
-        <div class="panel-kicker">01 · Procedura</div>
-        <h2 id="procedure-title">Durante la prova</h2>
+        <h2 id="procedure-title">Guida alla simulazione d'esame</h2>
         <ol class="guide-steps">
-          <li><strong>Leggi il caso e la domanda.</strong> Cerca l’obiettivo, il vincolo e il problema da risolvere.</li>
+          <li><strong>Leggi lo scenario e la domanda.</strong> Hai 4 possibili risposte tra cui scegliere, solo una è quella corretta.</li>
           <li><strong>Seleziona una delle quattro opzioni.</strong> La risposta viene salvata automaticamente; puoi cambiarla finché la prova è aperta.</li>
           <li><strong>Naviga liberamente.</strong> Usa Precedente, Successiva o l’indice numerato. Contrassegna i quesiti da rivedere con “Segna”.</li>
           ${timedMode ? `<li><strong>Consegna entro ${testDurationMinutes} minuti.</strong> Puoi consegnare prima; allo scadere la prova viene inviata automaticamente.</li>` : `<li><strong>Consegna quando vuoi.</strong> La prova è senza limite di tempo: il timer mostra solo il tempo trascorso.</li>`}
           <li><strong>Rivedi il risultato.</strong> Alla consegna trovi corrette, errate e senza risposta, con spiegazioni e filtri.</li>
         </ol>
       </section>
-      <section class="guide-section" aria-labelledby="strategy-title">
-        <div class="panel-kicker">02 · Strategia</div>
-        <h2 id="strategy-title">Per puntare al superamento</h2>
-        <ul class="guide-tips">
-          <li><strong>Rispondi a tutto.</strong> La guida d’esame indica che non ci sono penalità per le risposte errate; se sei incerto, scegli l’opzione più plausibile.</li>
-          <li><strong>Gestisci il tempo.</strong> Con ${questionBank.length} quesiti in ${testDurationMinutes} minuti, la media è di circa ${Math.floor((testDurationMinutes * 60) / questionBank.length)} secondi per domanda. Segna i dubbi e torna a rivederli.</li>
-          <li><strong>Leggi i vincoli con attenzione.</strong> Distingui il problema principale da sintomi secondari e scarta le soluzioni che contraddicono i requisiti dello scenario.</li>
-          <li><strong>Scegli la soluzione proporzionata.</strong> Preferisci l’intervento che affronta la causa alla radice senza aggiungere complessità non necessaria; usa vincoli programmatici quando serve una garanzia deterministica.</li>
-          <li><strong>Concentrati sui domini più pesanti.</strong> Architettura e orchestrazione (27%); Claude Code (20%); prompt e output strutturato (20%); strumenti e MCP (18%); contesto e affidabilità (15%).</li>
-        </ul>
+      <section class="guide-section" aria-labelledby="exam-title">
+        <h2 id="exam-title">Come funziona l’esame reale</h2>
+        <ol class="guide-steps">
+          <li><strong>60 domande in 120 minuti.</strong> Circa 2 minuti a domanda, in inglese e a scelta multipla con una sola risposta corretta.</li>
+          <li><strong>Domande legate a scenari.</strong> All’esame compaiono 4 dei 6 scenari ufficiali, scelti a caso; ogni domanda si basa sul contesto dello scenario.</li>
+          <li><strong>Nessuna penalità per gli errori.</strong> Una risposta sbagliata vale quanto una vuota: rispondi sempre, anche in modo provvisorio.</li>
+          <li><strong>Punteggio scalare da 100 a 1000.</strong> Per superare l’esame servono almeno 720 punti.</li>
+          <li><strong>Segna le domande da rivedere.</strong> Puoi contrassegnare le domande dubbie per rivederle prima della consegna.</li>
+        </ol>
       </section>
     </div>
     ${
@@ -50,8 +48,10 @@ export function renderExamGuide() {
         : ""
     }
     <aside class="guide-note" role="note">
-      <strong>Soglia ufficiale: 720 su 1000.</strong>
-      <span>È un punteggio scalare: la percentuale corretta mostrata da questa simulazione è un risultato grezzo e non equivale direttamente al punteggio ufficiale né garantisce il superamento.</span>
+      <span>In questa simulazione sono presenti tutti gli scenari ufficiali, e tutti i domini dell’esame reale, ma le domande sono generate ogni volta casualmente.</span>
+    </aside>
+    <aside class="guide-note" role="note">
+      <span>Formato, domande e livello di difficoltà sono pensati per avvicinarsi il più possibile alla prova reale, ma l’esito ottenuto qui non ha alcun valore ai fini della certificazione. Anche se qui raggiungi il 72% richiesto per superare l’esame, non hai comunque la certezza di superare la prova ufficiale.</span>
     </aside>
     <div class="guide-docs" aria-label="Documenti ufficiali">
       <a class="button secondary" href="../../assets/ccaf/Anthropic-Certification-Exam-Policy.pdf" target="_blank" rel="noopener">Politica d’esame Anthropic (PDF)</a>

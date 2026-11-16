@@ -28,7 +28,7 @@ export const TEST_DIFFICULTY = {
   7: "difficile",
   8: "difficile",
   9: "difficile",
-  10: "difficile",
+  10: "avanzato",
   11: "avanzato",
   12: "avanzato",
   13: "inferno",

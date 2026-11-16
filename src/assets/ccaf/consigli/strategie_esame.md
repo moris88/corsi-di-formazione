@@ -1,6 +1,6 @@
 # Strategie per superare l'esame CCA-F con tranquillità
 
-Questa guida non ripassa gli argomenti: spiega **come ragionare** sulle domande, quali **trabocchetti** ricorrono e come gestire **tempo e ansia**. È basata sui pattern delle domande di pratica (test 1–6).
+Questa guida non ripassa gli argomenti: spiega **come ragionare** sulle domande, quali **trabocchetti** ricorrono e come gestire **tempo e ansia**. È basata sui pattern delle domande dei test di pratica.
 
 ---
 
