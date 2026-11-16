@@ -615,8 +615,9 @@
   color: var(--ink);
 }
 .guide-note {
-  display: grid;
-  grid-template-columns: minmax(150px, 0.35fr) minmax(0, 1fr);
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
   gap: 14px;
   margin-top: 22px;
   padding: 16px 18px;
