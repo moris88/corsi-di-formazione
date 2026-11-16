@@ -162,6 +162,15 @@ export const documents = [
     index: "A6",
   },
   {
+    id: "pipeline-cicd",
+    title: "D3 · Claude Code nelle pipeline CI/CD",
+    group: "Approfondimenti",
+    path: "../../assets/ccaf/appunti/approfondimenti/pipeline_cicd.md",
+    description:
+      "claude -p, permessi decisi in anticipo, output JSON con schema, GitHub Actions, GitLab CI/CD, sicurezza e costi.",
+    index: "A7",
+  },
+  {
     id: "verifica-domain-1",
     title: "Verifica · Dominio 1",
     group: "Esercitazioni",

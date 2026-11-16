@@ -225,6 +225,20 @@ Le altre modalità di permesso sono `default`, `acceptEdits`, `auto`, `dontAsk` 
 
 In parole semplici, vanno da "chiedi conferma per quasi tutto" (`default`) a "fai tutto senza chiedere" (`bypassPermissions`). `acceptEdits` accetta automaticamente le modifiche ai file. Più la modalità è permissiva, più servono altri controlli (permessi `deny`, hook) per evitare danni.
 
+Le regole di permesso possono essere precise: `Bash(npm test)` approva solo quel comando, mentre `Bash` da solo li approva tutti. Allo stesso modo, una regola `deny` solo in scrittura su una cartella di codice generato impedisce di modificarla ma lascia a Claude la possibilità di leggerla.
+
+### Gli hook: azioni che non dipendono dalla memoria di Claude
+
+Un'istruzione in `CLAUDE.md` viene seguita quasi sempre; un **hook** viene eseguito sempre. Gli hook sono comandi configurati in `.claude/settings.json` (condiviso con il team) che partono a momenti precisi:
+
+| Hook | Quando parte | Esempio |
+| --- | --- | --- |
+| `PreToolUse` | Prima che uno strumento venga usato; può bloccarlo | Impedire modifiche in `src/generated/` |
+| `PostToolUse` | Subito dopo l'uso di uno strumento | Formattare con Prettier ogni file appena modificato (matcher su `Edit` e `Write`) |
+| `Stop` | Quando Claude finisce di rispondere | Un controllo finale sull'intero lavoro |
+
+Attenzione alla differenza tra gli ultimi due: se vuoi che ogni modifica successiva lavori su codice già formattato, serve `PostToolUse`. `Stop` arriverebbe solo alla fine.
+
 ---
 
 ## 6. I subagenti: assistenti con un compito preciso
@@ -273,6 +287,8 @@ La **CI/CD** è il sistema automatico che verifica e pubblica il codice ogni vol
 
 → Pre-corso: [CI/CD e pipeline](./studio.html?doc=prerequisiti#ci-cd-e-pipeline-d3), con un esempio completo di pipeline GitHub Actions.
 
+→ Approfondimento: [Claude Code nelle pipeline CI/CD](./studio.html?doc=pipeline-cicd), con GitHub Actions, GitLab CI/CD, permessi e sicurezza.
+
 Il flag indispensabile è **`-p`** (o `--print`): dice a Claude Code di lavorare in modo non interattivo, senza aspettare una persona. Senza `-p` la pipeline si blocca in attesa di input che non arriverà mai.
 
 Un'analogia: è la differenza tra una telefonata (serve qualcuno che risponda) e una lettera (la scrivi, la spedisci, e il destinatario la legge quando arriva). In una pipeline non c'è nessuno al telefono.
@@ -293,6 +309,7 @@ Altri flag da conoscere:
 | `--json-schema` | Verifica che il risultato finale rispetti uno schema |
 | `--max-turns N` | Limite rigido di passaggi |
 | `--max-budget-usd X` | Limite di spesa in dollari |
+| `--allowedTools "Bash(npm test)"` | Approva in anticipo solo i comandi che servono, senza aprire tutto Bash |
 | `--permission-prompts none` | Nega automaticamente le operazioni che richiederebbero conferma, quando nessuno può rispondere |
 
 → Pre-corso: [JSON](./studio.html?doc=prerequisiti#json-d2-d4-d5) e [JSON Schema](./studio.html?doc=prerequisiti#json-schema-d2-d4). L'output in JSON serve perché il passo successivo della pipeline (per esempio pubblicare i commenti nella pull request) è un programma, non una persona.
@@ -307,6 +324,8 @@ Qui il dominio si collega al dominio 4. Il **Batch** è una modalità in cui inv
 - **Batch** (risposta differita): per report notturni o controlli periodici, dove nessuno aspetta.
 
 I risultati del batch arrivano in ordine casuale, quindi per riconoscerli usi `custom_id`, un'etichetta che hai assegnato a ciascuna richiesta.
+
+Se c'è uno SLA, conta il caso peggiore: il tempo di attesa prima dell'invio più le 24 ore massime di elaborazione. Con uno SLA di 30 ore, il batch va inviato almeno ogni 6 ore.
 
 La domanda da farsi è sempre: **qualcuno sta aspettando?** Se uno sviluppatore non può unire la sua modifica finché la revisione non finisce, serve il sincrono. Se il report si legge domattina, il batch fa risparmiare metà della spesa.
 
