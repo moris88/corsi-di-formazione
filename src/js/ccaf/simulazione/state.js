@@ -5,6 +5,7 @@ export const DEFAULT_DURATION_MINUTES = 120;
 export const STORAGE_KEY = "ccaf-simulation-session-v1";
 export const HISTORY_KEY = "ccaf-simulation-history-v1";
 export const HISTORY_LIMIT = 30;
+// Numerati in ordine di difficoltà (Facile → Inferno), come i file delle banche quesiti
 export const BUILTIN_TESTS = [
   {
     file: "../../assets/ccaf/questions/Domande e risposte test 1 - Claude Certified Architect.md",
@@ -44,7 +45,7 @@ export const BUILTIN_TESTS = [
   },
   {
     file: "../../assets/ccaf/questions/Domande e risposte test 10 - Claude Certified Architect.md",
-    label: "Test 10 EN · Difficile",
+    label: "Test 10 EN · Avanzato",
   },
   {
     file: "../../assets/ccaf/questions/Domande e risposte test 11 - Claude Certified Architect.md",
