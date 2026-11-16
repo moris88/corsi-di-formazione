@@ -14,16 +14,16 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 
 A `PreToolUse` hook already blocks every `process_refund` above $500 and routes it to `escalate_to_human`; it works perfectly. Product now adds a second rule: "When the customer has no stated preference, offer store credit before a cash refund; if they decline, refund normally." Refund volume is high, latency must not grow, and the compliance team says this rule is a commercial preference, not a legal or financial control. An engineer proposes to reuse the same hook mechanism for the new rule. What should you do?
 
-- **A.** Extend the existing hook so that it blocks any `process_refund` call unless the transcript shows that store credit was offered and refused, returning an error that tells the agent to offer it first.
+- **A.** Express the preference in the system prompt with explicit criteria, and also extend the existing hook to block refunds until the transcript shows the offer was made.
 - **B.** Force `tool_choice` to a new `offer_store_credit` tool on the turn after `lookup_order`, so that the offer is always made before the model is free to choose the refund tool on later turns.
 - **C.** Express the preference in the system prompt with explicit criteria and a few examples of when to offer credit, keeping the hook only for the $500 limit that needs a deterministic guarantee.
-- **D.** Add a `PostToolUse` hook on `lookup_order` that appends a store-credit reminder to every tool result, so that the instruction sits at the end of the context right before the refund decision.
+- **D.** Move both rules into the system prompt with explicit criteria and examples, removing the hook, since a single mechanism for refund rules is easier to maintain.
 
 #### Correct answer to Question 1: C
 
 Hooks exist for rules that need a **deterministic guarantee** (financial limits, identity checks, compliance). This rule depends on a judgment ("no stated preference", "declined") that the model must interpret in conversation, and the compliance team explicitly says it is a soft preference: probabilistic compliance through clear criteria and few-shot examples is the appropriate tool, and it adds no latency or brittle logic.
 
-A would be right for a hard ordering rule with verifiable state (like verification before refund), but here the hook would have to parse the transcript to decide whether an offer was "refused", which is fragile and blocks legitimate refunds. B is the right technique to force a first step in a fixed pipeline, but forcing a tool call on every refund conversation ignores customers who already stated a preference. D misuses `PostToolUse`, whose role is normalizing tool results, and pollutes every result with instructions.
+Adding a transcript check to the hook turns a judgment-based commercial preference into brittle blocking logic, even with prompt criteria beside it. Moving the $500 limit into the prompt gives up the deterministic guarantee that control requires. Forcing an offer tool ignores the "no stated preference" condition. Prompt criteria for the preference, the hook only for the hard limit.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -34,15 +34,15 @@ You are using Claude Code to accelerate software development. Your team uses it 
 Your project root `CLAUDE.md` is shared through Git. A senior developer recently added two lines to it: "Use tabs for indentation in all TypeScript files" (an agreed team standard enforced in review) and "Always answer me in Italian and explain every change in detail" (his own preference). Since then, several colleagues complain that Claude answers them in Italian with very long explanations, while one new hire who cloned the repository last week says indentation is still inconsistent in his sessions because he deleted the root file "to reduce noise". What is the correct fix?
 
 - **A.** Keep the tabs rule in the project `CLAUDE.md`, move the language and verbosity preference to that developer's `~/.claude/CLAUDE.md`, and restore the project file for the new hire.
-- **B.** Move both lines to the developer's `~/.claude/CLAUDE.md`, so that personal and team preferences live in one place and the shared project file stays as small as possible.
-- **C.** Move both lines to a `.claude/rules/style.md` file with `paths: ["**/*.ts"]`, so they load only when TypeScript files are touched and stop affecting unrelated sessions.
+- **B.** Keep the tabs rule in the project `CLAUDE.md`, move the language preference to a `CLAUDE.local.md` committed in the repo root, and restore the root file for the new hire.
+- **C.** Keep the tabs rule in the project `CLAUDE.md`, move the language preference to the developer's `~/.claude/CLAUDE.md`, and have the new hire copy the tabs rule into his own user file.
 - **D.** Keep both lines in the project `CLAUDE.md` but prefix the language line with the developer's name, so that Claude understands it applies only when he is the one using the session.
 
 #### Correct answer to Question 2: A
 
 The hierarchy separates **team** instructions (project level, versioned and shared) from **personal** ones (user level, `~/.claude/CLAUDE.md`, never shared through VCS). The tabs standard belongs to everyone; the language preference belongs to one person. The new hire's problem is simply that he removed the shared file.
 
-B is the classic hierarchy mistake in reverse: team standards at user level are invisible to colleagues, which is exactly the "new member does not get the rule" diagnosis. C would be correct for file-type conventions, but a conversational language preference has nothing to do with file paths and would still apply to everyone. D relies on the model guessing who is typing; Claude has no reliable notion of the user's identity inside the shared file.
+A committed `CLAUDE.local.md` is no longer personal: that file is meant to stay uncommitted, and committing it shares the preference with everyone. Copying the team rule into the new hire's user file hides the real problem, a deleted shared file, and drifts from the team version. A name prefix still loads the preference for everyone. Team rule in the project file, personal preference at user level, root file restored.
 
 ## Scenario: Multi-Agent Research System
 
@@ -52,8 +52,8 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 
 For a market report, the coordinator first needs a subagent to identify the five largest companies in a niche (the list is not known in advance), and then needs patent analyses for each of those companies. A latency review notes that the run takes 14 minutes and suggests "always spawning all subagents in parallel in the first coordinator turn". Costs are acceptable, and the patent subagent's prompt requires the company names as input. What is the best design?
 
-- **A.** Spawn the company-identification subagent and five generic patent subagents together in the first turn, asking the patent subagents to guess the likely leaders so that no time is lost waiting.
-- **B.** Have a single subagent do both the identification and the five patent analyses sequentially, so the dependency is handled inside one context and the coordinator spawns only one task.
+- **A.** Run the identification step first, then have the coordinator spawn the five patent subagents one per turn, passing each company's name, so each result can inform the next.
+- **B.** Run the identification step first, then emit five `Task` calls in parallel in one turn, each prompt asking to analyze "the company assigned to you in the previous step".
 - **C.** Let the identification subagent spawn the five patent subagents directly once it knows the names, so the dependent work starts immediately without a round trip through the coordinator.
 - **D.** Run the identification step first, then, in a single later coordinator turn, emit five `Task` calls in parallel, one per company, passing each company's name and context in its prompt.
 
@@ -61,7 +61,7 @@ For a market report, the coordinator first needs a subagent to identify the five
 
 Parallel `Task` calls in one coordinator turn are the right optimization only for **independent** work. Here the patent analyses depend on the output of the identification step, so the dependency forces one sequential step, after which the five analyses are independent and can run in parallel, with the needed context passed explicitly in each prompt.
 
-A is the general advice ("spawn in parallel") applied where it does not hold: subagents without the company names would research guesses. B removes the dependency problem but serializes five independent analyses in one growing context, losing both latency and isolation. C breaks the hub-and-spoke pattern: subagent-to-subagent delegation bypasses the coordinator's routing, error handling and observability.
+Spawning the patent subagents one per turn respects the dependency but serializes five independent analyses. Parallel calls that refer to "the previous step" fail because subagents do not inherit the coordinator's context: each prompt must contain its company. Letting a subagent spawn others bypasses the coordinator. Identification first, then five parallel calls with explicit names.
 
 ## Scenario: Structured Data Extraction
 
@@ -71,16 +71,16 @@ You are building a structured data extraction system using Claude. The system ex
 
 Your pipeline receives documents of unknown type and has three type-specific extraction tools (`extract_invoice`, `extract_receipt`, `extract_contract`) plus `extract_metadata`. Downstream systems require that `extract_metadata` runs before any type-specific extraction on every document, because its output selects the storage partition. After that step, the model must pick the right type-specific tool and must never answer in plain text. How should you configure `tool_choice` across the two requests?
 
-- **A.** Use `tool_choice: "any"` on both requests and list `extract_metadata` first in the tools array, so that the model is required to call a tool and will naturally start from the metadata step.
+- **A.** Force `{"type": "tool", "name": "extract_metadata"}` on the first request, then use `tool_choice: "auto"` on the second with a system prompt requiring a type-specific tool.
 - **B.** Force `{"type": "tool", "name": "extract_metadata"}` on the first request, then use `tool_choice: "any"` on the second so the model must call one of the type-specific tools but chooses which.
 - **C.** Use `tool_choice: "auto"` on both requests with a system prompt that states the required order, so that the model can still explain in text when a document matches none of the types.
-- **D.** Force `{"type": "tool", "name": "extract_metadata"}` on both requests, and let the type-specific extraction be returned inside an extra free-form field of the metadata schema.
+- **D.** Use `tool_choice: "any"` on the first request with only `extract_metadata` in the tools array, then `"any"` with all four tools available on the second request.
 
 #### Correct answer to Question 4: B
 
 Two different guarantees are needed. **Ordering** of a specific step is guaranteed by forcing that tool; **"some tool, never text, model chooses which"** is exactly what `"any"` provides. Combining them across the two requests satisfies both constraints.
 
-A guarantees a tool call but not *which* one first: the order of the tools array is not an ordering guarantee. C is probabilistic and explicitly allows plain-text answers, which the pipeline forbids. D keeps the ordering but abandons the strict per-type schemas, turning the structured extraction into an unvalidated free-form field.
+`auto` on the second request still lets the model answer in plain text, whatever the prompt says. Offering all four tools with `any` on the second request allows `extract_metadata` to be called again instead of a type-specific tool. `auto` on both relies on the prompt for order and format. Force the metadata tool first, then `any` over the type-specific tools.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -110,15 +110,15 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 An engineer asks the agent to find every place where `sendInvoice` is called in a TypeScript monorepo of 6,000 files. The function is defined in `billing/core/send.ts`, but `billing/index.ts` re-exports it as `dispatchInvoice`, and most packages import that alias. A first attempt used Grep for `sendInvoice` and found only 3 call sites, while production logs show the function being invoked from at least a dozen services. What should the agent do next?
 
 - **A.** Grep for the export statements that re-export `sendInvoice`, identify the alias names, then Grep for each alias across the repository and Read only the files where they are imported and called.
-- **B.** Use Glob with `**/*invoice*` to list every file related to invoices, then Read each of them in full so that no call site is missed, regardless of how the function was imported.
+- **B.** Grep for `dispatchInvoice` across the repository and Read the files where it is called, since that alias from `billing/index.ts` is the one most packages import.
 - **C.** Read `billing/index.ts` and every file in the `billing` package in full, since all call sites must ultimately go through that package and the wrapper modules live inside it.
-- **D.** Repeat the Grep for `sendInvoice` with a case-insensitive pattern and a wider context window, so that indirect references and comments around the call sites are also captured.
+- **D.** Grep for both `sendInvoice` and `dispatchInvoice`, then Read every matching file in full, including those where the names appear only in comments or tests.
 
 #### Correct answer to Question 6: A
 
 Tracing usage through **wrapper modules** requires following the re-export: Grep for the export to find the alias, then Grep for the alias, then Read only what matters. This builds understanding incrementally without flooding the context.
 
-B confuses Glob (file names) with content search: callers in `orders/` or `payments/` need not have "invoice" in the file name, and reading everything in full wastes context. C searches in the wrong place: the call sites are in the consuming packages, not in `billing`. D still searches for the original name, which the consumers never use; case-insensitivity does not reveal an alias.
+Grepping only `dispatchInvoice` assumes it is the only alias; other re-exports or local renames would be missed. Grepping both known names helps, but reading every match in full wastes context. Reading the whole billing package misses callers elsewhere. Find the re-exports first, then search each alias and read only the call sites.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -128,7 +128,7 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 
 A customer writes: "My order arrived damaged. I don't want to deal with a bot, put me through to a person." The agent has already called `lookup_order` and can see that the item is eligible for an automatic replacement that it could complete with one tool call in a few seconds. Your first-contact resolution metric is at 78%, below the 80% target, and the human queue currently has a 25-minute wait. What should the agent do?
 
-- **A.** Complete the automatic replacement first, since it takes only seconds, and then offer the escalation if the customer still wants to speak with someone after seeing that the problem is solved.
+- **A.** Escalate immediately, but first trigger the replacement in the background, so the human operator finds the case already resolved when they pick it up.
 - **B.** Escalate immediately with `escalate_to_human`, passing a structured summary with the customer, the order, the damage and the eligible replacement, without attempting the resolution first.
 - **C.** Tell the customer about the 25-minute wait and ask whether they would prefer the instant replacement, escalating only if they confirm that they still want a person.
 - **D.** Escalate only after verifying the customer with `get_customer`, since a handoff to a human without verified identity would force the operator to restart the conversation.
@@ -137,7 +137,7 @@ A customer writes: "My order arrived damaged. I don't want to deal with a bot, p
 
 An **explicit request for a human** is an immediate escalation trigger: the agent must not keep investigating or negotiate. The work already done is not wasted, because it goes into a structured handoff so the operator does not re-ask anything. The FCR metric and the queue length do not change this rule.
 
-A and C are the right behaviour for a customer who is frustrated **but has not asked** for a human: offering a quick resolution first is then appropriate. Here, insisting turns a clear instruction into a negotiation. D adds a precondition that the material does not require for escalation; gating the handoff behind further tool calls delays exactly what the customer asked for.
+Starting the replacement in the background still acts against the explicit request and pre-empts the human's decision. Offering the instant option first re-argues a request already made. Requiring `get_customer` before handoff delays an explicit escalation; the summary carries what is known. Escalate immediately with a structured summary.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -167,15 +167,15 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 The synthesis subagent receives two findings on the same metric: a 2021 government survey reports that 41% of small firms use cloud accounting, and a 2024 industry study reports 63%. Both sources are credible, they use comparable definitions, and the report is about how adoption has evolved. The current synthesis writes "Sources disagree on adoption (41% vs 63%)" in a "Contested findings" section. What is the best correction?
 
 - **A.** Present both figures with their sources and collection dates as a time series showing growth, since the difference reflects the measurement period rather than a contradiction between sources.
-- **B.** Keep the figures in the "Contested findings" section but add both sources, since conflicting statistics must always be annotated as conflicts rather than resolved by the synthesis.
-- **C.** Report only the 2024 figure with its source, since the more recent study supersedes the older one and presenting both would confuse readers about current adoption levels.
-- **D.** Send the two figures back to the coordinator for reconciliation, asking it to launch a third search to determine which of the two sources is the more reliable one.
+- **B.** Present both figures with sources and dates as a time series, and also keep them in "Contested findings" so readers know the two sources report different values.
+- **C.** Normalize both figures to a common definition with a note, then report their average as the adoption rate for the 2021-2024 period.
+- **D.** Present the 2024 figure as the current value and mention the 2021 figure in a footnote, with its source and collection date.
 
 #### Correct answer to Question 9: A
 
 Publication and collection **dates** exist precisely so that temporal differences are not misread as contradictions. With comparable definitions and a report about evolution, 41% in 2021 and 63% in 2024 are two points of a trend, each with its attribution.
 
-B applies the right rule (annotate conflicts, do not pick one arbitrarily) to a case that is not a conflict. C discards a sourced data point and the trend the report is about. D is the right escalation path for a genuine conflict that needs reconciliation, but here there is nothing to reconcile.
+Keeping them under "Contested findings" still labels a time trend as a disagreement. Averaging two points in time erases the change the report is about. A footnote hides the evolution. With comparable definitions, the figures form a time series.
 
 ## Scenario: Structured Data Extraction
 
@@ -185,8 +185,8 @@ You are building a structured data extraction system using Claude. The system ex
 
 After three months in production, your extraction system shows 97% field-level accuracy on a random validation sample. Management wants to stop human review of all extractions with model confidence above 0.9, which are 85% of the volume. The sample was drawn uniformly, and 80% of documents are standard invoices; the remainder are scanned customs forms and handwritten delivery notes, which feed a tax filing. What should you do before deciding?
 
-- **A.** Raise the threshold from 0.9 to 0.97 so that only the most confident extractions skip review, since the higher bar compensates for any weaker document types in the mix.
-- **B.** Run a second uniform random sample of the same size, to confirm that 97% is stable over time before removing review from the high-confidence extractions.
+- **A.** Measure accuracy by document type with stratified sampling, then remove review for every type whose average accuracy exceeds the target, tax-related fields included.
+- **B.** Draw a stratified sample by document type, but only among low-confidence extractions, since the high-confidence ones are those about to be automated.
 - **C.** Measure accuracy separately by document type and field with stratified random sampling, including the high-confidence extractions, and automate only the segments that prove reliable.
 - **D.** Ask the model to re-evaluate its own confidence on the customs forms and handwritten notes, and remove review only for the documents where its second estimate is also above 0.9.
 
@@ -194,7 +194,7 @@ After three months in production, your extraction system shows 97% field-level a
 
 An **aggregate** metric dominated by standard invoices can hide poor performance on minority types, which here feed a tax filing. Stratified sampling by type and field, including high-confidence items, is the way to validate segment by segment before automating.
 
-A raises a threshold based on an uncalibrated confidence score, without knowing per-type error rates. B repeats the same flawed (unstratified) measurement: stability of the average says nothing about the segments. D relies on self-reported confidence, which the material treats as an unreliable indicator unless calibrated against labelled data.
+Per-type averages can hide weak fields, such as the values that feed the tax filing. Sampling only low-confidence extractions says nothing about the 85% you want to automate. Model self-assessment is not evidence. Stratify by type and field, include high-confidence extractions, and automate only proven segments.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -206,14 +206,14 @@ Your CI job runs `claude -p "Review this PR and output findings as JSON"`. The j
 
 - **A.** Add few-shot examples of the exact JSON to the prompt and a strong instruction to output nothing else, so that the model consistently reproduces the expected format and field names.
 - **B.** Add `--output-format json` with a `--json-schema` describing the findings structure, so the CLI returns structured output that conforms to the fields the script expects.
-- **C.** Wrap the parsing in a retry loop that re-runs the whole Claude job when parsing fails, since the failure rate is low and a second run almost always produces valid JSON.
-- **D.** Replace `-p` with an interactive session driven by a script, so the pipeline can inspect the output and ask Claude to fix the format when the first answer is not valid JSON.
+- **C.** Add `--output-format json` and parse its `result` field, with few-shot examples in the prompt so the text inside `result` is always the expected JSON.
+- **D.** Add `--json-schema` describing the findings while keeping the default text output format, so the schema guides the model without changing what the script reads.
 
 #### Correct answer to Question 11: B
 
 `-p` already solves the hanging problem (it is not the issue here). Format and field-name drift is solved by **structured output**: `--output-format json` with `--json-schema` makes the CLI return data that conforms to a declared schema, which is what a downstream script needs.
 
-A improves consistency but remains probabilistic, so occasional drift persists. C hides the problem at double the cost and still produces nondeterministic failures. D throws away non-interactive mode, the very thing that makes Claude Code usable in a pipeline.
+Examples and instructions reduce but do not remove format drift. `--output-format json` alone wraps the reply in a JSON envelope, but the text inside `result` can still drift. A schema without JSON output leaves the script reading free text. JSON output format plus `--json-schema` returns conforming structured output.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -243,15 +243,15 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 `process_refund` is an MCP tool. When a refund breaks policy (for example, the item was bought more than 90 days ago), the tool currently returns `isError: true` with the text "Refund failed". Traces show the agent retrying the same call two or three times, then telling the customer "there was a technical problem, please try again later". Database timeouts produce the same response. What change fixes both behaviours?
 
 - **A.** Return structured error metadata: a business category with `isRetryable: false` and a customer-facing explanation for policy violations, and a transient category marked retryable for timeouts.
-- **B.** Add a system prompt instruction telling the agent never to retry `process_refund` more than once, and to tell customers about the 90-day policy whenever a refund fails for any reason.
-- **C.** Return `isError: false` with an empty result for policy violations, so that the agent treats them as normal outcomes, and keep `isError: true` with "Refund failed" only for genuine timeouts.
+- **B.** Return structured errors with a category and `isRetryable` for both cases, using the same customer-facing message, "please try again later", for each.
+- **C.** Mark policy violations as a business error with `isRetryable: false`, and retry timeouts inside the tool indefinitely so the agent never sees them.
 - **D.** Add a `PreToolUse` hook that blocks refunds older than 90 days before they reach the tool, so policy violations never produce an error and only timeouts can still fail.
 
 #### Correct answer to Question 13: A
 
 The agent cannot choose a recovery strategy from a generic message. **Structured errors** distinguish the category (business vs transient) and retryability, and give a user-facing explanation: the agent stops retrying policy violations and explains them correctly, while it can still retry timeouts.
 
-B misinforms customers when the cause is a timeout, and caps retries even when retrying is right. C hides the violation as an apparent success with no explanation, the same anti-pattern as confusing an error with a valid empty result. D handles the 90-day rule deterministically, but gives the agent no way to explain the block to the customer and does nothing about the generic timeout message, so only half the problem is fixed.
+A shared "try again later" message misleads customers whose refund breaks policy. Retrying timeouts indefinitely can hang the conversation. A pre-call hook covers one policy case but leaves the generic error for others. Distinct categories, retryability and a customer-facing explanation fix both behaviours.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -261,16 +261,16 @@ You are using Claude Code to accelerate software development. Your team uses it 
 
 Your team created a project skill `/dep-audit` that scans the repository and prints several thousand lines of dependency analysis. Two problems emerged: after running it, the main session's answers become vague and lose earlier details; and once, while "fixing" an outdated version it found, the skill edited `package.json` without being asked. The skill must stay shared with the team. Which two-part change addresses both problems?
 
-- **A.** Move the skill to `~/.claude/skills/` and add an instruction in its body to never modify files, so that each developer can run it privately and only reads the dependency files.
-- **B.** Turn the skill into a `.claude/commands/` slash command with a shorter output format, and add a `PreToolUse` hook that blocks every Edit and Write call across the whole project.
+- **A.** Add `context: fork` to its `SKILL.md` frontmatter so it runs in an isolated context, and add an instruction in the skill body never to modify any file.
+- **B.** Use `allowed-tools` to restrict it to Read, Grep and Glob, and ask the skill to print only a short summary of its findings at the end of the run.
 - **C.** Add `context: fork` to its `SKILL.md` frontmatter so it runs in an isolated subagent context, and use `allowed-tools` to restrict it to read-only tools such as Read, Grep and Glob.
-- **D.** Add `argument-hint` to ask which package to audit, so the output is smaller, and add a line to the project `CLAUDE.md` forbidding changes to `package.json` during audits.
+- **D.** Add `context: fork` and `allowed-tools: Read, Grep, Glob, Bash`, so the skill stays isolated but can still run `npm outdated` to check versions.
 
 #### Correct answer to Question 14: C
 
 `context: fork` isolates verbose output in a subagent context so the main session is not polluted; `allowed-tools` **restricts** what the skill can use, preventing edits structurally. Both live in the shared `.claude/skills/` frontmatter.
 
-A breaks the sharing requirement and relies on an instruction rather than a restriction. B's hook would block edits everywhere, including legitimate work in normal sessions, and a slash command does not isolate context. D narrows the scope a little and adds a probabilistic instruction, but the audit output still floods the main context.
+An instruction never to edit is probabilistic. Restricting tools without forking still fills the main session with the scan's reads. Allowing Bash reopens the door to changes such as `npm install`. Fork plus strictly read-only tools fixes both problems.
 
 ## Scenario: Multi-Agent Research System
 
@@ -280,16 +280,16 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 
 To cut latency, a developer changed the system so that the web search subagent hands its results directly to the analysis subagent, which then calls the synthesis subagent; the coordinator only receives the final report. Latency dropped by 20%, but when a report contains a wrong claim nobody can tell which step introduced it, and when the analysis subagent fails the run silently produces a partial report. What is the best response?
 
-- **A.** Keep the direct chain but have each subagent append a log line to a shared file, so that engineers can reconstruct the path of each claim after the fact without slowing down the run.
+- **A.** Route only errors through the coordinator: subagents report failures to it, but keep passing successful results directly to each other to preserve the latency gain.
 - **B.** Restore hub-and-spoke routing so every result returns to the coordinator, which handles errors and routing, and recover latency by running independent subagents in parallel.
-- **C.** Keep the direct chain and give the synthesis subagent a final check that compares the report with the original search results, so that wrong claims are caught before delivery.
+- **C.** Restore hub-and-spoke routing, and recover latency by having the coordinator launch search, analysis and synthesis in parallel in a single turn.
 - **D.** Merge analysis and synthesis into a single subagent to shorten the chain, so there is one less handoff in which claims can be distorted and one less step that can fail.
 
 #### Correct answer to Question 15: B
 
 The coordinator owns **all communication, error handling and routing** so that the system is observable and failures are handled. The latency gain is better recovered with legitimate parallelism of independent work than by bypassing the hub.
 
-A adds post-hoc forensics but leaves failure handling with no owner: partial reports still go out silently. C adds a check but still lets a failed step pass unnoticed and keeps routing outside the coordinator. D reduces the number of steps but not the lack of observability or error handling.
+Routing only errors through the coordinator still leaves successful results untraceable. Running dependent steps in parallel breaks their order: analysis needs the search results. Merging subagents loses specialization. Full hub-and-spoke, with parallelism only among independent subagents.
 
 ## Scenario: Structured Data Extraction
 
@@ -299,16 +299,16 @@ You are building a structured data extraction system using Claude. The system ex
 
 You extract data from supplier contracts. The field `penalty_rate` is missing in 18% of outputs. A retry loop resends the document with the validation error ("penalty_rate is required"), but after three retries the success rate on those documents is still near zero. Reading a sample, you notice that those contracts say "penalties as defined in Annex C", and Annex C is a separate file that is not sent to the pipeline. What should you do?
 
-- **A.** Add few-shot examples showing how to infer a plausible penalty rate from the other contract terms, so that the field is always filled and the downstream validation stops rejecting it.
-- **B.** Increase the retries to five and include the full list of previous failed attempts in each retry, so that the model has more feedback to correct its extraction of the missing field.
-- **C.** Switch to forcing the extraction tool with `tool_choice`, since a forced call guarantees that every required field in the schema is present in the output of each contract.
+- **A.** Stop retrying those cases and make `penalty_rate` nullable, letting downstream systems treat a null value as "no penalty applies" for those contracts.
+- **B.** Detect the "as defined in Annex C" wording and retry with an instruction to read the rate from the annex text, so the model looks in the right place.
+- **C.** Keep `penalty_rate` required but accept the value "SEE_ANNEX", so validation passes and the external reference is preserved in the same field.
 - **D.** Stop retrying those cases, make `penalty_rate` nullable with a field recording the external reference, and route them so that the annex can be retrieved or reviewed.
 
 #### Correct answer to Question 16: D
 
 Retry-with-feedback works when the information is **in the source** and the model extracted it badly. When the data lives only in an external document, retries are useless: the right design accepts absence (nullable field), records where the value lives, and routes the case for retrieval or review.
 
-A teaches the model to fabricate values. B adds more of an approach that cannot work. C guarantees a tool call and schema-conformant syntax, but a required field the source does not contain still invites an invented value.
+Treating null as "no penalty" turns a missing reference into a false fact. Retrying with a better instruction cannot extract text that was never sent. A sentinel string in a required field mixes data and status. Stop retrying, make it nullable, record the reference and route the case.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -319,15 +319,15 @@ You are integrating Claude Code into your Continuous Integration/Continuous Depl
 A developer uses Claude Code locally to implement a feature, then in the same session asks "Now review your changes thoroughly as a senior engineer would" before opening the PR. The CI pipeline then runs its own review. The team notices that the local self-review almost never finds problems that the CI review catches, even subtle ones. Budget allows one extra review step. Where is it best spent?
 
 - **A.** A review run by an independent Claude instance that receives the diff and project standards but not the generation session's reasoning, so it is not anchored to the original decisions.
-- **B.** A second self-review in the same session with a stricter prompt listing the categories to check, so that the model reconsiders each change against explicit criteria before the PR.
-- **C.** Asking the generating session to state its confidence for each changed file, and sending only the files below a given confidence threshold to the more expensive CI review step.
+- **B.** An independent Claude instance that receives the diff, the project standards and a summary of the session's design decisions, so it reviews with full context.
+- **C.** A second CI review pass with a different prompt, since CI is already the step that catches what the local self-review misses.
 - **D.** Extending the generation session with the CI findings of previous PRs, so that the same session learns the issues usually caught downstream and avoids them in its self-review.
 
 #### Correct answer to Question 17: A
 
 Self-review is limited because the model **keeps its own reasoning context** and is less likely to question its decisions. An independent instance without the generation context is more effective at catching subtle issues.
 
-B improves the criteria but keeps the same anchored context, the root cause. C routes on self-reported confidence from the same anchored session, an unreliable signal. D makes the generating context even longer while still reviewing its own work.
+Passing the generation session's design decisions re-introduces the anchoring an independent review should avoid. A second CI pass duplicates the step that already works instead of adding a fresh perspective earlier. Feeding past CI findings to the same session leaves it reviewing its own reasoning. An independent instance with diff and standards only.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -337,16 +337,16 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 
 After two hours exploring a legacy codebase with many long Grep and Read outputs, the agent's answers become generic: it talks about "typical service-layer patterns" instead of the specific classes it examined earlier, and it has started contradicting a finding from the first hour. The exploration still has three phases to go. What is the most effective strategy for the rest of the work?
 
-- **A.** Raise the context limit with a larger model and continue in the same session, since the problem is the size of the context window and not the way the exploration is organized.
-- **B.** Restart from scratch in a new session and re-run all the Grep and Read commands of the first two hours, so that the agent rebuilds its knowledge with fresh and consistent context.
+- **A.** Write the key findings to a scratchpad file and run `/compact`, then continue the three remaining phases in the same session as before.
+- **B.** Delegate each remaining phase to subagents that return concise results, keeping the findings of the first two hours only in the current context.
 - **C.** Write the key findings to a scratchpad file, then delegate each remaining phase's exploration to subagents that return concise results, keeping coordination in the main agent.
-- **D.** Ask the agent to summarize everything it has learned so far into its next answer, so that the important findings move to the end of the context where they get more attention.
+- **D.** Start a new session seeded with a scratchpad of the findings, and run the remaining phases' Grep and Read commands directly in that session.
 
 #### Correct answer to Question 18: C
 
 These are symptoms of **context degradation** in long sessions. A scratchpad preserves findings beyond the context, and subagents isolate verbose exploration output so the main agent keeps only what it needs for coordination.
 
-A treats a structural issue as a capacity issue: verbose output will fill a larger window too. B repeats the same verbose exploration and will degrade again. D keeps everything in the same polluted session; a summary inside the conversation is still exposed to further degradation and does not persist.
+Compacting after saving findings helps once, but running the remaining phases in the main context refills it. Subagents help, but findings kept only in an already degraded context stay unreliable. A fresh session doing the verbose exploration itself degrades the same way. Persist the findings and delegate the verbose phases.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -375,7 +375,7 @@ You are using Claude Code to accelerate software development. Your team uses it 
 
 A developer created a `/release-notes` command that works well for him. He put it in `~/.claude/commands/release-notes.md` and then wrote in the team chat that everyone can now use it. Two colleagues report that the command does not exist in their Claude Code, and a third says he has a different `/release-notes` from a previous project. The command should be identical for everyone and reviewed like code. What is the correct fix?
 
-- **A.** Ask every colleague to copy the file into their own `~/.claude/commands/`, overwriting older versions, so that everyone has the same command available in every project they open.
+- **A.** Commit the file to `.claude/commands/` on a separate `tooling` branch, so that changes to the command are reviewed without touching feature branches.
 - **B.** Move the command to the project's `.claude/commands/` directory and commit it, so that it is versioned, reviewed and available to everyone who works on the repository.
 - **C.** Describe the release-notes procedure in the project `CLAUDE.md`, so that Claude follows it whenever someone asks for release notes, without needing a separate command file.
 - **D.** Configure the command as a tool of an MCP server in `.mcp.json`, so it is shared through the repository and Claude can invoke it automatically when release notes are needed.
@@ -384,7 +384,7 @@ A developer created a `/release-notes` command that works well for him. He put i
 
 **Project commands** live in `.claude/commands/` and are shared through version control; **user commands** in `~/.claude/commands/` are personal and invisible to others. A versioned, reviewed, identical command for everyone belongs in the repository.
 
-A creates copies that drift and are not reviewed like code, and it leaves name clashes across projects. C turns an on-demand command into always-loaded context and loses explicit invocation. D uses an integration mechanism (MCP) for a prompt template, a much heavier solution than the problem requires.
+Copies in user directories drift and collide with older commands of the same name. A command on a separate branch is not available where people work. CLAUDE.md guidance is not an invocable command. An MCP tool is the wrong mechanism for a prompt template. The project `.claude/commands/` directory is versioned and shared.
 
 ## Scenario: Multi-Agent Research System
 
@@ -395,7 +395,7 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 The final reports contain well-written paragraphs, but the reviewers cannot check them: about a third of the claims have no citation or a citation to the wrong source. Traces show that the search and analysis subagents return findings with URLs and quotes, but the coordinator passes the synthesis subagent a prose summary it writes itself, "to save context". Context budget is tight. What is the most effective fix?
 
 - **A.** Have the coordinator pass the findings to the synthesis subagent as structured claim-to-source mappings (claim, URL or document, quote, date) and require the synthesis to preserve them.
-- **B.** Add an instruction to the synthesis subagent's prompt requiring a citation for every claim, so that it searches for supporting sources for any claim that arrives without one.
+- **B.** Have the coordinator keep its prose summary but append the list of URLs used, so the synthesis subagent can cite from that list.
 - **C.** Add a final citation subagent that, after synthesis, searches the web for a source supporting each uncited claim and inserts the best match it finds into the final report.
 - **D.** Pass the full raw outputs of the search and analysis subagents to the synthesis subagent instead of the summary, so that no information at all is lost during the handoff.
 
@@ -403,7 +403,7 @@ The final reports contain well-written paragraphs, but the reviewers cannot chec
 
 Attribution is lost when **claim-to-source mappings** are not preserved through aggregation. Passing structured mappings keeps provenance while staying compact, which also respects the tight context budget.
 
-B asks the synthesis subagent to recover information it never received, inviting new searches or invented citations. C finds *a* source for each claim after the fact, which is not the source the claim came from. D preserves provenance but ignores the context constraint and buries the important data in verbose outputs.
+A list of URLs beside a prose summary lets synthesis cite, but not tie each claim to its source. Searching for sources after writing attaches citations that may not support the claims. Raw outputs preserve everything but break the tight context budget. Structured claim-to-source mappings are compact and verifiable.
 
 ## Scenario: Structured Data Extraction
 
@@ -413,8 +413,8 @@ You are building a structured data extraction system using Claude. The system ex
 
 The `document_category` field is an enum of nine values. Every week new kinds of documents arrive (for example, warranty claims) that fit none of them, and the model forces each into the closest category, corrupting reports. Some documents are also so damaged that even a human cannot tell the category. Downstream analysts want to discover new categories over time without a schema change every week. What schema change is best?
 
-- **A.** Remove the enum and make `document_category` a free-text string, so that the model can describe any new kind of document precisely without being forced into an existing value.
-- **B.** Add a confidence field next to the category and discard the category when confidence is low, so that only documents the model is sure about end up in the downstream reports.
+- **A.** Add `"other"` with a companion `category_detail` field, and use `"other"` for damaged documents too, describing the damage in the detail field.
+- **B.** Add an `"other"` value and an `"unclear"` value without any detail field, keeping the enum simple and the existing nine values unchanged.
 - **C.** Add `"other"` with a companion `category_detail` text field, and `"unclear"` for documents whose category cannot be determined, keeping the existing nine values unchanged.
 - **D.** Extend the enum to thirty values covering every document type the business might plausibly receive, so that the model always has a close match available for new documents.
 
@@ -422,7 +422,7 @@ The `document_category` field is an enum of nine values. Every week new kinds of
 
 Extensible categorization is done with **`"other"` plus a descriptive field** (new kinds are captured and can later become values) and **`"unclear"`** for genuinely undeterminable cases. The existing values stay validated.
 
-A loses validation and consistency: the same category would appear under many spellings. B uses an uncalibrated confidence to discard data instead of representing the two distinct situations. D only postpones the problem and makes selection among many close values harder.
+Using `"other"` for damaged documents mixes new categories with unreadable ones, polluting the discovery analysts want. An `"other"` without detail gives nothing to discover new categories from. A larger enum still forces matches. `"other"` with detail plus a separate `"unclear"` serves both needs.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -432,16 +432,16 @@ You are integrating Claude Code into your Continuous Integration/Continuous Depl
 
 Your CI review runs on every push to a pull request. Developers complain that after each new commit the review reposts comments on issues they already fixed, and repeats comments they explicitly marked as "won't fix" in the thread. The review must still catch new problems introduced by later commits. What is the best change?
 
-- **A.** Run the review only once, on the first push of each PR, so that developers receive a single set of comments and can resolve them without being interrupted by repeated feedback.
+- **A.** Include previous findings in each re-run and report only issues never reported before, dropping earlier findings whatever their current status.
 - **B.** Run the review only on the diff of the latest commit, so that the review cannot comment again on code that was already reviewed in earlier runs on the same pull request.
-- **C.** Have the CI script delete all previous review comments before posting new ones, so that the PR always shows only the latest review instead of an accumulation of repeated feedback.
+- **C.** Include previous findings in each re-run and re-post every unresolved one, including those marked "won't fix", so that nothing is forgotten.
 - **D.** Include the previous review findings and their status in the context of each re-run, instructing the review to report only issues that are new or still unresolved.
 
 #### Correct answer to Question 23: D
 
 The material addresses exactly this: when re-running after new commits, **include the prior review results** so the model reports only new or unresolved issues, respecting what was already fixed or dismissed.
 
-A misses issues introduced by later commits. B loses cross-commit context: a problem may arise from the interaction between the latest change and earlier ones. C removes duplicates visually but still re-raises "won't fix" items and erases the discussion history.
+Dropping everything already reported hides issues that are still unresolved. Re-posting "won't fix" findings ignores the team's decision. Reviewing only the latest commit misses interactions with earlier changes. Pass findings with their status and report only new or still-unresolved issues.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -451,7 +451,7 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 
 Every session of your developer agent starts with 10 to 15 exploratory tool calls just to discover which internal API schemas, service catalogs and architecture documents exist, before doing any real work. The documents change weekly, are served by an internal MCP server, and the agent already has a `search_docs` tool that works well once it knows what to look for. What is the most effective change?
 
-- **A.** Paste the full content of every schema and architecture document into the system prompt, so that the agent never needs to search for them at the beginning of a session.
+- **A.** Expose each schema and document as an MCP resource with its full content, and remove `search_docs`, since everything is now available up front.
 - **B.** Expose the catalog of available schemas and documents as MCP resources, so the agent can see what exists up front and call `search_docs` only for the content it needs.
 - **C.** Add a `list_everything` tool that returns all documents with their full content in one call, replacing the 10 to 15 exploratory calls with a single large tool result.
 - **D.** Write a section in the project `CLAUDE.md` listing the current documents and their locations, and ask developers to keep it updated whenever the documents change.
@@ -460,7 +460,7 @@ Every session of your developer agent starts with 10 to 15 exploratory tool call
 
 MCP **resources** as content catalogs give the agent visibility of what is available and reduce exploratory tool calls; the content is still fetched on demand. Because the server owns the catalog, it stays current with weekly changes.
 
-A floods the context with weekly-changing content most sessions do not need. C replaces many small calls with one enormous result, a disproportionate tool output. D works on paper but depends on manual upkeep of a list that changes every week, and it will drift.
+Exposing full content and dropping search floods the context and loses targeted retrieval. A single tool returning everything floods it too. A hand-maintained CLAUDE.md list goes stale weekly. A resource catalog shows what exists, and `search_docs` fetches only what is needed.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -471,15 +471,15 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 A customer's single message asks for three things: a refund for a damaged blender (order A), a delivery address change for a pending order (order B), and an explanation of a duplicate charge on last month's invoice. Currently the agent handles the refund, writes a long answer, and the other two requests are forgotten in about 40% of such conversations. Each request needs different tools and they do not depend on each other. What is the best design?
 
 - **A.** Decompose the message into distinct items, investigate each with the tools it needs (in parallel where independent), then compose one response that addresses all three items.
-- **B.** Escalate every message containing more than one request to a human, since multi-issue conversations exceed the reliable scope of the agent and lower first-contact resolution.
-- **C.** Ask the customer to send each request in a separate conversation, so the agent can process one issue at a time with full attention and a clean context for each request.
+- **B.** Decompose the message into items and handle them one after another across turns, confirming each with the customer before starting the next.
+- **C.** Spawn one subagent per request and have each subagent reply to the customer directly as soon as it has finished its own item.
 - **D.** Add a `PostToolUse` hook that, after each tool call, appends the original customer message to the result, so that the agent keeps seeing all three requests until the end.
 
 #### Correct answer to Question 25: A
 
 **Multi-concern requests** should be decomposed into separate items, each investigated with the appropriate tools (independent ones can be handled in parallel), and then synthesized into a single complete answer.
 
-B escalates cases that are fully within the agent's scope. C shifts the burden to the customer and hurts the experience and FCR. D misuses a normalization hook to compensate for a missing decomposition step, and repeatedly bloats the context.
+Handling items one by one across turns delays independent work. Subagents replying directly fragment the response and lose coordination. Re-appending the message keeps the requests visible but does not ensure each is investigated. Decompose, investigate in parallel, reply once.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -491,14 +491,14 @@ Your repository has Terraform files in `infra/`, in `services/*/deploy/` (40 ser
 
 - **A.** Create a `CLAUDE.md` in `infra/`, one in `modules/shared/` and one in each of the 40 `services/*/deploy/` directories, each importing the same conventions file with `@path`.
 - **B.** Move the conventions into a skill called `terraform-conventions`, so that Claude loads them when it judges a task to be infrastructure-related and leaves them out otherwise.
-- **C.** Keep the conventions in the root `CLAUDE.md` but move them to the end of the file, so that they do not interfere with the instructions that are relevant for application code.
+- **C.** Move the conventions into `.claude/rules/terraform.md` without any `paths` frontmatter, and remove them from the root `CLAUDE.md`.
 - **D.** Move the conventions into `.claude/rules/terraform.md` with `paths: ["**/*.tf"]` in its frontmatter, and remove them from the root `CLAUDE.md`.
 
 #### Correct answer to Question 26: D
 
 When conventions apply to a **file type scattered across many directories**, a path-scoped rule with a glob is preferable to directory-level files: it loads only when matching files are edited and is maintained in one place.
 
-A is the directory-level approach: it works but requires 42 files that must be kept in sync, the scenario where the material prefers glob rules. B makes loading depend on the model's judgment, while conventions should apply automatically to matching files. C still loads 300 lines in every session.
+Forty-two directory CLAUDE.md files work but are heavy to maintain. A skill relies on Claude deciding when to load it. A rules file without `paths` loads in every session. `paths: ["**/*.tf"]` loads the conventions only for Terraform files.
 
 ## Scenario: Multi-Agent Research System
 
@@ -511,13 +511,13 @@ The synthesis subagent often needs to verify single facts (a date, a figure, a n
 - **A.** Give the synthesis subagent the full web search toolset, since it already knows what it needs, and remove the round trip through the coordinator for all verification requests.
 - **B.** Keep the round trips but batch them, so that the synthesis subagent collects all its verification needs and the coordinator runs one search subagent for all of them at the end.
 - **C.** Give the synthesis subagent a narrowly scoped `verify_fact` tool for simple lookups, and keep routing open-ended investigations through the coordinator to the search subagent.
-- **D.** Merge the search and synthesis subagents into one, so that verification happens inside the same context and the coordinator no longer needs to handle round trips between them.
+- **D.** Give the synthesis subagent a `verify_fact` tool for every verification, open questions included, removing the round trip through the coordinator entirely.
 
 #### Correct answer to Question 27: C
 
 Tools should be **scoped to the role**, plus a small set of cross-role utilities for frequent needs. A constrained `verify_fact` covers the 85% of simple lookups without latency, while real investigations stay with the specialized agent through the coordinator.
 
-A gives the synthesis agent tools outside its specialization, which the material warns leads to misuse (it starts doing its own research). B reduces calls but delays verification until after writing, when it is needed during writing. D removes specialization and isolation.
+The full search toolset blurs roles and invites uncoordinated research. Batching checks at the end blocks writing until all answers return. A narrow tool used for open questions too stretches it beyond simple lookups. A scoped tool for lookups plus coordinator routing for investigations.
 
 ## Scenario: Structured Data Extraction
 
@@ -527,16 +527,16 @@ You are building a structured data extraction system using Claude. The system ex
 
 Your system extracts 30 fields from loan applications. A single document-level confidence score is used to decide human review, but auditors find that applications with high overall confidence still contain wrong values in two critical fields (`annual_income` and `employer_name`), while low-confidence applications are often wrong only in trivial fields. You have a labelled validation set of 5,000 applications. What should you implement?
 
-- **A.** Lower the document-level threshold so that more applications go to review, since a more conservative overall threshold catches more of the wrong critical fields as well.
+- **A.** Produce field-level confidence scores and apply one shared threshold, calibrated on the validation set, to all 30 fields.
 - **B.** Produce field-level confidence scores, calibrate a review threshold per field on the labelled validation set, and route to review based on the critical fields' calibrated scores.
-- **C.** Ask the model to explain its confidence in natural language for each application, and route to review those whose explanation mentions uncertainty about income or employer.
+- **C.** Produce field-level confidence scores and route to review whenever any of the 30 fields falls below 0.9, without calibration.
 - **D.** Send every application to review whenever `annual_income` is above a certain amount, since high-value loans carry more risk regardless of the confidence of the extraction.
 
 #### Correct answer to Question 28: B
 
 Errors concentrate on specific fields, so confidence must be **field-level**, and thresholds must be **calibrated on labelled data** to mean something. The labelled set is the decisive resource here.
 
-A increases review volume without targeting the fields that matter. C relies on uncalibrated self-assessment. D is a business-risk rule, which may be legitimate in itself, but it does not address extraction accuracy and misses wrong values on lower amounts.
+One shared threshold ignores that fields differ in calibration and criticality. An uncalibrated cutoff on every field sends trivial errors to review and may still pass wrong critical values. Value-based routing ignores extraction quality. Per-field calibrated thresholds focused on the critical fields.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -565,16 +565,16 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 
 The agent must change a single configuration line `timeout: 30` to `timeout: 60` in a YAML file of 400 lines. Edit fails because `timeout: 30` appears in three different blocks, and only the one under `payment_gateway:` must change. The engineer forbids adding comments or reformatting the file, and wants no other line touched. What should the agent do according to the recommended tool fallback?
 
-- **A.** Retry Edit with the same string several times, since the tool will eventually match the occurrence closest to the beginning of the file, which is often the intended one.
-- **B.** Use Bash with `sed` to replace every `timeout: 30` in the file with `timeout: 60`, since the three values were probably meant to be identical anyway.
-- **C.** Use Grep to count the occurrences, then ask the engineer to change the other two values manually, so that the string becomes unique and the Edit can finally succeed.
+- **A.** Retry Edit with `replace_all: true`, then restore the two unintended changes with further Edit calls on the other two blocks.
+- **B.** Use Bash with `sed` to replace every `timeout: 30` with `timeout: 60`, then check with `git diff` that the result looks acceptable.
+- **C.** Parse the YAML with a library, change the value under `payment_gateway`, and serialize the whole structure back to the same file.
 - **D.** Read the whole file, change only the `timeout` line inside the `payment_gateway:` block, and Write the file back with every other line left exactly as it was.
 
 #### Correct answer to Question 30: D
 
 The material's fallback when Edit fails because the match is **not unique** is **Read + Write**: read the full content, make the targeted change, write it back unchanged elsewhere.
 
-A misunderstands Edit: a non-unique match fails, it does not pick an occurrence. B changes two values the engineer did not ask to touch. C pushes work onto the engineer and changes unrelated configuration to satisfy a tool limitation.
+`replace_all` followed by reverts makes more edits than needed, and the reverts hit the same uniqueness problem. A global `sed` changes all three values, and reviewing the diff afterward does not undo it. Re-serializing with a YAML library drops comments and reformats the file. Reading the file and writing it back with only that line changed respects every constraint.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -584,7 +584,7 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 
 In conversations longer than 30 turns, the agent progressively summarizes older turns to save context. QA finds cases where, after the summary, the agent offers a refund of "about the order amount" instead of the exact $1,284.50 that was confirmed earlier, or forgets that the customer said the delivery date was 14 March. Context usage must stay under the current budget. What is the best fix?
 
-- **A.** Stop summarizing and keep the full conversation history in every request, since summarization is the cause of the lost details and full history guarantees nothing is ever lost.
+- **A.** Extract the transactional facts into a case-facts block, but place it at the start of the history so that it is summarized together with the turns.
 - **B.** Summarize more often but with a prompt instructing the summarizer to "preserve all important details", so that amounts and dates survive each round of summarization.
 - **C.** Extract transactional facts (amounts, dates, order IDs, confirmed decisions) into a persistent "case facts" block kept outside the summarized history and included in every request.
 - **D.** Move the summary to the end of the context, just before the latest customer message, so that the model gives the most attention to the details it contains when deciding.
@@ -593,7 +593,7 @@ In conversations longer than 30 turns, the agent progressively summarizes older 
 
 Progressive summarization tends to condense **numbers, percentages and dates** into vague wording. A persistent **case facts** block separate from the summarized history preserves them exactly while still allowing summarization within budget.
 
-A violates the context budget constraint. B is a vague instruction: summarization still compresses, and "important" is left to judgment. D changes where the summary is, but the exact values have already been lost inside it.
+Full history breaks the context budget. A better summarizer prompt still paraphrases. Facts placed inside the summarized history are summarized away like the rest. Moving the summary does not restore lost details. A persistent facts block outside the summary keeps them verbatim.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -625,13 +625,13 @@ The web search subagent calls a search MCP tool. Two situations occur: (1) the p
 - **A.** Retry the timeouts locally a few times, and for both situations return a successful empty list to the coordinator, so the run continues without the coordinator having to handle any error.
 - **B.** Retry transient timeouts locally; if still failing, propagate a structured error with type, query, partial results and alternatives; report zero results as a valid empty result, not an error.
 - **C.** Propagate every failure immediately to the coordinator with full details and let it decide on retries, so that all recovery decisions are centralized in one place for observability.
-- **D.** Abort the whole run on the first timeout with a detailed error message, since continuing with incomplete research would produce a report whose coverage cannot be trusted.
+- **D.** Retry timeouts locally and, if they still fail, return a structured error; report zero results as a structured `no_results` error so the coordinator decides.
 
 #### Correct answer to Question 33: B
 
 Transient errors are **recovered locally** in the subagent; only unrecoverable ones are propagated, with **structured context** (type, attempted operation, partial results, alternatives). An **access failure** must be distinguished from a **valid empty result**.
 
-A suppresses errors silently, an anti-pattern: the coordinator would believe the topic has no sources. C pushes simple transient recovery up to the coordinator unnecessarily. D is the opposite anti-pattern: aborting the whole workflow for a single failure.
+Returning an empty success for timeouts hides real failures. Propagating every timeout immediately moves transient handling away from where it is cheapest. Reporting zero results as an error makes the coordinator treat a valid finding as a failure. Retry locally, propagate structured errors, report zero results as valid.
 
 ## Scenario: Structured Data Extraction
 
@@ -641,16 +641,16 @@ You are building a structured data extraction system using Claude. The system ex
 
 You extract line items and totals from invoices with `tool_use` and a strict JSON schema. Schema errors have dropped to zero. Finance now reports invoices where the extracted line items do not add up to the extracted total, and cannot tell whether the error is in a line item, in the total, or in the invoice itself, which is sometimes wrong at the source. What is the best change?
 
-- **A.** Make the JSON schema stricter by adding minimum and maximum values for each amount field, so that implausible values are rejected by the validator before reaching finance.
+- **A.** Compute the sum of the line items in code and reject any extraction where it differs from the total, re-running the extraction until the values match.
 - **B.** Add an instruction to the prompt asking the model to make sure that line items always add up to the total, correcting either value when they do not match.
-- **C.** Use `tool_choice` to force the extraction tool on every request, since forcing the call removes the remaining errors that the model makes when it decides how to answer.
+- **C.** Extract both `stated_total` and `calculated_total`, and when they differ overwrite `stated_total` with the calculated value so downstream data stays consistent.
 - **D.** Extract both the `stated_total` printed on the invoice and a `calculated_total` from the line items, flag discrepancies, and route flagged invoices for retry or review.
 
 #### Correct answer to Question 34: D
 
 Strict schemas remove **syntax** errors, not **semantic** ones. Extracting both the stated and calculated totals turns inconsistency into a detectable signal and distinguishes extraction errors from invoices wrong at the source.
 
-A rejects only out-of-range values, not inconsistent sums. B pushes the model to "fix" numbers, hiding source errors and inventing values. C is already effectively in place (schema errors are zero) and does nothing for semantic correctness.
+Rejecting and re-running until values match cannot fix invoices that are wrong at the source, and pushes the model to adjust numbers. Asking the model to reconcile values hides which one was wrong. Overwriting the stated total destroys the evidence finance needs. Keep both totals, flag the discrepancy and route it.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -661,15 +661,15 @@ You are integrating Claude Code into your Continuous Integration/Continuous Depl
 For pull requests touching 20 or more files, the single-pass CI review is inconsistent: some files get detailed comments, others get almost none, and the review misses a bug where a renamed field in `api/schema.ts` breaks a consumer in `web/orders.tsx`. Reviews are blocking and must stay synchronous. What is the best restructuring?
 
 - **A.** Use a larger context window so the single pass can hold all the changed files and their full contents at once, giving the model a complete view of the pull request.
-- **B.** Run the same single-pass review three times and keep only the findings reported in at least two runs, so that the inconsistent findings are filtered out of the final result.
+- **B.** Review each file in a separate local pass, adding the names of the other changed files to each pass so that it can spot cross-file issues.
 - **C.** Review each file in a separate local pass, then run a cross-file integration pass focused on interfaces and data flow between the changed files to catch issues like the renamed field.
-- **D.** Split the pull request automatically into smaller PRs of five files each, so that every review stays small enough for the model to give every file the same level of attention.
+- **D.** Run a single cross-file integration pass with a larger context, skipping per-file passes, since the bug that was missed was a cross-file issue.
 
 #### Correct answer to Question 35: C
 
 **Multi-pass review**: per-file local passes keep attention even, and an integration pass catches **cross-file** issues such as a renamed field breaking a consumer. Both passes remain synchronous.
 
-A does not address attention dilution: more files in one pass is the cause. B filters inconsistency but cannot find what no single pass sees, and triples cost. D breaks the PR into pieces that hide exactly the cross-file interactions where the bug lives.
+Names of other files give a per-file pass no view of their content, so interface breaks still slip through. An integration pass alone keeps the uneven per-file depth. A larger window does not fix attention spread. Per-file passes plus a dedicated integration pass.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -681,14 +681,14 @@ After a two-hour investigation into a slow payment reconciliation job, the agent
 
 - **A.** Fork the session twice from the analysis point (for example with `--fork-session`), try one strategy in each branch, and compare the outcomes while the original session stays intact.
 - **B.** Resume the session with `--resume`, try the batching strategy, then revert the code and try the queue strategy in the same session, comparing the results at the end of the session.
-- **C.** Start two brand-new sessions, each with a short description of the job, and let each one rediscover the code before trying its assigned strategy independently of the other.
-- **D.** Ask the current session to try both strategies at once in separate directories, so that it can compare them directly while keeping the full context of both attempts available.
+- **C.** Fork the session once, try the queue strategy in the fork and the batching strategy in the original session, then compare the two outcomes.
+- **D.** Write the analysis to a summary file, then start two new sessions seeded with that file, one per strategy, and compare the outcomes.
 
 #### Correct answer to Question 36: A
 
 Forking creates **independent branches from a shared context**: both strategies start from the same analysis, cannot contaminate each other, and the original session is preserved.
 
-B tries both in one context: the second attempt is biased by the first. C throws away two hours of valid analysis. D mixes both attempts in a single context, the contamination the team wants to avoid.
+Using the original session for one strategy contaminates the baseline you wanted to keep intact. New sessions seeded with a summary lose much of the detailed understanding. Reverting and retrying in one session leaves the first attempt in context. Two forks from the analysis point keep both clean.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -701,13 +701,13 @@ The agent uses three MCP tools that return timestamps in different formats: `loo
 - **A.** Add a system prompt section explaining the three formats with examples, so that the agent converts each timestamp correctly before comparing dates from different tools.
 - **B.** Add a `PostToolUse` hook that normalizes every timestamp to a single format (for example ISO 8601) before the results reach the model, so all comparisons use one format.
 - **C.** Add a `date_compare` tool that the agent can call whenever it needs to compare two dates, so the computation is done by code rather than by the model's own reasoning.
-- **D.** Ask the owning teams to add a note in each tool's description stating the format, so that the agent knows which format each result uses when it reads the tool output.
+- **D.** Add a `PreToolUse` hook that tells the model, before each call, which date format that tool is going to return in its result.
 
 #### Correct answer to Question 37: B
 
 `PostToolUse` hooks intercept tool results **before the model consumes them**: this is exactly the place to normalize heterogeneous formats deterministically, without changing the tools owned by other teams.
 
-A remains probabilistic. C helps only when the model remembers to call it and still requires it to parse three formats correctly. D needs changes from the other teams, which the constraints exclude, and still leaves the conversion to the model.
+Explaining formats, in the prompt or before each call, still leaves the conversion to the model. A comparison tool helps only when the agent remembers to call it, and the results stay in mixed formats. Normalizing every result in a `PostToolUse` hook gives the model one format.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -738,14 +738,14 @@ Asked to research "the impact of remote work on urban economies", the system pro
 
 - **A.** The search subagent's queries are too narrow: broaden its prompt so it looks for any economic effect of remote work, even beyond the subtopic it was assigned.
 - **B.** The synthesis subagent is filtering out relevant material: instruct it to include every economic dimension it finds, even when only a few sources support it.
-- **C.** The number of sources is too low: raise the limit of results per search so the subagents surface more sources and, with them, the missing economic areas.
+- **C.** The coordinator's decomposition is too narrow: always split each research topic into at least six fixed dimensions before delegating any work.
 - **D.** The coordinator's decomposition is too narrow: revise it to cover the topic's main dimensions and evaluate coverage of the synthesis, re-delegating the gaps found.
 
 #### Correct answer to Question 39: D
 
 The subagents did their assigned work well; the gaps come from the **coordinator's decomposition**. The fix is in the coordinator: broader task decomposition plus an iterative refinement loop that evaluates coverage and reallocates work.
 
-A blurs the subagents' scope and causes duplication instead of fixing the plan. B cannot include material that was never collected. C produces more sources on the same two subtopics.
+Broadening the search subagent's prompt pushes scope decisions to the wrong level. Synthesis cannot include what was never searched. A fixed number of dimensions may still miss areas and wastes budget elsewhere. Revise the decomposition and evaluate coverage, re-delegating the gaps.
 
 ## Scenario: Structured Data Extraction
 
@@ -757,14 +757,14 @@ A batch of 12,000 extraction requests returns with 310 failures: 240 failed beca
 
 - **A.** Identify the failures by `custom_id`; resubmit the 70 transient failures as they are, and split the 240 long contracts into chunks before resubmitting them in a new batch.
 - **B.** Resubmit the entire batch of 12,000 requests with a larger context model, so that both kinds of failure are handled together and the results are consistent with each other.
-- **C.** Resubmit all 310 failed requests unchanged in a new batch, since batch failures are usually transient and most of them will succeed on a second attempt.
+- **C.** Identify the failures by `custom_id` and resubmit all 310 unchanged in a new batch, since a second attempt can also succeed for the long contracts.
 - **D.** Match the failures to the documents by their position in the results file, then process the 310 failed documents one by one with the synchronous API to finish faster.
 
 #### Correct answer to Question 40: A
 
 Failures are handled by **resubmitting only the failed documents, identified by `custom_id`**, and with the right fix per cause: transient failures as they are, oversized documents after chunking.
 
-B reprocesses 11,690 successful documents. C resubmits 240 requests that will fail again for the same reason. D relies on result ordering, which batch results do not guarantee; `custom_id` exists precisely for correlation.
+Resubmitting all 12,000 repeats successful work. Resubmitting the long contracts unchanged fails again on the same limit. Results are not in submission order, so matching by position is unreliable. Use `custom_id`, retry the transient ones, chunk the long ones.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -777,13 +777,13 @@ Claude Code runs in CI to review pull requests and generate tests. The output is
 - **A.** Copy the developers' personal instruction file into the CI runner's home directory at the start of each job, so that the CI run uses exactly the same configuration as the local sessions.
 - **B.** Document the testing standards, available fixtures and review criteria in the project `CLAUDE.md` committed to the repository, so that CI runs and every developer get the same context.
 - **C.** Pass all the standards in the `-p` prompt of each CI job, so that the instructions arrive with every request and there is no dependence on configuration files in the repository.
-- **D.** Configure an MCP server in `.mcp.json` that exposes the team's practices as a tool, so that Claude in CI can query the standards whenever it needs them during a review.
+- **D.** Commit the standards to `docs/claude-standards.md` and add a line to the CI prompt asking Claude to read that file before every review.
 
 #### Correct answer to Question 41: B
 
 `CLAUDE.md` provides the **project context** (testing standards, fixtures, review criteria) to Claude Code runs started by CI. The underlying problem is the hierarchy: the practices live at user level, where neither CI nor new colleagues see them.
 
-A propagates a personal file that is not versioned or reviewed and may differ between developers. C duplicates standards in pipeline scripts and drifts from what developers use locally. D adds an integration where a project file is the intended mechanism, and depends on the model choosing to call it.
+Copying personal files onto runners keeps drifting copies. Standards in the CI prompt cover CI but leave developers on personal files. A docs file read on request depends on Claude reading it and covers only CI. The project CLAUDE.md gives everyone the same context.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -796,13 +796,13 @@ A developer wants to connect two MCP servers to Claude Code for the whole team: 
 - **A.** Put all three servers in the project `.mcp.json` with each developer's tokens written directly in their local copy, and add `.mcp.json` to `.gitignore` so the tokens are never committed.
 - **B.** Put all three servers in each developer's `~/.claude.json`, so tokens stay on each machine and the experimental server is configured in the same place as the team servers.
 - **C.** Put the GitHub and deployment servers in the project `.mcp.json` using environment variable references such as `${GITHUB_TOKEN}`, and the experimental server in that developer's `~/.claude.json`.
-- **D.** Write a custom MCP server that wraps both GitHub and the deployment system with a shared service token, configured in `.mcp.json`, and keep the experimental server out of Claude Code.
+- **D.** Put the GitHub and deployment servers in `.mcp.json` with `${...}` token references, and the experimental server in `.mcp.json` too, disabled by default.
 
 #### Correct answer to Question 42: C
 
 Team servers belong in the project **`.mcp.json`** (shared through VCS) with **environment variable substitution** for secrets; personal or experimental servers belong in the user-level **`~/.claude.json`**.
 
-A defeats the purpose of a shared project configuration: once ignored, the team configuration is no longer shared. B works per machine but leaves the team setup unversioned and inconsistent. D replaces a community server for a standard integration with a custom one, the opposite of the recommended preference, and replaces personal tokens with a shared one.
+An ignored `.mcp.json` with local tokens stops sharing the configuration. User-level setup for the team servers drifts between developers. Committing the experimental server, even disabled, shares a personal setup with the team. Team servers in `.mcp.json` with variable references; the experimental one at user level.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -812,7 +812,7 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 
 Traces show that when customers ask "where is my order?", the agent calls `get_customer` instead of `lookup_order` about 30% of the time, then answers with account information. The descriptions are: `get_customer`: "Gets customer information"; `lookup_order`: "Gets order information for the customer". The system prompt says "Always start by understanding the customer". Which change is most likely to fix the misrouting?
 
-- **A.** Merge the two tools into a single `get_customer_or_order` tool, so the agent can no longer choose the wrong one and always receives both customer and order data in one call.
+- **A.** Rewrite both descriptions to state inputs, typical queries and when to use each, leaving the line "Always start by understanding the customer" unchanged.
 - **B.** Force `tool_choice` to `lookup_order` whenever the customer's message contains the word "order", so that the right tool is called for every order-related question.
 - **C.** Add few-shot examples to the system prompt showing order questions resolved with `lookup_order`, leaving the tool descriptions and the system prompt wording as they are.
 - **D.** Rewrite both descriptions to state inputs, typical queries, and when to use each instead of the other, and reword the system prompt line that biases the agent toward `get_customer`.
@@ -821,7 +821,7 @@ Traces show that when customers ask "where is my order?", the agent calls `get_c
 
 Tool **descriptions are the primary mechanism** for tool selection: vague, overlapping descriptions cause misrouting. The system prompt wording can also create **unwanted associations** with a tool ("understanding the customer" pulls toward `get_customer`). Both causes must be fixed.
 
-A creates a generic tool that hides two responsibilities. B is keyword routing, brittle for "my package" or "delivery" and wrong for "cancel my order". C can help, but leaves the root causes in place: the overlapping descriptions and the biased prompt line.
+Better descriptions help, but the system prompt line keeps biasing the agent toward `get_customer`. Keyword-forced `tool_choice` breaks on phrasing. Few-shot examples alone leave the vague descriptions and the biased line. Fix both the descriptions and the biasing line.
 
 ## Scenario: Multi-Agent Research System
 
@@ -850,7 +850,7 @@ You are building a structured data extraction system using Claude. The system ex
 
 A compliance team requires that an archive of documents be fully re-extracted with a new schema within 30 hours of each regulatory update, and wants to minimize cost. You will use the Message Batches API, whose processing can take up to 24 hours. Updates can arrive at any time of day, and work for an update cannot start until the update is published. How often should the pipeline submit batches of pending work?
 
-- **A.** Once a day at midnight, since the Batches API usually completes in a few hours and a single nightly submission is the simplest and most cost-effective schedule to maintain.
+- **A.** Every 8 hours, since 8 hours of waiting plus up to 24 hours of processing stays within the 30-hour requirement for the large majority of updates.
 - **B.** At least every 4 to 6 hours, so that waiting time before submission plus up to 24 hours of processing still fits within the 30-hour requirement for any update.
 - **C.** Immediately and synchronously for each update, since any batch schedule would risk breaking the 30-hour requirement and compliance work cannot depend on batch timing.
 - **D.** Every 12 hours, since that halves the waiting time of a nightly schedule while keeping the number of batch submissions low enough to stay easy to monitor.
@@ -859,7 +859,7 @@ A compliance team requires that an archive of documents be fully re-extracted wi
 
 Submission frequency is planned from the SLA: with a 30-hour requirement and up to **24 hours of processing**, the wait before submission must not exceed about 6 hours. The material's example uses 4-hour windows for exactly this case.
 
-A can make an update wait almost 24 hours, plus 24 of processing: up to 48 hours. C gives up the 50% discount although the deadline is achievable with batches. D can reach 12 + 24 = 36 hours, still too long.
+A 12-hour schedule allows 12 + 24 = 36 hours in the worst case, and every 8 hours still allows 32. Synchronous calls give up the batch discount without need. Submitting at least every 6 hours keeps the worst case within 30 hours for any update.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -869,7 +869,7 @@ You are integrating Claude Code into your Continuous Integration/Continuous Depl
 
 The same code pattern (an unvalidated external input passed to a database query) is classified as "critical" on one PR, "medium" on another and "low" on a third. The prompt already defines the four severity levels in a sentence each. Developers do not trust the severity labels and have started ignoring the ordering of findings. What is the most effective improvement?
 
-- **A.** Add an instruction asking the model to be consistent with the severity it assigned in previous reviews, so that similar issues receive the same severity across different pull requests.
+- **A.** Add one code example per severity level, without stating the criteria that separate adjacent levels, so the model learns by imitation.
 - **B.** Run the classification three times per finding and take the most frequent severity, so that the random variation between runs is smoothed out by the majority vote.
 - **C.** Replace the four levels with two (blocking and non-blocking), so that the model has fewer boundaries to decide on and inconsistent classifications become less likely.
 - **D.** Define explicit criteria for each severity level with code examples per level, including examples that show where borderline patterns like this one should be classified.
@@ -878,7 +878,7 @@ The same code pattern (an unvalidated external input passed to a database query)
 
 Severity consistency comes from **explicit criteria with code examples for each level**: the model sees where patterns like this one belong. One-sentence definitions leave the boundaries open to interpretation.
 
-A asks for consistency without memory of previous reviews or concrete criteria. B triples cost and still has no shared standard. C reduces granularity the team needs without defining where the boundary lies.
+One example per level without criteria leaves borderline patterns unresolved. Majority voting smooths noise without fixing the ambiguity. Fewer levels lose useful distinctions. Explicit criteria with examples, including borderline cases, make severity consistent.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -889,15 +889,15 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 The agent must answer a multi-phase question about a large legacy monolith: first find all entry points of the reporting subsystem, then trace how report data is aggregated, then propose a refactoring. In the first phase alone, exploration fills over half the context with Grep and Read output, and by the third phase the proposals ignore findings from the first. What is the best approach?
 
 - **A.** Use the Explore subagent for the discovery-heavy phases, so verbose exploration output stays in its own context and only a concise summary returns to the main conversation.
-- **B.** Run all three phases with Read on every file of the reporting subsystem upfront, so that the model has a complete view before starting and does not need to search again.
+- **B.** Save the first phase's findings to a scratchpad file, but run the second and third phases' exploration directly in the main context as before.
 - **C.** Run `/compact` after every single tool call, so that the context never grows large enough for the findings of the first phase to be pushed out by later exploration.
-- **D.** Split the question into three separate sessions started from scratch, one per phase, so that each phase has an empty context and cannot be affected by the others.
+- **D.** Use the Explore subagent for the discovery phases, but have it return its full Grep and Read outputs so the main agent can verify every finding.
 
 #### Correct answer to Question 47: A
 
 The **Explore subagent** isolates verbose discovery output, preventing context exhaustion in multi-phase tasks: the main conversation receives the conclusions and keeps the findings needed for the later phases.
 
-B maximizes context consumption upfront. C is useful occasionally during long investigations, but compacting after every call loses detail continuously and adds overhead. D loses continuity: phase three needs phase one's findings, and separate sessions without a handoff would discard them.
+A scratchpad preserves phase one, but running later exploration in the main context refills it. An Explore subagent that returns its full output brings the noise straight back. Compacting after every call is costly and loses detail. Delegate discovery and return only a concise summary.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -907,7 +907,7 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 
 A developer implemented the agent loop. Traces show the agent calling `lookup_order` with identical parameters five or six times in a row before eventually answering, even though each call returns the correct order. The code checks `stop_reason`, executes the requested tool, and sends a new request containing the original messages plus a short "Tool executed successfully" note. What is the problem?
 
-- **A.** The loop should stop on any `stop_reason` other than `"end_turn"`, so that the repeated `"tool_use"` responses are interrupted before they produce duplicate calls.
+- **A.** The results are appended as a plain user message instead of a `tool_result` block, so the model cannot link the order data to its own call.
 - **B.** The tool's description does not tell the model that one call is enough, so the agent keeps calling it to confirm the result; the description should state that results are final.
 - **C.** The tool results are not appended to the conversation history, so the model never sees the order data and requests the same call again; each result must be added as a tool result.
 - **D.** The loop lacks an iteration cap, so the model can repeat calls indefinitely; a maximum of three iterations would stop the repetition and force a final answer earlier.
@@ -916,7 +916,7 @@ A developer implemented the agent loop. Traces show the agent calling `lookup_or
 
 In the agentic loop, **tool results must be appended to the conversation history** so that the model can decide the next step. A generic "executed successfully" note gives it no data, so it asks again.
 
-A inverts the logic: `"tool_use"` means the model needs a tool, and stopping would break the loop. B treats a loop bug as a description problem. D is the anti-pattern of using iteration limits as the primary stop mechanism, and would only cut off a model that still has no data.
+The code never sends the order data at all, only a note, so the problem is not the block format. The description is not the cause: the model never sees a result to treat as final. A cap hides the bug. Each result must be appended as a `tool_result`.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -926,7 +926,7 @@ You are using Claude Code to accelerate software development. Your team uses it 
 
 Your monorepo has 25 packages. All of them must follow a shared testing standard, but only the 8 packages that expose public APIs must also follow the API conventions, and the 5 data packages must follow a data-handling standard. Each standard is a separate 150-line document in `standards/`. Each package already has its own `CLAUDE.md` for package-specific notes. How should you make each package load exactly the right standards?
 
-- **A.** Paste the relevant standards' full text into each package's `CLAUDE.md`, so that each package is self-contained and does not depend on files outside its own directory.
+- **A.** Import all three standards in the root `CLAUDE.md` with `@path`, and state in each package's `CLAUDE.md` which of the standards apply to it.
 - **B.** In each package's `CLAUDE.md`, import only the standards that apply with `@path` references (for example `@../../standards/testing.md`), keeping one copy of each standard.
 - **C.** Put all three standards in the root `CLAUDE.md`, explaining in the text which packages each standard applies to, so that Claude can decide which conventions to follow.
 - **D.** Turn each standard into a skill, so that Claude loads the testing, API or data-handling standard when it decides that the current task in a package needs it.
@@ -935,7 +935,7 @@ Your monorepo has 25 packages. All of them must follow a shared testing standard
 
 The **`@path` syntax** lets each package's `CLAUDE.md` selectively include the right standards while keeping a single source for each. The selection follows a fixed per-package mapping, not file types, so per-package imports fit better than glob rules.
 
-A duplicates 150-line documents across up to 25 files, which will drift. C loads all standards everywhere and leaves applicability to judgment. D makes always-applicable conventions depend on the model's decision to invoke a skill.
+Pasting full text duplicates 150-line standards across packages. Importing everything at the root loads all standards for every package and relies on Claude to ignore the irrelevant ones. A skill depends on Claude deciding to load it. Package-level `@path` imports load exactly the right standards.
 
 ## Scenario: Multi-Agent Research System
 
@@ -945,7 +945,7 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 
 The document analysis subagent could not access five paywalled reports that are central to the topic; the search subagent found summaries of three of them in press articles. The coordinator must deliver a report today, and the client values transparency over completeness. Currently the final report presents the findings as complete. What should the final synthesis do?
 
-- **A.** Leave out the subtopics covered by the paywalled reports, since presenting partial findings would lower the perceived quality of a report that otherwise has solid evidence.
+- **A.** Annotate that the five paywalled reports could not be accessed, but present the claims from the three press summaries as primary findings.
 - **B.** Delay the report until the paywalled reports can be purchased and analyzed, since the client needs complete research and partial findings would mislead the readers.
 - **C.** Annotate coverage: state which findings rest on strong evidence, which rest only on secondary press summaries, and which central sources could not be accessed.
 - **D.** Present the press summaries of the three reports as equivalent to the originals, attributing the claims to the paywalled reports since the summaries reflect their content.
@@ -954,7 +954,7 @@ The document analysis subagent could not access five paywalled reports that are 
 
 The final synthesis must **annotate coverage**: what is backed by strong evidence and where there are information gaps. This matches the client's preference for transparency and today's deadline.
 
-A silently hides gaps. B ignores the deadline. D breaks provenance: a press summary is not the original source, and attributing claims to documents nobody read misrepresents the evidence.
+Flagging the inaccessible reports while presenting press summaries as primary evidence still overstates the evidence. Delaying conflicts with today's deadline when the client values transparency. Attributing summaries to the originals misrepresents sources. Annotate evidence strength and gaps.
 
 ## Scenario: Structured Data Extraction
 
@@ -984,7 +984,7 @@ You are integrating Claude Code into your Continuous Integration/Continuous Depl
 Developers dismiss about 35% of the CI review's findings, but nobody knows why. Some dismissed findings concern real issues developers chose to ignore, others are wrong. You want to identify which kinds of finding are systematically false positives in order to refine the prompt, with minimal disruption to the current workflow. What is the best first step?
 
 - **A.** Add a `detected_pattern` field to each finding recording which pattern triggered it, and analyze dismissals grouped by pattern to find the systematically wrong ones.
-- **B.** Ask the model to add a confidence score to each finding and suppress all findings below 0.7, since those are the most likely to be the false positives developers dismiss.
+- **B.** Add a `category` field to each finding (security, style, correctness, performance) and analyze dismissals grouped by category.
 - **C.** Disable the review for two weeks and compare the defect rates, so that you can measure how much value the findings actually bring before investing in refining the prompt.
 - **D.** Add an instruction to the prompt asking the model to avoid findings that developers are likely to dismiss, based on the kind of feedback it has seen in previous reviews.
 
@@ -992,7 +992,7 @@ Developers dismiss about 35% of the CI review's findings, but nobody knows why. 
 
 Feedback loop design tracks **the pattern that produced each finding** (`detected_pattern`): grouping dismissals by pattern reveals which ones are systematic false positives without changing what developers see.
 
-B suppresses findings on uncalibrated confidence before understanding the problem. C is disruptive and does not identify which kinds of finding are wrong. D asks the model to predict dismissals without any memory or data about them.
+Broad categories mix accurate and inaccurate patterns, so they cannot show which specific triggers are wrong. Suppressing by uncalibrated confidence hides real issues too. Disabling the review disrupts the workflow. Recording the detected pattern lets you analyze dismissals precisely.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -1002,7 +1002,7 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 
 A teammate's agent loop runs until the assistant's text contains "TASK COMPLETE" or 10 iterations have passed. On long tasks it stops at iteration 10 with half-finished work; on short ones it sometimes keeps calling tools after writing "the task is complete, but let me double check". The team still wants a safeguard against runaway costs. What is the best loop design?
 
-- **A.** Raise the cap to 50 iterations and keep the text check, so that long tasks have enough room to finish while the cap still protects against runaway costs.
+- **A.** Continue while `stop_reason` is `"tool_use"` and stop on `"end_turn"`, keeping the existing 10-iteration cap as the hard limit.
 - **B.** Continue while `stop_reason` is `"tool_use"` and stop on `"end_turn"`, keeping a generous iteration limit only as a safety net rather than as the primary stopping mechanism.
 - **C.** Ask the model to output a JSON object with a `done` boolean at the end of each response, and stop the loop when the parsed value is true or the 10-iteration cap is reached.
 - **D.** Stop the loop as soon as a response contains no text, since that indicates the model is only calling tools and therefore has not finished the task the user asked for.
@@ -1011,7 +1011,7 @@ A teammate's agent loop runs until the assistant's text contains "TASK COMPLETE"
 
 The loop is controlled by **`stop_reason`**: continue on `"tool_use"`, finish on `"end_turn"`. Parsing assistant text and arbitrary iteration caps as the **primary** mechanism are both anti-patterns; a generous limit as a cost safeguard is compatible with the requirement.
 
-A keeps both anti-patterns, with a different number. C replaces one text-based signal with another self-reported one. D inverts the meaning: a response with only tool calls is exactly when the loop must continue.
+Following `stop_reason` is right, but a 10-iteration cap still cuts long tasks short. A self-reported `done` flag is a heuristic on content. A response without text may still be mid-task. `stop_reason` drives the loop, with a generous cap as a safety net.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -1060,7 +1060,7 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 The coordinator receives the outputs of six subagents and passes them to the synthesis subagent as one long block in the order they finished. Reviewers notice that the final reports reliably use the findings of the first and last subagents, but often omit the third and fourth, even when those contain the most important results. Each output is long and has no headings. What is the best change?
 
 - **A.** Pass the six outputs to six separate synthesis subagents, one each, and concatenate their syntheses into the final report without any further integration step.
-- **B.** Shuffle the order of the subagent outputs on each run, so that no subagent is systematically placed in the middle and omissions are spread evenly across subagents.
+- **B.** Organize each subagent's output under explicit section headings, keeping them in completion order and without any summary at the start.
 - **C.** Ask the synthesis subagent in its prompt to read every part of the input carefully and give equal weight to the findings from each of the six subagents.
 - **D.** Put a summary of key findings at the start of the aggregated input and organize each subagent's output under explicit section headings before passing it to synthesis.
 
@@ -1068,7 +1068,7 @@ The coordinator receives the outputs of six subagents and passes them to the syn
 
 This is the **lost-in-the-middle** effect: content at the start and end of long inputs is processed reliably, the middle less so. The structural fix is to place key information at the beginning and use explicit section headings.
 
-A eliminates integration, producing six disconnected syntheses. B spreads the problem randomly instead of solving it. C is a vague instruction against a structural effect.
+Separate syntheses concatenated lose integration. Headings help but, without a summary up front, the middle sections still get less attention. Shuffling spreads the omissions instead of fixing them. A key-findings summary at the start plus headed sections addresses the position effect.
 
 ## Scenario: Structured Data Extraction
 
@@ -1078,7 +1078,7 @@ You are building a structured data extraction system using Claude. The system ex
 
 Your single tool `extract_document` accepts any document and returns a generic object with optional fields for everything (invoice lines, contract clauses, receipt totals). Output for contracts often contains invoice fields filled with nonsense, and downstream consumers must guess which fields apply. The pipeline already knows the document type before extraction for 95% of documents. What is the best redesign?
 
-- **A.** Keep the generic tool but make every field required, so that the model must explicitly fill each one and can no longer leave the wrong fields filled with arbitrary content.
+- **A.** Split the tool into type-specific extraction tools and use `tool_choice: "auto"`, so the model picks the right tool even when the type is known.
 - **B.** Split the tool into type-specific extraction tools with well-defined input and output contracts, and force the tool that matches the known type for the documents that have one.
 - **C.** Keep the generic tool and add a long description listing which fields apply to which document type, so that the model knows which fields to leave empty for each type.
 - **D.** Keep the generic tool and post-process its output with code that deletes the fields not relevant to the detected document type before sending the result downstream.
@@ -1087,7 +1087,7 @@ Your single tool `extract_document` accepts any document and returns a generic o
 
 Generic tools should be **split into specialized tools** with well-defined contracts. Since the type is known for 95% of documents, the matching tool can be forced (with `"any"` among the specialized tools for the remaining 5%).
 
-A makes things worse, forcing values in irrelevant fields. C improves the description but keeps an ambiguous contract. D hides the symptom downstream while nonsense extraction continues and costs tokens.
+With `auto`, the model may pick another tool or answer in text even when the type is known. A long description still leaves one schema full of irrelevant fields. Deleting fields afterward hides nonsense instead of preventing it. Type-specific tools, forced when the type is known.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -1100,13 +1100,13 @@ Claude Code generates unit tests for each pull request. Developers complain that
 - **A.** Add an instruction to the prompt telling Claude to avoid duplicates and to follow the suite's existing structure carefully when generating each new test.
 - **B.** Run a deduplication script after generation that removes tests whose names match existing ones, so duplicated scenarios never reach the pull request.
 - **C.** Include the existing test files for the changed modules in the generation context, so that Claude sees what is already covered and follows the established structure.
-- **D.** Generate tests with the Batches API overnight instead of on each PR, so there is more time to compare generated tests with the existing suite before proposing them.
+- **D.** Include the full test suite of the whole repository in the generation context, so Claude sees everything that is already covered.
 
 #### Correct answer to Question 58: C
 
 To avoid duplicates and stay consistent, **include the existing test files in the context** when generating new ones. The `CLAUDE.md` already describes the conventions; what is missing is visibility of what already exists.
 
-A asks the model to avoid duplicates it cannot see. B matches names, not scenarios: different names can cover the same case. D changes timing and cost, not the missing information, and delays the feedback developers need on the PR.
+Instructions alone cannot show what is already covered. Name-based deduplication misses scenarios under other names. The whole repository's suite floods the context with unrelated tests. The existing tests of the changed modules are the right context.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -1118,14 +1118,14 @@ Your developer agent has 18 tools: the 5 built-in ones plus 13 from MCP servers 
 
 - **A.** Give the main agent only the tools relevant to code exploration plus a few shared utilities, and delegate ticket and dashboard tasks to specialized subagents with their own scoped tools.
 - **B.** Keep all 18 tools and rewrite every description to be longer and more detailed, so that the model can always distinguish between them regardless of how many there are.
-- **C.** Set `tool_choice: "any"` so the model is always forced to call a tool, reducing the chance that it reasons about which tool to use and picks the wrong one by mistake.
+- **C.** Split all tools across specialized subagents, one of them for code exploration, and give the main agent no tools of its own except delegation.
 - **D.** Merge the three search tools and the Confluence tool into one generic `search` tool, so the model has fewer choices and does not have to decide between them each time.
 
 #### Correct answer to Question 59: A
 
 Too many tools (18 instead of 4 to 5) **reduce selection reliability**, and tools outside an agent's specialization tend to be misused. Scoping the tool set by role, with a few shared utilities, and delegating the rare needs to specialized subagents addresses both.
 
-B improves descriptions but leaves the number of tools and the specialization problem. C forces a call but does nothing to choose the right one. D creates a generic tool, the opposite of the specialized contracts the material recommends.
+Longer descriptions help, but 18 overlapping tools remain hard to choose from. Delegating even the main code-exploration work adds overhead to the most common task. Merging search tools hides real differences. Scope the main agent to code tools and delegate the occasional tasks.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -1135,7 +1135,7 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 
 The agent escalates a billing dispute to a human operator. Operators report spending several minutes reading the full transcript of each escalated conversation, and sometimes asking customers again for the account number and the disputed amount, which the agent already had. The escalation tool currently receives only the conversation ID. Which change best addresses the operators' problem?
 
-- **A.** Escalate earlier in each conversation, before the agent gathers much information, so that the transcript is shorter and the operator can read it in less time.
+- **A.** Pass a structured handoff with customer ID, disputed amount and the issue, leaving out what was already checked to keep it short.
 - **B.** Have the escalation tool attach the full transcript and every tool result, so that the operator has all the available information about the case in a single place.
 - **C.** Instruct the agent to tell the customer to repeat the key details to the operator at the start of the call, so that the operator hears them directly from the customer.
 - **D.** Pass a structured handoff to the escalation tool: customer ID, disputed amount, the issue, what was already checked, the reason for escalation and a recommended action.
@@ -1144,4 +1144,5 @@ The agent escalates a billing dispute to a human operator. Operators report spen
 
 Escalation needs a **structured handoff protocol** (customer ID, reason, recommended action, key facts and steps already taken), so the operator can act without rereading the transcript or re-asking the customer.
 
-A escalates too early, wasting the agent's ability to resolve cases and still not providing structure. B gives more data but no summary: the operator still has to read everything. C shifts the work back to the customer, the very experience the handoff should avoid.
+A handoff without what was already checked makes the operator redo the same verifications. The full transcript and every tool result take minutes to read. Asking customers to repeat details is the problem itself. A structured handoff with checks, reason and recommendation fixes it.
+

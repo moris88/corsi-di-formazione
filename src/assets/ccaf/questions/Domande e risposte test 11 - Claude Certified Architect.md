@@ -131,13 +131,13 @@ A customer writes in an angry tone about a delayed shipment but does not ask for
 - **A.** Acknowledge the frustration and offer the in-policy resolution, escalating only if the customer then asks for a human.
 - **B.** Adopt the classifier, because strong negative sentiment reliably signals cases too complex for automated handling.
 - **C.** Escalate right away, since resolving an angry customer's issue automatically risks escalating the conflict further.
-- **D.** Ask the customer to rate their frustration from 1 to 10 and escalate automatically when the score is above 7.
+- **D.** Offer the in-policy resolution and flag the conversation for a human to review its tone afterward.
 
 #### Correct answer to Question 7: A
 
 Sentiment is a poor proxy for case complexity: an angry customer with a simple, in-policy issue is best served by a fast resolution. The right trigger for escalation is an explicit request for a human, a policy gap, or the inability to make progress.
 
-The classifier and the immediate escalation both send solvable cases to humans and hurt first-contact resolution. Asking for a frustration score adds friction and still uses the wrong signal.
+Negative sentiment does not measure case complexity, so a sentiment classifier or an immediate escalation sends resolvable cases to humans. Flagging every angry conversation for later review adds workload without helping the customer now. Acknowledge, resolve within policy, and escalate if the customer asks.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -223,16 +223,16 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 
 The agent tries to change a configuration line with Edit, but the operation fails because the text to replace appears three times in the file, in similar blocks. What is the best way to proceed?
 
-- **A.** Retry Edit with the same text, since the tool will pick the first occurrence of the text.
+- **A.** Retry Edit with `replace_all: true`, since the three blocks are similar and the change probably applies to all.
 - **B.** Use Bash with `sed` to replace every occurrence of the text across the whole file.
-- **C.** Give up on the change and ask the user to make it by hand, since the file is ambiguous.
+- **C.** Use Grep with line numbers to find the right occurrence, then pass that line number to Edit.
 - **D.** Include more surrounding context to make the match unique, or Read and rewrite the file with Write.
 
 #### Correct answer to Question 12: D
 
 Edit needs a unique match: you extend the context until the anchor is unambiguous, or as a fallback you read the file and rewrite it in full in a controlled way.
 
-Edit does not pick the first occurrence: it fails. `sed` on every occurrence changes blocks that should not be touched. Giving up is premature.
+`replace_all` changes all three blocks when only one should change. `sed` on every occurrence has the same problem. Edit matches text, not line numbers. More unique context, or a careful Read-then-Write, targets the right block.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -244,14 +244,14 @@ Human agents who receive escalations say they spend minutes re-asking customers 
 
 - **A.** The full raw transcript, since humans then have every detail and can scan only the parts that matter for the case.
 - **B.** A short reason code from a fixed list, so escalations can be routed to the right queue more quickly and reliably.
-- **C.** A personalized apology for the customer, so the human can pick up the conversation without restating anything.
+- **C.** The agent's confidence that escalation was needed, so the human can prioritize the uncertain cases.
 - **D.** A structured summary: verified customer and order IDs, root cause, actions attempted, amounts, and the recommended next step.
 
 #### Correct answer to Question 13: D
 
 The receiving human lacks the conversation, so the handoff must be self-contained: verified identifiers, what was investigated, what was attempted, the amounts involved and why the case is being escalated. That removes the re-asking.
 
-A raw transcript moves the analysis work onto the human. A reason code helps routing but carries none of the facts. An apology text does not solve the missing-context problem.
+A raw transcript forces the human to dig for the facts. A reason code helps routing but carries no case facts. A confidence score does not say what was verified or tried. A structured summary of IDs, cause, actions, amounts and next step removes the re-asking.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -320,14 +320,14 @@ Analysis of the findings shows that "style and naming" findings have an 80% fals
 
 - **A.** Lower the severity of style findings, while still posting them as informational comments.
 - **B.** Temporarily disable the high false-positive categories while you improve their prompts with explicit criteria.
-- **C.** Add a note to each comment telling developers that some findings may be false positives.
+- **C.** Raise the confidence threshold for all categories, so fewer findings of every kind get posted.
 - **D.** Switch to a larger model, which should reduce false positives in every category.
 
 #### Correct answer to Question 17: B
 
 False positives in one category erode trust in the accurate ones as well. Temporarily disabling them protects the credibility of the security and correctness findings while you work on criteria.
 
-Posting them at lower severity still produces noise. A generic note does not restore trust. A bigger model does not fix poorly defined criteria.
+Lowering severity still posts mostly wrong comments. A global threshold also cuts accurate security and correctness findings. A larger model is not targeted at the noisy categories. Disabling the noisy categories while their criteria are fixed restores trust in the rest.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -394,16 +394,16 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 
 When the web search subagent hits repeated timeouts, it returns "Search unavailable" to the coordinator. The coordinator then either aborts the whole research or carries on as if the topic had no sources. What is the best fix?
 
-- **A.** Have the subagent retry indefinitely until the search succeeds, so the coordinator never sees an error.
+- **A.** Have the subagent retry with exponential backoff for up to ten minutes before returning "Search unavailable".
 - **B.** Have the subagent return an empty successful result, so the coordinator can carry on without interruption.
-- **C.** Abort the whole workflow on any subagent error, so that a report is never incomplete.
+- **C.** Have the coordinator treat "Search unavailable" as a gap and add a generic disclaimer to the report.
 - **D.** Return structured error context: failure type, query attempted, partial results, and possible alternatives.
 
 #### Correct answer to Question 21: D
 
 The coordinator can make good recovery decisions (retry, change query, report a coverage gap) only if it knows what failed and what is still available.
 
-Infinite retries block the system. An empty success hides the failure and leads to wrong conclusions. Aborting everything on any error wastes the partial work.
+Longer retries delay the run and still end with an unstructured message. An empty successful result hides the failure. A generic disclaimer is honest but gives the coordinator nothing to retry or reroute. Structured error context lets it decide.
 
 ## Scenario: Structured Data Extraction
 
@@ -432,7 +432,7 @@ You are integrating Claude Code into your Continuous Integration/Continuous Depl
 
 The review prompt says "Be conservative: only report issues you are really sure about." False positives have not gone down, and some real bugs have stopped being reported. What is the most effective fix?
 
-- **A.** Remove the instruction and add "Report every possible issue" to maximize recall.
+- **A.** Keep the instruction and filter out findings in categories with a high historical false-positive rate.
 - **B.** Write the instruction in capitals and repeat it at the end of the prompt as well.
 - **C.** Ask Claude to state a confidence percentage and filter out findings below 90% in the script.
 - **D.** Define explicit criteria for what to report and what to skip, with concrete examples for each category.
@@ -441,7 +441,7 @@ The review prompt says "Be conservative: only report issues you are really sure 
 
 Vague instructions like "be conservative" get applied inconsistently. Explicit criteria with examples (what counts as a bug and what is a stylistic preference) improve precision without sacrificing recall.
 
-Maximizing recall makes false positives worse. Emphasis does not add clarity. Self-reported confidence without calibration is not a reliable filter.
+A post-filter by category hides noise without fixing the vague instruction that also suppresses real bugs. Capitals do not make the instruction clearer. Self-reported confidence is uncalibrated, so a 90% cutoff drops real bugs too. Explicit criteria with examples fix both precision and recall.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -454,13 +454,13 @@ You connected an MCP server with a `semantic_code_search` tool that understands 
 - **A.** Remove Grep from the agent's tools, so that it is forced to use the semantic search tool.
 - **B.** Add a rule to the system prompt: "Always use semantic_code_search first, for every search".
 - **C.** Expand the MCP tool's description: what it does, for which questions it beats Grep, and with examples.
-- **D.** Rename the tool to `search`, so it looks more general-purpose than the built-in Grep.
+- **D.** Lower Grep's priority in the agent settings, so the model considers the MCP tool before the built-in one.
 
 #### Correct answer to Question 24: C
 
 The agent chooses tools from their descriptions: a minimal description gives no reason to prefer the MCP tool. Explaining its strengths and when to use it fixes the choice.
 
-Removing Grep throws away the best tool for exact searches. An "always" rule leads to misuse on literal searches. A generic name makes things more ambiguous.
+Removing Grep loses the right tool for exact-match searches. A rule to always use semantic search first misuses it for literal lookups. There is no priority setting between tools. A description stating what the tool does and when it beats Grep lets the model choose.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -527,16 +527,16 @@ You are building a structured data extraction system using Claude. The system ex
 
 You have two workloads: (1) a nightly reprocessing of 50,000 archived documents; (2) extraction on documents uploaded by users, who wait for the result on screen. To cut costs, a colleague proposes moving both to the Message Batches API. What is the best decision?
 
-- **A.** Move both, since the 50% savings justify asking users to come back later for their results.
+- **A.** Move both to batches, emailing interactive users when their extraction is ready to view.
 - **B.** Use batches for the nightly reprocessing and keep synchronous calls for interactive extraction.
 - **C.** Keep both synchronous, since the Batches API does not support `tool_use` for structured output.
-- **D.** Use batches for interactive extraction and synchronous calls at night, to spread the load evenly.
+- **D.** Keep both synchronous, but switch interactive extraction to a smaller model to reduce its cost.
 
 #### Correct answer to Question 28: B
 
 The Batches API halves the cost but has processing windows of up to 24 hours with no latency guarantee: perfect for the nightly job, unsuitable when a user is waiting.
 
-Making users wait hours is unacceptable. Batches do support tools in single requests (what they lack is multi-turn tool use within a request). Reversing the assignment is the worst of both.
+Moving interactive extraction to batches breaks the on-screen experience. Batches support tool use. A smaller model may reduce quality and leaves the nightly job at synchronous prices. Batch the nightly job and keep interactive extraction synchronous.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -568,13 +568,13 @@ In every session the agent spends many tool calls exploring to find out which in
 - **A.** Add a tool that returns the full content of all the documents in a single call.
 - **B.** Expose the catalog of documents and schemas as MCP resources, so the agent knows what exists without exploring.
 - **C.** Copy the whole internal documentation into CLAUDE.md, so it is always available in context.
-- **D.** Increase the session's tool-call limit, so that exploration does not get cut short.
+- **D.** Add to CLAUDE.md a list of the available document names, updated by hand whenever the documentation changes.
 
 #### Correct answer to Question 30: B
 
 MCP resources expose a catalog of content the agent can consult directly, reducing exploratory calls to discover what is available.
 
-Returning everything blows up the context. Copying the documentation into CLAUDE.md loads it in every session and gets out of date. Raising the limit does not cut wasted calls.
+Returning all content at once floods the context. Copying the documentation, or a hand-kept list of names, into CLAUDE.md goes stale and loads in every session. A higher tool-call limit allows more exploration instead of removing the need. MCP resources expose the catalog directly.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -622,16 +622,16 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 
 Two credible sources give different figures for the same metric: a 2022 industry report says 34%, a 2024 academic study says 51%. The synthesis subagent reports only 51%, without mentioning the other figure. What is the correct behavior?
 
-- **A.** Report the average of the two values, so that both sources are reflected in the final figure.
+- **A.** Report the more recent value in the text and cite the older one in a footnote as historical context.
 - **B.** Present both values with their sources and dates, noting the discrepancy and possible explanations.
 - **C.** Always use the more recent value, since it reflects the latest state of knowledge on the topic.
-- **D.** Leave the metric out of the report entirely, since the sources do not agree on its value.
+- **D.** Run a third search for a tie-breaking source, and report whichever value that third source supports.
 
 #### Correct answer to Question 33: B
 
 Credible conflicting data should be preserved with attribution and context (different dates or methods may explain the gap): the reader can evaluate, while the synthesis does not pick arbitrarily.
 
-An average invents a figure no source reports. Always preferring the most recent ignores differences in methodology. Leaving it out loses relevant information.
+A footnote still presents one figure as the answer without explaining the discrepancy. Always preferring the newer value ignores differences in scope and method. A tie-breaking search treats the question as a vote. Both values with sources, dates and possible explanations let readers judge.
 
 ## Scenario: Structured Data Extraction
 
@@ -642,7 +642,7 @@ You are building a structured data extraction system using Claude. The system ex
 A batch of 10,000 requests comes back with 230 failures: 180 for exceeding the context limit (very long contracts) and 50 for temporary errors. What is the best strategy?
 
 - **A.** Resubmit the whole batch, since partial results could be inconsistent with those of a new batch.
-- **B.** Discard the failed requests, since a 2.3% failure rate is acceptable for a batch workload.
+- **B.** Resubmit all 230 failures in a new batch with a higher `max_tokens`, so the long contracts fit.
 - **C.** Resubmit all 230 failures unchanged in a new batch, since the errors are probably transient.
 - **D.** Use `custom_id` to resubmit only the failures: the 50 as they are, the 180 after chunking the long documents.
 
@@ -650,7 +650,7 @@ A batch of 10,000 requests comes back with 230 failures: 180 for exceeding the c
 
 `custom_id` links each result to its request: you resubmit only what failed and adjust the cause (oversized documents need chunking, transient errors only need a retry).
 
-Resubmitting everything wastes cost and time. Discarding loses data. Resubmitting unchanged repeats the 180 context-limit failures.
+Resubmitting the whole batch repeats 9,770 successful requests. A higher `max_tokens` raises the output limit, not the context limit. Resubmitting the 180 unchanged fails again. Resubmit by `custom_id`: the transient ones as they are, the long ones after chunking.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -663,13 +663,13 @@ Claude generates unit tests for every pull request. Developers complain that man
 - **A.** Ask Claude to generate fewer tests, focusing only on the functions changed in the pull request.
 - **B.** Remove duplicate tests with a script after generation, by comparing the test names.
 - **C.** Include the existing test files in the context, so Claude can identify what is already covered.
-- **D.** Generate the tests in a batch run at night, so they can be reviewed more carefully the next day.
+- **D.** Ask Claude to list edge cases first, keeping the existing tests out of the context to save tokens.
 
 #### Correct answer to Question 35: C
 
 Without seeing the existing tests, Claude cannot know what is already covered. With them in context it can target the gaps, edge cases included.
 
-Fewer tests does not mean better tests. Comparing names does not catch semantic duplicates. Running at night changes the timing, not the coverage.
+Fewer tests cover less without avoiding duplicates. Name-based deduplication misses tests that cover the same scenario under other names. Listing edge cases helps, but without the existing tests Claude cannot see what is covered. Including the existing tests fixes both issues.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -681,14 +681,14 @@ For multi-day investigations of a legacy system, the agent loses earlier finding
 
 - **A.** Disable automatic compaction, so the context is never compacted during the investigation.
 - **B.** Ask the agent to remember the important findings, emphasizing it in the system prompt.
-- **C.** Restart the investigation from scratch every day, so the context always stays small.
+- **C.** Resume the same session every day with `--resume`, so the full history of the investigation stays available.
 - **D.** Have the agent keep a scratchpad file of structured findings that it updates and re-reads when needed.
 
 #### Correct answer to Question 36: D
 
 A file of findings persists outside the context: it survives compaction and new sessions, and the agent can consult it instead of repeating analyses.
 
-Disabling compaction leads to running out of context. "Remembering" is not possible beyond the context. Restarting from scratch throws away the work done.
+Without compaction the context overflows. Asking the agent to remember is probabilistic. A resumed session is still compacted as it grows, losing the same findings. A scratchpad file of structured findings persists across compactions and days.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -701,13 +701,13 @@ When the order database times out, the `lookup_order` MCP tool catches the excep
 - **A.** Have the tool retry the query internally up to ten times before returning, so timeouts become very rare.
 - **B.** Return a structured error (`isError`, a transient category, `isRetryable: true`) that is distinct from a valid empty result.
 - **C.** Add a prompt instruction telling the agent to treat empty lists as possible errors and to apologize to the customer.
-- **D.** Have the tool return a fake placeholder order, so the agent never concludes the customer has no orders.
+- **D.** Return the empty list with a `warning: "timeout"` field, leaving `isError` set to false.
 
 #### Correct answer to Question 37: B
 
 The real defect is that an access failure and a valid "no results" look identical. Structured error metadata lets the agent retry or tell the customer about a temporary problem instead of stating something false.
 
-Internal retries reduce but do not remove the ambiguity. The prompt instruction leaves the agent guessing between two different situations. A placeholder order is fabricated data.
+Internal retries make timeouts rarer, but when they run out the failure still looks like an empty result. A prompt rule asks the agent to guess. A warning beside an empty list with `isError` false is easy to miss. A structured, retryable error distinct from a valid empty result fixes it.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -718,15 +718,15 @@ You are using Claude Code to accelerate software development. Your team uses it 
 During a two-hour exploration of a legacy codebase, Claude ran many Grep and Read commands with long outputs. It now answers with generic phrases like "the typical pattern for this kind of service" instead of citing the specific classes it found an hour ago. What is the best way to prevent this in future sessions?
 
 - **A.** Use a model with a larger context window, so the early exploration outputs remain fully available.
-- **B.** Run `/clear` every thirty minutes, so that the context is reset regularly before it degrades.
+- **B.** Run `/compact` and ask Claude to continue exploring in the same way afterward.
 - **C.** Delegate verbose exploration to an Explore subagent that returns concise findings, keeping the main context clean.
-- **D.** Ask Claude to re-read every file it already explored before answering any question about the codebase.
+- **D.** Ask Claude to save long outputs to files instead of printing them, and keep exploring in the main session.
 
 #### Correct answer to Question 38: C
 
 The symptom is context degradation from verbose output. Delegating exploration to a subagent isolates that output and brings only a synthesis back into the main session.
 
-A bigger window postpones the problem. `/clear` throws away findings along with the noise. Re-reading everything worsens the very problem it tries to fix.
+A larger window postpones degradation without removing the noise. Compacting helps once, but exploring the same way refills the context. Saving outputs to files still leaves the main session doing the verbose exploration. An Explore subagent keeps the noise out of the main context.
 
 ## Scenario: Multi-Agent Research System
 
@@ -758,13 +758,13 @@ Overall extraction accuracy on a validation sample is 97%, and management propos
 - **A.** Remove human review, since 97% overall exceeds the quality target set for the project.
 - **B.** Keep human review on everything until each document type exceeds 97% accuracy.
 - **C.** Reduce review only for segments with verified high accuracy, keeping it for handwritten forms.
-- **D.** Remove review and add a disclaimer that extracted data may contain occasional errors.
+- **D.** Remove review for all typed documents and keep it only on handwritten forms, without measuring each typed type.
 
 #### Correct answer to Question 40: C
 
 Aggregate metrics can hide segments with poor performance. Reducing review should be decided per segment (document type, field), keeping humans where accuracy is not enough.
 
-The overall figure masks the handwritten forms. Keeping review on everything ignores the savings available on reliable segments. A disclaimer does not protect downstream systems from errors.
+97% overall hides a segment at 71%. Waiting for every type to reach 97% keeps unnecessary review. Dropping review for all typed documents without measuring each type assumes their accuracy instead of verifying it. Reducing review only where accuracy is verified is safe.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -774,16 +774,16 @@ You are integrating Claude Code into your Continuous Integration/Continuous Depl
 
 The team runs Claude Code in CI, but the reviews do not reflect the project's standards (fixtures to use, testing conventions, criteria for what counts as a bug). Developers who use Claude Code locally with their personal configurations do not have this problem. What is the best fix?
 
-- **A.** Paste all the standards into the command-line prompt of every CI job.
+- **A.** Pass the standards with `--append-system-prompt` in each CI job, keeping them in the workflow file.
 - **B.** Document the standards in the project CLAUDE.md, which Claude Code in CI loads from the repository.
-- **C.** Copy each developer's personal configuration onto the CI runners.
+- **C.** Copy the standards into the runner's `~/.claude/CLAUDE.md` during job setup, from a page on the wiki.
 - **D.** Create a dedicated MCP server that serves the project's standards on demand.
 
 #### Correct answer to Question 41: B
 
 The project CLAUDE.md is versioned with the code and loaded automatically by Claude Code in CI too: one source for local and pipeline runs.
 
-Duplicating standards in every job causes drift. Personal configurations are not shared and differ between people. An MCP server is excessive for static context.
+Appending the standards in the CI job keeps a second copy that drifts from what developers use locally. Copying a user-level file onto runners from a wiki is the same drift with extra steps. An MCP server is unnecessary for static standards. The project CLAUDE.md is loaded from the repository everywhere.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -812,7 +812,7 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 
 A customer's single message raises three issues: a refund for a damaged item, a shipping address change for a pending order, and a question about a double charge. The agent handles the refund well but ignores the other two. What is the best design change?
 
-- **A.** Ask the customer to send each issue in a separate message, so the agent can handle them one at a time.
+- **A.** Add a rule to always restate every issue in the customer's message at the start of the reply.
 - **B.** Add a rule to always end the reply by asking "Is there anything else I can help you with?"
 - **C.** Handle the issues sequentially across turns, resolving the refund before even looking at the other two.
 - **D.** Decompose the message into distinct issues, investigate each (in parallel where possible), then reply on all of them together.
@@ -821,7 +821,7 @@ A customer's single message raises three issues: a refund for a damaged item, a 
 
 Multi-concern requests should be decomposed explicitly, with each issue investigated (independent lookups can run in the same turn) and a single synthesized reply that covers all of them.
 
-Asking the customer to split the message shifts the work to them. A closing question still does not ensure the issues already raised get addressed. Strictly sequential handling is slower and makes it easy to lose the remaining issues.
+Restating issues or ending with a question does not ensure each one is investigated. Handling them strictly in sequence across turns delays the independent ones. Decomposing, investigating each and replying on all together resolves them.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -850,7 +850,7 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 
 The document analysis subagent could not access several paywalled sources that are central to the topic. The final report presents its conclusions as exhaustive, without mentioning any limitations. What should change?
 
-- **A.** Instruct the search subagent to bypass the paywalls so that every source is always available.
+- **A.** Have the search subagent use the abstract of each paywalled source and cite it as the source of the claims.
 - **B.** Have the coordinator abort the research whenever a central source turns out to be inaccessible.
 - **C.** Have synthesis include coverage annotations that show which areas are well supported and where the gaps are.
 - **D.** Have the report subagent add a generic disclaimer about possible incomplete sources to every report.
@@ -859,7 +859,7 @@ The document analysis subagent could not access several paywalled sources that a
 
 Making coverage gaps explicit, tied to specific areas, lets readers calibrate their trust in each conclusion.
 
-Bypassing paywalls is not legitimate. Aborting wastes the work done. A generic disclaimer does not tell the reader which conclusions are weaker.
+Citing abstracts as if the full sources were read overstates the evidence. Aborting the research wastes the work that succeeded. A generic disclaimer on every report says nothing about where the gaps are. Coverage annotations show what is well supported and what is missing.
 
 ## Scenario: Structured Data Extraction
 
@@ -910,13 +910,13 @@ In the agentic loop, the agent repeats the same tool call over and over with ide
 - **A.** Add an instruction to the system prompt telling the model not to repeat calls it has already made.
 - **B.** Store the tool results in a cache and return them immediately when an identical call repeats.
 - **C.** Append a `tool_result` with the matching `tool_use_id` to the messages before calling the model again.
-- **D.** Lower the temperature so the model is less likely to repeat its tool calls.
+- **D.** Make the tool idempotent, so that repeated calls with the same parameters become harmless.
 
 #### Correct answer to Question 48: C
 
 Without the `tool_result` in the history, the model does not know the tool already ran and asks again. The result must be appended, linked by `tool_use_id`.
 
-A prompt instruction cannot fix missing data. A cache hides the bug without informing the model. Temperature has nothing to do with the problem.
+A prompt rule cannot fix a model that never sees the result. A cache makes repeated calls cheaper, but the model still never sees the data. Idempotency makes repeats harmless, not less frequent. Appending a `tool_result` with the matching `tool_use_id` fixes the loop.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -967,13 +967,13 @@ Reports on complex topics often have uneven coverage: some subtopics are thoroug
 - **A.** Have the coordinator evaluate synthesis output for gaps, delegate targeted follow-up research, and re-synthesize, with an iteration cap.
 - **B.** Always double the number of subagents for complex topics, so that coverage is wider from the very start.
 - **C.** Have every subagent self-assess its own completeness and decide on its own whether more research is needed.
-- **D.** Have the report subagent fill the thin sections with general considerations, so they look balanced.
+- **D.** Have synthesis mark thin sections as low-confidence and deliver the report with those markings.
 
 #### Correct answer to Question 51: A
 
 An iterative evaluate-and-refine loop driven by the coordinator, which has the full view, finds gaps and requests targeted research. The cap prevents endless loops.
 
-More subagents up front do not guarantee balance. Each subagent sees only its own part, not the overall gaps. Filling with generic content masks the problem.
+Doubling subagents widens coverage blindly without checking for gaps. Self-assessment by each subagent misses gaps between their scopes. Marking thin sections is honest but does not fix them. A coordinator evaluation loop with targeted follow-ups and a cap does.
 
 ## Scenario: Structured Data Extraction
 
@@ -1135,13 +1135,14 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 
 The team wants to integrate the agent with GitHub (issues, pull requests) and with an internal tool that manages team-specific deploy approvals. A colleague proposes writing two custom MCP servers. What is the best choice?
 
-- **A.** Write both custom servers, so you have full control over both integrations.
+- **A.** Write a minimal custom GitHub server exposing only the needed operations, plus a custom one for the internal tool.
 - **B.** Have the agent call both systems' APIs with `curl` through Bash, without any MCP server.
-- **C.** Use a community MCP server for the internal tool and write a custom one for GitHub.
+- **C.** Use the community GitHub server for everything, modelling deploy approvals as GitHub issues with labels.
 - **D.** Use an existing community MCP server for GitHub and write a custom one only for the internal tool.
 
 #### Correct answer to Question 60: D
 
 For standard integrations like GitHub, mature community servers already exist: building one is wasted effort. A custom server makes sense for team-specific workflows that nobody else covers.
 
-Writing both duplicates existing work. Bare `curl` loses the structured tool interface. Swapping the choices is the reverse of what makes sense.
+A minimal custom GitHub server duplicates a maintained community one. Modelling approvals as labeled issues bends a team-specific workflow into a generic tool and loses its rules. Calling APIs with `curl` loses schemas and structured errors. Use the community server for GitHub and a custom one for the internal tool.
+

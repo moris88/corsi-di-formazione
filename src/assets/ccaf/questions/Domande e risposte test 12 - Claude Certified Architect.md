@@ -225,14 +225,14 @@ You notice that the agent uses Bash for operations like `cat file.py`, `grep -r 
 
 - **A.** Instruct the agent to prefer the dedicated tools (Read, Grep, Glob) for reading and searching, keeping Bash for operations that require a shell, such as builds and tests.
 - **B.** Remove Bash from the agent completely, so that it is forced to use the dedicated tools in every situation, including builds and tests.
-- **C.** Allow everything in Bash without restrictions, since the shell commands produce the same results as the dedicated tools anyway.
-- **D.** Add a PostToolUse hook that converts the output of shell commands into the format of the dedicated tools after every single Bash execution.
+- **C.** Keep Bash for everything, adding allow rules for `Bash(cat:*)`, `Bash(grep:*)` and `Bash(find:*)` so these commands no longer need approval.
+- **D.** Add a PreToolUse hook that blocks every Bash command, so that the agent falls back to the dedicated tools for reading and searching.
 
 #### Correct answer to Question 12: A
 
 The dedicated tools offer granular permissions, consistent output and better integration. Bash remains the right tool for builds, tests and operations that have no dedicated equivalent.
 
-Removing Bash prevents legitimate operations. Allowing everything gives up control. Converting shell output after the fact is complex and leaves the permission problem untouched.
+Removing or blocking Bash entirely also stops builds and tests. Allowing everything, or pre-approving `cat`, `grep` and `find`, gives up the finer permission control the dedicated tools provide. Preferring Read, Grep and Glob, with Bash for shell-only work, gives clear permissions.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -319,15 +319,15 @@ You are integrating Claude Code into your Continuous Integration/Continuous Depl
 You have two automations: (a) a review of every PR, which developers wait for before merging; (b) a weekly audit of the whole repository for technical debt, whose report is read on Monday. Both use a long, identical set of instructions. How can you optimize cost without hurting the experience?
 
 - **A.** Use the Batches API for both, since the 50% saving justifies a few hours of waiting for the PR review as well as for the weekly audit.
-- **B.** Use synchronous calls for both, since the Batches API does not support the long, detailed prompts that the review instructions require.
+- **B.** Use synchronous calls for both and enable prompt caching on both, since caching gives savings comparable to the Batches API.
 - **C.** Keep (a) synchronous, possibly using prompt caching for the shared instructions, and run (b) with the Batches API, since nobody is waiting for it.
-- **D.** Run (a) with the Batches API and (b) synchronously, since the weekly audit is more important and deserves the fastest processing available.
+- **D.** Run (a) with the Batches API only for PRs labeled low priority, and (b) synchronously over the weekend when traffic is low.
 
 #### Correct answer to Question 17: C
 
 The PR review blocks developers: it must be synchronous (and caching reduces the cost of the repeated static instructions). The weekly audit tolerates latency: the Batches API halves its cost.
 
-Using batches for the PR review makes developers wait up to 24 hours. Batches do support long prompts. The fourth option reverses the right assignment.
+Batch latency is unacceptable for a review developers wait on, even on low-priority PRs. Prompt caching helps the PR review but does not replace batch pricing for an audit nobody waits for. Synchronous with caching for (a), batches for (b).
 
 ## Scenario: Developer Productivity with Claude
 
@@ -378,13 +378,13 @@ You are creating an `/audit-deps` skill that analyzes dependencies and produces 
 - **A.** An instruction at the start of the skill saying "this is a read-only skill: never modify any files", repeated again at the end of the SKILL.md for emphasis.
 - **B.** `allowed-tools` in the SKILL.md frontmatter, limited to Read, Grep and Glob, so the skill cannot use Edit, Write or Bash while it runs, whatever the analyzed content says.
 - **C.** `context: fork` in the frontmatter, so that any changes made by the skill stay isolated in the subagent and are discarded automatically when the skill finishes.
-- **D.** A PostToolUse hook that runs `git checkout .` after each tool call, restoring any modified files to their original state right after the skill has touched them.
+- **D.** A PreToolUse hook that asks the user to confirm every Edit, Write or Bash call made while the skill is running.
 
 #### Correct answer to Question 20: B
 
 `allowed-tools` restricts which tools are available while the skill runs: without Edit, Write and Bash, no content (including an injected one) can lead to modifications or commands.
 
-Textual instructions can be overridden by prompt injection. `context: fork` isolates the *context*, not the effects on the filesystem. Restoring files after the fact is fragile and does nothing about arbitrary commands.
+A prompt instruction is probabilistic. A forked context isolates the conversation, not the filesystem: edits made there are real. A confirmation prompt depends on a human saying no every time. `allowed-tools` limited to read-only tools removes the capability.
 
 ## Scenario: Multi-Agent Research System
 
@@ -394,7 +394,7 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 
 The document analysis subagent sometimes receives timeouts when downloading a PDF. Currently, every error is propagated immediately to the coordinator, which then decides whether to retry: this produces many coordinator round trips for errors that would resolve themselves on the second attempt. Which error-handling strategy is best?
 
-- **A.** Have the subagent never propagate any error, replacing failed documents with a summary inferred from the title and the other sources already analyzed for the topic.
+- **A.** Have the subagent retry every failed download indefinitely, so the coordinator only ever receives complete results for each document.
 - **B.** Have the coordinator retry every failed operation itself, removing all error-handling logic from the subagents so it lives in one central place.
 - **C.** Have the subagent handle transient errors locally with limited retries, propagating only the ones it cannot resolve, together with partial results and what was attempted.
 - **D.** Abort the subagent at the first error and start a new instance with the same prompt, so that every attempt starts from a clean state with no residue from the previous one.
@@ -403,7 +403,7 @@ The document analysis subagent sometimes receives timeouts when downloading a PD
 
 Recovering locally from transient errors avoids unnecessary round trips. Propagating only unresolved errors, with context (partial results, attempts made), lets the coordinator make informed decisions.
 
-Replacing documents with inferences fabricates content. Centralizing every retry in the coordinator is exactly the current problem. Restarting the instance throws away the work done and does not distinguish transient errors from permanent ones.
+Infinite retries can block the run on a document that will never download. Centralizing every retry in the coordinator moves local, transient handling to the wrong level. Restarting a fresh instance on any error throws away progress. Local limited retries, then propagation with partial results, fit.
 
 ## Scenario: Structured Data Extraction
 
@@ -510,14 +510,14 @@ A research run takes about 3 hours with 40 subtasks. When the process crashes (f
 
 - **A.** Increase the timeout and the resources of the process, so that crashes become very rare and restarting from scratch only happens in exceptional cases.
 - **B.** Resume the coordinator's conversation with its full history, relying on the model to work out which subtasks it had already completed before the crash.
-- **C.** Shorten the runs by splitting every request into smaller requests of at most 30 minutes, each started manually by the user one after the other.
+- **C.** Store the coordinator's full conversation in a database and replay it from the start after a crash, re-running each subtask call.
 - **D.** Have each subagent save its results to a file and have the coordinator keep a state manifest (completed subtasks, file paths) that it loads on restart.
 
 #### Correct answer to Question 27: D
 
 Persisting results and a structured manifest makes the state recoverable deterministically: on restart the coordinator knows exactly what is done and where to find it, and resumes the missing subtasks.
 
-More resources reduce but do not eliminate crashes. Relying on the history makes the model infer the state, which is error-prone (and the history may be lost along with the crash). Splitting manually moves the coordination onto the user.
+More resources make crashes rarer, not recoverable. Replaying the conversation re-runs the subtasks. Resuming with full history relies on the model to work out what was done. Per-subtask result files plus a state manifest let the coordinator resume exactly.
 
 ## Scenario: Structured Data Extraction
 
@@ -529,14 +529,14 @@ In some invoices, the total appears twice with different values: $4,250 in the h
 
 - **A.** Extract both values with their position in the document, and flag the conflict for review instead of letting the model silently choose one of the two.
 - **B.** Always take the value from the summary at the bottom, since it is usually computed by the invoicing system and is therefore more reliable than the header.
-- **C.** Always take the highest value, since in case of doubt it is better to overestimate the amount than to underestimate it in the accounting records.
+- **C.** Use the header value, since the header is what the customer sees first and therefore the amount they agreed to pay.
 - **D.** Ask the model to choose the most plausible value by checking which one matches the line items better, and keep only that value in the `total` field.
 
 #### Correct answer to Question 28: A
 
 Conflicting values in the source are information, not noise: capturing both with their location and flagging the conflict allows a correct decision, instead of a silent and inconsistent choice.
 
-Fixed rules (bottom, highest) are arbitrary and wrong in some cases. Letting the model pick by plausibility is still a hidden choice, even though comparing with the line items is a useful signal to provide to the reviewer.
+Always trusting one position, header or summary, silently picks a value that may be wrong. Choosing the value that matches the line items is reasonable evidence but still hides the conflict from review. Extracting both with positions and flagging the conflict lets a human decide.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -549,13 +549,13 @@ The tests Claude generates for each PR all pass, but a mutation analysis shows t
 - **A.** Ask Claude to generate more tests per function, since a larger number of tests increases the probability that at least one catches a real error.
 - **B.** Define explicit quality criteria for the tests (they must fail against a broken implementation, minimal mocking, assertions on results) with examples of good and bad tests.
 - **C.** Measure line coverage and reject the generated tests when coverage is below 90%, so that only tests touching most of the code are accepted.
-- **D.** Turn off test generation, since automatically generated tests will never reach the quality of tests written by hand by the developers.
+- **D.** Require every generated test to contain at least three assertions, so that tests check results instead of only running the code.
 
 #### Correct answer to Question 29: B
 
 The problem is the quality of the tests, not their number. Explicit criteria with contrasting examples define what makes a test useful (it detects a broken implementation, asserts on results, mocks only what is needed).
 
-More weak tests are still weak. Line coverage would be satisfied by these same tests, which execute code without checking anything. Giving up generation throws away value that can be recovered with better criteria.
+More tests of the same kind still mock everything. A coverage threshold is met by tests that execute code without checking it. A fixed number of assertions can still assert on mocks. Explicit quality criteria with examples, such as failing against a broken implementation, target the real problem.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -624,14 +624,14 @@ The synthesis subagent reports a contradiction: "Source A says the market is wor
 
 - **A.** Require the search and analysis subagents to include publication and reference dates with every finding, so synthesis can interpret differences over time.
 - **B.** Instruct the synthesis subagent to always use the most recent source and ignore older ones whenever two figures for the same metric disagree.
-- **C.** Remove from the reports all metrics that come from more than one source, so that contradictions never appear in the final output delivered to readers.
+- **C.** Have synthesis always use the figure from the source that is cited more often elsewhere, mentioning the other figure in a footnote.
 - **D.** Have the report subagent add a note to every report saying that the figures may refer to different periods and may therefore not be directly comparable.
 
 #### Correct answer to Question 33: A
 
 Synthesis cannot tell a temporal evolution from a contradiction if it does not receive the dates. Structured temporal metadata, collected at the source, makes the comparison interpretable (here: growth from $12B to $19B).
 
-Always using the most recent value throws away the trend, which is often the valuable information. Removing multi-source metrics impoverishes the report. A generic note does not say which figures belong to which period.
+Always preferring the newer source discards valid historical figures. Picking by citation count ignores that the figures refer to different years. A generic note on every report explains no specific difference. Dates attached to each finding let synthesis interpret change over time.
 
 ## Scenario: Structured Data Extraction
 
@@ -663,13 +663,13 @@ In the pipeline, the same Claude Code session first generates a fix for a failin
 - **A.** Make the review step stricter by asking the session to find at least three problems in every fix, so that the review is never a simple automatic approval.
 - **B.** Run the review twice in the same session, approving the fix only when both reviews are positive and agree with each other on the outcome.
 - **C.** Have an independent Claude instance perform the review, without the context and reasoning of the session that generated the fix.
-- **D.** Remove the review step, since an automatic review that always approves adds no value and only slows the pipeline down for every fix.
+- **D.** Keep the self-review but feed it the CI test results as extra input, so that it has evidence beyond its own reasoning.
 
 #### Correct answer to Question 35: C
 
 A session reviewing its own work shares the reasoning that produced it and tends to confirm it. An independent instance evaluates the fix with no prior assumptions.
 
-Requiring at least three problems produces artificial findings. Two reviews in the same session share the same bias. Removing the review gives up a control that becomes valuable once it is truly independent.
+Requiring a set number of problems produces invented findings. Two reviews in the same session share the same anchoring. Test results help, but the session still reviews its own reasoning. An independent instance without the generation context reviews with fresh eyes.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -680,15 +680,15 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 The agent generates boilerplate for new REST endpoints. Every time, the style differs a little from the existing code (error handling, logging, validation), and reviewers keep asking for the same corrections. The repository has 40 endpoints that follow the conventions well. What is the most effective improvement?
 
 - **A.** Point the agent to one or two representative existing endpoints as a reference to follow, together with the specific conventions to respect.
-- **B.** Write a detailed style guide of about 50 pages in prose, covering every aspect of how endpoints are written in the project.
+- **B.** Add the conventions to CLAUDE.md as a short list (error handling, logging, validation) without pointing to any existing endpoint.
 - **C.** Ask reviewers to fix the generated code by hand, since boilerplate needs to be adapted to the specific context of each endpoint anyway.
-- **D.** Generate each endpoint three times and choose the version that looks most like the existing ones, comparing them automatically with a diff.
+- **D.** Run a linter with custom rules after generation, and let the agent fix the violations it reports until the linter passes.
 
 #### Correct answer to Question 36: A
 
 A concrete example from the codebase is the most effective reference for stylistic consistency: it shows every convention in context at once, better than any description.
 
-A long prose guide is costly and still ambiguous. Manual correction is exactly the problem to solve. Generating three times and choosing by diff triples cost without addressing the cause.
+A short list without a reference leaves the details to interpretation. Fixing by hand in review wastes reviewer time. A linter catches some patterns after the fact but not structural choices. Representative endpoints plus the specific conventions give a concrete model.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -698,7 +698,7 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 
 A customer says: "Last week one of your agents promised me a $200 credit for the inconvenience." There is no tool to read the history of previous contacts, and no note on the account mentions a credit. The policy allows goodwill credits of up to $50 at the agent's discretion. What is the most appropriate response?
 
-- **A.** Grant the $200 credit, since the customer describes the promise in detail and refusing it would damage trust in the company far more than the cost of the credit itself.
+- **A.** Grant the credit only if the customer can state the date of the contact and the name of the agent who made the promise.
 - **B.** Grant $50, the maximum allowed by policy, presenting it as a partial fulfillment of the promise the customer says they received from a previous agent last week.
 - **C.** Explain that there is no record of any promise and close the matter, since the agent cannot act on claims that it is unable to verify through its tools or account data.
 - **D.** Explain that the promise cannot be verified with the information available and escalate to a human who can check previous contacts, without confirming or denying the claim.
@@ -707,7 +707,7 @@ A customer says: "Last week one of your agents promised me a $200 credit for the
 
 The claim may be true but cannot be verified with the tools available, and it exceeds the agent's authority. The right path is to be transparent about what it cannot verify and escalate to someone who can check the history, without making commitments.
 
-Granting $200 exceeds the policy on an unverified claim. Granting $50 as a "partial fulfillment" implicitly confirms an unverified promise. Closing the matter treats "not verifiable by me" as "false", which may be wrong.
+Details the customer provides are not verification. Granting a partial amount still acts on an unverified claim. Closing the matter dismisses a claim that may be true. Explaining and escalating to someone who can check is correct.
 
 ## Scenario: Code Generation with Claude Code
 
@@ -737,15 +737,15 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 Reports combine very different content: financial comparisons across 12 companies with 6 metrics each, qualitative analyses of strategy, and a chronology of events. The report subagent currently writes everything as continuous prose, and readers struggle to compare the financial data. What is the best approach?
 
 - **A.** Turn the entire report into tables, including the qualitative analyses, so that the format is uniform and easy to compare for every section of the document.
-- **B.** Keep continuous prose, but put all the financial numbers in bold, so readers can find them more quickly while they scan through the text of the report.
+- **B.** Keep prose throughout, but add a summary table of the 12 companies' key metrics at the end of the report.
 - **C.** Have the report use the right format for each type of content: tables for multidimensional comparisons, prose for analysis, a list for the chronology.
-- **D.** Generate two separate reports, one with only the data and one with only the prose, letting readers choose the version that suits their own needs.
+- **D.** Move all comparisons and the chronology into an appendix, keeping the main body as continuous prose for readability.
 
 #### Correct answer to Question 39: C
 
 Each type of content has a natural format: tabular data for comparisons across many entities and metrics, prose for argument, ordered lists for sequences of events. Choosing the format per section improves readability without losing information.
 
-Forcing everything into tables flattens the qualitative analysis. Bold text does not make 72 values comparable. Two separate reports break the connection between data and interpretation.
+Forcing everything into tables loses analytical nuance. A single summary table at the end leaves comparisons buried in prose. Moving data to an appendix separates it from the analysis that uses it. Matching format to content type serves readers.
 
 ## Scenario: Structured Data Extraction
 
@@ -774,16 +774,16 @@ You are integrating Claude Code into your Continuous Integration/Continuous Depl
 
 Developers ignore many findings because they are generic: "Consider improving error handling in this function" or "This code could be more readable". What should you require in the output of each finding?
 
-- **A.** A higher severity level for every finding, so that developers pay more attention to the comments the bot posts on their pull requests.
-- **B.** A link to the general documentation on code best practices, so that developers can study the subject in depth on their own.
-- **C.** A shorter tone for every finding, so that comments are quicker to read and therefore more likely to be read by developers.
+- **A.** A severity level and a category tag on each finding, so developers can filter out the generic ones.
+- **B.** An instruction telling Claude to be more specific, with the word "specific" emphasized in the review prompt.
+- **C.** A confidence score on each finding, hiding those below 0.7 to remove the vaguest comments.
 - **D.** A concrete failure scenario (which input causes which problem) and a specific suggested fix, with the exact location in the code.
 
 #### Correct answer to Question 41: D
 
 Concrete, actionable findings (location, failure scenario, proposed fix) let developers assess and resolve them quickly. They also force the model to report only problems it can actually justify.
 
-Raising severity without changing the content creates noise. Generic documentation does not help with the specific case. Shorter comments do not solve the lack of substance.
+Tags and severity let developers filter generic comments but do not make them actionable. Asking to be more specific without saying what that means changes little. Confidence scores are uncalibrated and add none of the missing detail. A concrete failure scenario, location and fix make findings actionable.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -793,7 +793,7 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 
 A developer is investigating a performance bug in a legacy system over several days. Each morning they want to pick up the work from where they left off; the code changes little between sessions (only the fixes they apply themselves, which they know precisely). What is the most practical approach?
 
-- **A.** Start a new session every morning without context, letting the agent rediscover the system from scratch so that it never works on outdated information.
+- **A.** Start a new session each morning seeded with yesterday's final summary, without telling the agent which files have changed.
 - **B.** Keep the session open continuously for several days, so that the agent never loses context between one work session and the next.
 - **C.** Copy the whole previous conversation into a file and paste it at the start of every new session, so that the agent has the full history available.
 - **D.** Resume the named session with `--resume`, telling the agent which files changed since the last session so that it re-analyzes only those.
@@ -802,7 +802,7 @@ A developer is investigating a performance bug in a legacy system over several d
 
 When the code changes little and the changes are known, resuming the session keeps the valuable context, and pointing out the modified files allows a targeted re-analysis instead of a full one.
 
-Starting from scratch every day throws away useful work. A session open for days accumulates context until it degrades. Pasting the full conversation costs a lot of context and adds nothing over a resume.
+A summary without the changed files lets the agent rely on outdated analysis. A session kept open for days still compacts and goes stale. Pasting the whole conversation floods the context. Resuming and flagging changed files keeps valid context and refreshes the rest.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -948,13 +948,13 @@ You find three bugs in the checkout module: (1) an incorrect VAT calculation, (2
 - **A.** One at a time, in three separate sessions, so that each fix is isolated and can be verified independently of the others before moving on to the next.
 - **B.** Only the first, since fixing it will probably also fix the other two, which seem to be consequences of the same initial calculation error.
 - **C.** Together in the same message, since they interact on the same logic, so that Claude can design a consistent fix rather than three patches that conflict.
-- **D.** In reverse order of severity, starting with the third, since the most visible symptom is the best starting point for finding the root cause.
+- **D.** Fix (3) first with direct execution, then reconsider (1) and (2) once you see how the total changes after that fix.
 
 #### Correct answer to Question 50: C
 
 When problems interact (here they share the calculation logic and the third depends on the others), presenting them together lets Claude reason about the order of operations as a whole. Independent problems, by contrast, are best handled one at a time.
 
-Separate sessions produce fixes that may conflict on the same code. Assuming the first fix solves everything is not supported by the facts. Starting from the composite symptom ignores that it comes from two distinct causes.
+Three separate sessions risk three patches that conflict on the same logic. Fixing only the first assumes a shared root cause without evidence. Starting from the visible symptom treats an effect as the cause. Describing the interacting bugs together lets Claude design one consistent fix.
 
 ## Scenario: Multi-Agent Research System
 
@@ -964,7 +964,7 @@ You are building a multi-agent research system using the Claude Agent SDK. A coo
 
 Four search subagents launched in parallel on "renewable energy in Europe" return largely overlapping results: three of them cite the same reports from major international agencies, while important areas (storage, grid, policy) have little coverage. What is the root cause, and the fix?
 
-- **A.** The subagents use the same search engine: give each a different engine, so that results diverge naturally without having to change the delegation at all.
+- **A.** Give each subagent a different maximum number of sources, so their results naturally cover the topic at different depths.
 - **B.** Too many subagents for the topic: reduce them to two, so that overlaps are minimal while keeping the same level of coverage across the topic.
 - **C.** The subagents do not communicate with each other: let them exchange results directly, so that each can avoid what the others have already found.
 - **D.** The coordinator delegated overlapping scopes: assign each subagent an explicit, distinct scope (for example storage, grid, policy, generation) in its delegation prompt.
@@ -973,7 +973,7 @@ Four search subagents launched in parallel on "renewable energy in Europe" retur
 
 Overlap and gaps together indicate a decomposition problem: if the scopes are not distinct, the subagents converge on the most prominent sources. Defining non-overlapping scopes solves both problems.
 
-Changing engines does not ensure the scopes are covered. Reducing the number of subagents reduces coverage. Direct communication between subagents breaks the hub-and-spoke model and adds complexity without fixing the delegation.
+Different depths or engines still search the same scope. Fewer subagents reduce overlap by reducing coverage. Letting subagents talk directly breaks hub-and-spoke coordination. Distinct scopes in the delegation prompts fix the overlap at its source.
 
 ## Scenario: Structured Data Extraction
 
@@ -1021,7 +1021,7 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 
 You must apply the same change (updating the CI configuration and a deprecated dependency) to 200 internal repositories. Each change requires judgment (different versions, small differences in configuration). You want a report of outcomes for each repository. What is the best approach?
 
-- **A.** Open Claude Code interactively in each of the 200 repositories and apply the change by hand together with the agent, one repository at a time.
+- **A.** Run one Claude Code session per batch of 20 repositories, giving it all 20 paths and asking for a summary at the end.
 - **B.** Write a sed script that applies the same textual replacement in every repository, without using the agent, since the change is the same everywhere.
 - **C.** Run Claude Code non-interactively (`-p`) in a loop over the repositories, with restricted tools and structured JSON output to aggregate the outcomes.
 - **D.** Ask the agent to work on all 200 repositories within a single session, so that it can learn from the first ones and apply what it learns to the next.
@@ -1030,7 +1030,7 @@ You must apply the same change (updating the CI configuration and a deprecated d
 
 Headless use (`-p`) automates repetitive tasks at scale, keeps the agent's judgment for each repository's differences, and structured output makes the outcomes easy to aggregate into a report.
 
-200 interactive sessions do not scale. sed does not handle the differences that require judgment. A single session for 200 repositories would exhaust the context and mix up the state of different repositories.
+Batches of 20 in one session mix contexts and degrade as the session grows, as does a single session for all 200. A sed script cannot apply changes that require judgment. A non-interactive loop with restricted tools and structured output scales and aggregates.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -1059,7 +1059,7 @@ You are using Claude Code to accelerate software development. Your team uses it 
 
 Two developers working on the same repository get different behavior from Claude Code: for one it respects the commit-message convention, for the other it ignores it. Both have the latest repository. What is the most effective first step to diagnose the cause?
 
-- **A.** Reinstall Claude Code on the second developer's machine, since a corrupted installation is the most common cause of inconsistent behavior between users.
+- **A.** Check that both developers run the same Claude Code version, since versions may load memory files in a different order.
 - **B.** Move the convention to the top of the project CLAUDE.md, since its position in the file probably determines whether it is applied in every session.
 - **C.** Ask the second developer to repeat the convention at the start of every session, until the cause of the difference between the two machines is understood.
 - **D.** Use `/memory` on both machines to see which memory files are loaded: the convention may be in a user-level file present on only one of the two.
@@ -1068,7 +1068,7 @@ Two developers working on the same repository get different behavior from Claude
 
 If the repository is the same, the difference likely comes from memory files outside the repository (for example `~/.claude/CLAUDE.md`). `/memory` shows exactly what is loaded and quickly confirms or rules out this hypothesis.
 
-Reinstalling is a blind attempt. Moving the rule acts before understanding the cause. Repeating the convention by hand is a workaround, not a diagnosis.
+Version differences do not explain a convention applied on one machine only. Moving the rule within the project CLAUDE.md changes nothing if it is not there. Repeating it every session is a workaround. `/memory` shows which files are loaded and reveals a user-level file present on one machine only.
 
 ## Scenario: Multi-Agent Research System
 
@@ -1100,13 +1100,13 @@ Your team can manually review 500 documents a day out of 20,000 processed. Each 
 - **A.** Review 500 documents chosen completely at random every day, since random sampling is the only way to obtain an unbiased estimate of overall quality.
 - **B.** Prioritize documents with low confidence or contradiction flags, and reserve a small random sample of high-confidence documents to monitor quality.
 - **C.** Review only documents with contradiction flags, since they are the only ones where the extraction can really be wrong, and ignore confidence entirely.
-- **D.** Review the first 500 documents processed each day, since the beginning of the batch is representative of the day's mix of document types and formats.
+- **D.** Review the 500 lowest-confidence documents each day, without any random sample of the high-confidence ones.
 
 #### Correct answer to Question 58: B
 
 Limited capacity goes first to the most likely errors (low confidence, contradictions). A small random sample of high-confidence cases is still needed to detect errors the model is "confident" about and to keep the thresholds calibrated.
 
-Random-only sampling wastes capacity on cases that are almost always correct. Contradiction flags alone ignore errors without a flag. The first 500 of the day are not a representative sample.
+Pure random sampling wastes reviews on documents that are almost always right. Reviewing only flagged or only low-confidence documents leaves no way to detect errors among high-confidence ones. Prioritizing risky documents plus a small random sample balances catching errors and monitoring quality.
 
 ## Scenario: Claude Code for Continuous Integration
 
@@ -1136,12 +1136,13 @@ You are building developer productivity tools using the Claude Agent SDK. The ag
 A developer is trying out an experimental MCP server, configured with a personal path (`/Users/marco/dev/mcp-experiment`) and not yet approved by the team. They added it to the project `.mcp.json`, and colleagues now get startup errors. Where should the configuration go?
 
 - **A.** In the project `.mcp.json`, but with the path in an environment variable, so that each colleague can point to their own copy of the experimental server.
-- **B.** In the project CLAUDE.md, documenting how to start the server by hand, so that whoever is interested can configure it on their own machine.
-- **C.** In a separate branch of the repository, so that only the developer working on the experimental server ever sees the modified configuration.
+- **B.** In the project `.mcp.json` with the server disabled by default, so colleagues can enable it whenever they want to try it.
+- **C.** In the project `.mcp.json`, committed on the main branch with a comment marking the server as experimental.
 - **D.** In the user-level configuration, available only to them, moving it to the project `.mcp.json` only once the server is approved and shared.
 
 #### Correct answer to Question 60: D
 
 Personal, experimental configurations belong at user level: they work for whoever uses them without affecting the team. The project `.mcp.json` is for servers shared and approved for everyone.
 
-The environment variable still pushes an unapproved server onto everyone. CLAUDE.md does not configure MCP servers. A separate branch for one configuration complicates the developer's workflow.
+Committing it to `.mcp.json`, disabled or marked experimental, still shares an unapproved server and a personal path with the team. Documenting it in CLAUDE.md adds noise to every session. User-level configuration keeps it personal until it is approved.
+

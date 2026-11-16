@@ -87,14 +87,14 @@ Claude Code reviews schema migration pull requests in your CI pipeline and often
 
 - **A.** Define "unsafe migration" in the prompt with short examples: flag a column rename without backfill or compatibility layer, but not an additive nullable column with rollback.
 - **B.** Remove the migration-safety check from the CI review prompt because production readiness is too context-dependent for automated feedback.
-- **C.** Change the comment text to say, "This database change may not meet production-readiness expectations," so the feedback sounds less absolute and more professional.
-- **D.** Ask Claude Code to tell authors to consult the data platform team whenever it is uncertain whether a migration is safe for production traffic.
+- **C.** Add a confidence threshold so the comment appears only when Claude is at least 80% sure the migration is unsafe for production traffic.
+- **D.** Attach a link to the team's migration guidelines to every such comment, so authors can check the criteria for themselves.
 
 #### Correct answer to Question 4: A
 
 The vague criterion "unsafe" produces both false positives and misses. Defining the criterion explicitly, with short contrasting examples of what to flag (rename without backfill/compatibility layer) and what not to flag (additive nullable column with rollback), makes the review precise and actionable.
 
-Removing the migration-safety check throws away a valuable check. Softening the comment text changes only the wording, not what gets flagged. Sending authors to the data platform team pushes the decision onto another team instead of improving the criterion.
+Removing the check loses a valuable review. A confidence threshold filters comments without defining what "unsafe" means. A link to guidelines pushes the analysis back to authors. A definition with short examples of what to flag, and what not to, makes the comment actionable.
 
 ## Scenario: Multi-Agent Research System
 
@@ -124,7 +124,7 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 A support team uses Claude Code to maintain a resolution agent for subscription cancellations and invoice disputes. Several engineers rely on a custom skill named `dispute-triage-checklist` to update prompts and MCP tool examples, but the skill currently lives only in personal laptop directories. After a laptop replacement, one engineer recreates the skill from memory and introduces guidance that sends more account-lock cases to `process_refund` instead of `escalate_to_human`. What is the clearest configuration risk to address?
 
 - **A.** Keep the triage skills in each engineer’s Claude Code profile because runtime support configuration should not be part of the application repository.
-- **B.** Let agents overwrite local triage skills after each evaluation run because skills are short-lived aids that should not need rollback history.
+- **B.** Let each engineer copy the triage skills into their own `~/.claude/skills/` from a shared drive whenever the skills change.
 - **C.** Document the triage skills in the repository, but leave the actual skill files local because Claude Code does not support repository-managed skills.
 - **D.** Store the shared triage skills in the repository's `.claude/skills/` directory, and require normal git pull requests for any edits.
 
@@ -132,7 +132,7 @@ A support team uses Claude Code to maintain a resolution agent for subscription 
 
 Skills kept only on personal laptops are not shared, not versioned and cannot be reviewed: that is how the regression in escalation logic slipped in. Placing them in the project's `.claude/skills/` directory and editing them through pull requests gives history, review and rollback.
 
-Keeping the skills in each engineer's profile preserves the drift problem. Letting agents overwrite them removes all control over changes. Documenting them while leaving the files local rests on a false premise: Claude Code supports project-level skills under `.claude/skills/`.
+Skills kept in personal profiles or copied from a shared drive drift and have no review or history. Letting agents overwrite skills removes rollback. Claude Code supports repository-managed skills. `.claude/skills/` with pull requests gives shared, reviewed versions.
 
 ## Scenario: Developer Productivity with Claude
 
@@ -219,15 +219,15 @@ You are building a customer support resolution agent using the Claude Agent SDK.
 A Claude Agent SDK support agent handles subscription cancellations using MCP tools such as get_customer, lookup_order, process_refund, and escalate_to_human. Clear cases are fine, but ambiguous situations vary: a long-time customer charged after a confusing cancellation flow may receive a refund, a service credit, a denial, or an escalation depending on the run. The policy intentionally leaves room for judgment based on tenure, prior refunds, and evidence of confusion. Which prompt-design change would most directly improve consistency for these borderline cases?
 
 - **A.** Add several representative system-prompt examples of borderline disputes, showing when to resolve directly, offer a partial remedy, decline with a rationale, or call escalate_to_human.
-- **B.** Keep the system prompt short and avoid examples, because extra sample cases mainly increase prompt length and are unlikely to affect the agent’s support decisions.
-- **C.** Wait until the customer conversation contains a similar prior case, because behavioral examples should be learned only from earlier turns rather than placed in the system prompt.
+- **B.** Add a short rule to the system prompt: "For borderline disputes, prefer a partial remedy over escalation", without examples.
+- **C.** Escalate every borderline dispute to a human, so the team builds up a set of decided cases to use as examples later.
 - **D.** Move the borderline dispute examples into a separate test set, because examples are useful for measuring the agent’s behavior but should not be included in runtime instructions.
 
 #### Correct answer to Question 11: A
 
 When the policy leaves room for judgment, inconsistency comes from the model not knowing where the boundaries lie. Representative few-shot examples in the system prompt (resolve, partial remedy, decline with rationale, escalate) calibrate decisions on borderline cases.
 
-Avoiding examples underestimates their effect: they are one of the most effective levers for consistency. Waiting for a similar prior case relies on examples that may never arrive. Test sets are needed to measure behavior, but they do not change it at runtime.
+A single preference rule flattens cases that need different outcomes. Escalating every borderline case overloads humans and delays customers. Examples kept only in a test set measure behavior without guiding it. Representative examples in the prompt show where each line falls.
 
 ## Scenario: Multi-Agent Research System
 
@@ -391,14 +391,14 @@ A Claude Agent SDK support agent is being added to a retailer's returns queue. I
 
 - **A.** Remove the slow warehouse and warranty sections from `build_return_packet` entirely, allowing the agent to resolve all return requests using only order age and delivery status.
 - **B.** Keep the workflow unchanged and focus only on database index tuning and cache warming for `build_return_packet`, since the agent should not reason until the entire lookup payload is complete.
-- **C.** Have the agent immediately tell customers that return checks may take up to ten seconds, then remain silent until `build_return_packet` finishes assembling every field.
+- **C.** Raise the tool timeout and keep the agent waiting for the full packet before replying, so it never works on partial data.
 - **D.** Have `build_return_packet` stream a compact header first (customer tier, order age, delivery status, return-window flags), so the agent can proceed while warranty and warehouse details load.
 
 #### Correct answer to Question 20: D
 
 Streaming a compact header of fast data first lets the agent respond immediately and ask targeted questions, while slower details (warranty, warehouse exceptions, fraud review) arrive afterward. This balances responsiveness and reliable decisions.
 
-Removing the slow sections drops information needed for correct decisions. Focusing only on database tuning accepts a poor user experience while waiting for optimizations. Warning customers and then staying silent keeps the user waiting without using the data already available.
+Removing the warehouse and warranty sections loses data some cases need. Database tuning may help but leaves the agent idle on cases the header already decides. Waiting for the full packet keeps latency high. Streaming a compact header lets the agent proceed when it suffices.
 
 ## Scenario: Customer Support Resolution Agent
 
@@ -486,14 +486,14 @@ A healthcare data team uses Claude to extract `patient_id`, `specimen_site`, `co
 
 - **A.** Select the first successful JSON object produced for each lab report as the canonical record, because a schema-valid response should be considered authoritative once generated.
 - **B.** Process each report five more times and merge the results by taking the most common categorical value and the average timestamp when runs disagree.
-- **C.** Document the observed variation as expected behavior for language-model extraction, keep the current pipeline, and let downstream systems handle occasional differences in `specimen_site` and `collection_time`.
+- **C.** Set temperature to 0 for this pipeline and keep the instructions as they are, since sampling explains the run-to-run differences.
 - **D.** Run a consistency-focused debug pass on the repeated outputs, inspect the source passages and criteria for the unstable fields, then tighten instructions, schema constraints and model settings before re-testing.
 
 #### Correct answer to Question 25: D
 
 All outputs are schema-valid, yet some fields are unstable across runs: a sign of ambiguity in the sources or in the instructions. The right path is to diagnose the unstable cases, inspect the source passages, tighten criteria, constraints, settings and ambiguity handling, then re-test.
 
-Taking the first schema-valid object picks an arbitrary result. Rerunning and merging by majority and average produces data that may not exist in the document. Documenting the variation as expected accepts unreliable data in a critical healthcare context.
+Accepting the first valid object hides the instability. Majority voting and averaged timestamps can produce values no run actually saw. Temperature 0 reduces variation but leaves the ambiguous criteria that cause it. A consistency-focused debug of the unstable fields, then tighter instructions, fixes the cause.
 
 ## Scenario: Multi-Agent Research System
 
@@ -906,14 +906,14 @@ A finance team is using Claude to extract vendor name, invoice total, tax amount
 
 - **A.** Add an ingestion stage that detects document type and quality, runs OCR when needed, and records the steps applied with each extraction.
 - **B.** Configure the pipeline to decline any receipt image below a minimum resolution or contrast threshold, accepting only clean digital PDFs for automated JSON extraction.
-- **C.** Require vendors to resubmit only high-resolution, upright, machine-generated receipts and exclude preprocessing details from the supplier payment system.
+- **C.** Run OCR on every file, including clean digital PDFs, and send only the OCR text to Claude for extraction.
 - **D.** Send all uploaded files directly to Claude without OCR or image correction so the fastest path is always used before JSON schema validation runs.
 
 #### Correct answer to Question 47: A
 
 Inputs of varying quality call for a preprocessing stage: detect type and quality, apply OCR/cleanup when needed, and record the steps and quality signals. These signals then feed the decision between automatic posting and review.
 
-Declining low-quality images or requiring vendors to resubmit excludes legitimate documents instead of handling them. Sending everything without OCR skips preprocessing and loses the signals needed to calibrate confidence.
+Declining low-quality images rejects real receipts the business needs. OCR on every file, even clean PDFs, adds errors and loses layout where none was needed. Sending everything directly skips the preprocessing poor scans need. A detection stage that applies OCR when needed and records the steps fits.
 
 ## Scenario: Multi-Agent Research System
 
