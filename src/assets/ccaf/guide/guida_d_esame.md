@@ -193,16 +193,6 @@ Il sistema estrae informazioni da documenti non strutturati, valida l’output t
 
 **Cosa ti sta dicendo:** è lo scenario dell'**output strutturato e della validazione**. Lo schema garantisce la forma, non la correttezza: servono anche controlli semantici (totali che tornano, date plausibili). "Casi limite" significa campi mancanti (si usa `null`, non si inventa), documenti in formati diversi, valori ambigui. "Sistemi a valle" significa che l'output deve essere sempre leggibile da un programma. Tipici anche few-shot, nuovo tentativo con il messaggio d'errore e Batch API per grandi volumi. Domini più coinvolti: D4, D5.
 
-### Scenario 7: Pattern di architettura per AI conversazionale (EXTRA)
-
-Si progettano sistemi conversazionali multi-turno che includono gestione della finestra di contesto, persistenza delle istruzioni tra i turni, strategie di memoria, progettazione di strumenti per l’esecuzione sicura e gestione di input utente ambigui o contraddittori.
-
-**Testo nelle domande:** a differenza degli altri, questo scenario **non ha un'introduzione fissa**. Le domande vanno subito al caso concreto, per esempio:
-
-> *A conversational application uses server-side compaction, but on every turn it adds only `response.content[0].text` to the history. What is wrong?*
-
-**Cosa ti sta dicendo:** è lo scenario delle **conversazioni lunghe**. La Claude API non ricorda nulla tra una chiamata e l'altra: la storia va reinviata completa e corretta, inclusi i blocchi dei tool e della compattazione (nell'esempio, salvare solo il testo fa perdere proprio quei blocchi). Le domande riguardano cosa fare quando il contesto cresce (compattazione, riepiloghi, fatti importanti conservati a parte), come far valere le istruzioni per tutta la conversazione e come gestire richieste ambigue o in contraddizione con quanto detto prima. Domini più coinvolti: D1, D5.
-
 ---
 
 ## Documentazione Ufficiale

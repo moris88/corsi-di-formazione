@@ -924,104 +924,104 @@ An application's system prompt contains the current date and time at the beginni
 
 The timestamp changes on every request and invalidates the prefix. It must be moved after the stable content.
 
-## Scenario: Conversational AI Architecture Patterns
+## Scenario: Developer Productivity with Claude
 
 ### Question 55
 
-You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
-A conversational application uses server-side compaction, but on every turn it adds only `response.content[0].text` to the history. What is wrong?
+The agent must generate a new REST controller, and the repository already has a dozen controllers with the same structure. What should it do first?
 
-- **A.** Nothing is wrong, since the API only needs the text of each response to rebuild the history.
-- **B.** The first compaction makes every following request fail with a `400` error from the API.
-- **C.** Compaction triggers too early in the conversation, so the threshold should be raised.
-- **D.** The compaction state is silently lost, because the full `response.content` is required.
+- **A.** Write the controller from general best practices, then let the linter fix any differences.
+- **B.** Read one or two existing controllers and follow their structure and conventions.
+- **C.** Ask the engineer to describe the team's conventions in detail before writing any code.
+- **D.** Generate three versions of the controller and let the engineer pick the best one.
 
-#### Correct answer to question 55: D
+#### Correct answer to question 55: B
 
-Extracting only the text silently destroys the compaction state, and the problem only shows up after many turns.
+Existing code in the repository is the most reliable reference for local conventions: reading it first keeps the new file consistent.
 
-## Scenario: Conversational AI Architecture Patterns
+## Scenario: Developer Productivity with Claude
 
 ### Question 56
 
-You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
-An application uses on-request compaction. In the next request it places the `compaction` block at the beginning, but leaves after it the messages that the block summarizes. What is the correct rule?
+An engineer asks the agent to add the same license header to 400 source files. What is the most efficient approach?
 
-- **A.** The block goes first, and the messages it summarizes must not be left after it.
-- **B.** Messages must always be left before the block, so the history is not lost.
-- **C.** The block must be omitted if there are later messages.
-- **D.** The block must be converted into text before being sent.
+- **A.** Use Edit on each of the 400 files, one at a time, in the main conversation.
+- **B.** Read all 400 files first, so the agent knows their content before changing them.
+- **C.** Ask the engineer to add the header by hand, since the change is purely mechanical.
+- **D.** Write a short script, run it with Bash, then check a sample of files and the diff.
 
-#### Correct answer to question 56: A
+#### Correct answer to question 56: D
 
-Leaving the summarized messages after the block sends them twice. Leaving them before the block causes an explicit error.
+A mechanical change repeated hundreds of times is faster and more consistent with a script, verified afterwards on a sample.
 
-## Scenario: Conversational AI Architecture Patterns
+## Scenario: Developer Productivity with Claude
 
 ### Question 57
 
-You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
+You are building developer productivity tools using the Claude Agent SDK. The agent helps engineers explore unfamiliar codebases, understand legacy systems, generate boilerplate code, and automate repetitive tasks. It uses the built-in tools (Read, Write, Bash, Grep, Glob) and integrates with Model Context Protocol (MCP) servers.
 
-In a conversation with Opus 5.5 and thinking enabled, a rule must be added to the system prompt midway through. Which approach does not invalidate the thinking blocks of earlier turns?
+An engineer asks the agent to explain how a legacy billing module calculates discounts. How can the engineer easily check the explanation?
 
-- **A.** Rebuild the system prompt on every request, including the new rule from that point on.
-- **B.** Delete the thinking blocks of all earlier turns, so they no longer conflict with the rule.
-- **C.** Append a `role: "system"` message after the last user turn, keeping `system` intact.
-- **D.** Switch to a different model midway through the conversation, starting it with the new rule.
+- **A.** The agent cites the file paths and functions it read for each statement it makes.
+- **B.** The agent writes a longer explanation that covers every possible discount case.
+- **C.** The agent adds a confidence score from 1 to 10 at the end of its explanation.
+- **D.** The agent explains the module from its general knowledge of billing systems.
 
-#### Correct answer to question 57: C
+#### Correct answer to question 57: A
 
-A system message appended at the end does not modify the prefix already used for thinking.
+References to the code it actually read make each statement verifiable, and expose what was inferred rather than seen.
 
-## Scenario: Conversational AI Architecture Patterns
+## Scenario: Structured Data Extraction
 
 ### Question 58
 
-You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
-A harness uses both `clear_tool_uses` and `clear_thinking` in the same context-management request. Which statement is correct?
+The schema requires a `due_date` field, but some invoices have no due date. The model then writes a plausible date. What is the right fix?
 
-- **A.** The order does not matter, since each edit is applied independently by the API.
-- **B.** `clear_thinking` must come first whenever the two are used together.
-- **C.** They must always be sent in separate requests, since they cannot be combined.
-- **D.** `clear_tool_uses` cannot be used with recent models, so only one edit applies.
+- **A.** Remove `due_date` from the schema, so the model never has to produce that value.
+- **B.** Ask the model in the prompt to be careful and never to write wrong dates.
+- **C.** Make `due_date` nullable, and say in the prompt to return `null` when it is absent.
+- **D.** Fill missing dates downstream with the invoice date plus thirty days.
 
-#### Correct answer to question 58: B
+#### Correct answer to question 58: C
 
-When the two edits are used together, `clear_thinking` must come first.
+A required field forces a value even when there is none: a nullable field lets the model say honestly that the data is missing.
 
-## Scenario: Conversational AI Architecture Patterns
+## Scenario: Structured Data Extraction
 
 ### Question 59
 
-You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
-An application reads `response.content` without checking `stop_reason`. Occasionally it receives an HTTP `200` response with `stop_reason: "refusal"`. What is the most appropriate fix?
+An extraction fails validation because `amount` is the string `"1.250,00"` instead of a number. What should the retry send?
 
-- **A.** Increase `max_tokens`, so that the model has enough room to answer instead of refusing.
-- **B.** Ignore the empty content and continue the conversation with the next user message.
-- **C.** Retry the request automatically, as many times as needed, until the model answers.
-- **D.** Check `stop_reason` before reading content, and handle the refusal explicitly.
+- **A.** The same request again, unchanged, since the second attempt is usually correct.
+- **B.** The document, the failed output, and the specific validation error to fix.
+- **C.** Only the message "invalid output, try again", to keep the retry short.
+- **D.** The same request with a higher temperature, to get a different answer.
 
-#### Correct answer to question 59: D
+#### Correct answer to question 59: B
 
-A refusal arrives with status 200: it must be recognized through `stop_reason`, otherwise it is treated as a successful response.
+The model can fix a format error only if it knows what failed: the specific error and the previous output guide the correction.
 
-## Scenario: Conversational AI Architecture Patterns
+## Scenario: Structured Data Extraction
 
 ### Question 60
 
-You are designing a long-running conversational application built on the Claude API. Conversations span many turns, use extended thinking and tools, and must stay within the context window through compaction and context editing while preserving prompt caching and conversation state.
+You are building a structured data extraction system using Claude. The system extracts information from unstructured documents, validates the output using JavaScript Object Notation (JSON) schemas, and maintains high accuracy. It must handle edge cases gracefully and integrate with downstream systems.
 
-An agentic workflow is cut off midway through a task when it reaches `max_tokens`. Which mechanism lets the model pace itself so it can conclude in an orderly way?
+Every night, 30,000 archived documents must be extracted, and nobody needs the results before the next day. Which API option reduces costs the most?
 
-- **A.** Increase `max_tokens` substantially and hope it is enough for the whole task to finish.
-- **B.** Disable thinking, so the model saves tokens and has more room for the actual output.
-- **C.** A task budget (`output_config.task_budget`) that is visible to the model itself.
-- **D.** Set a lower `effort` value, so the model works faster and uses fewer tokens per step.
+- **A.** Synchronous calls with as much concurrency as the rate limits allow.
+- **B.** Streaming responses, so each extraction starts returning data sooner.
+- **C.** One very long request that contains all 30,000 documents at once.
+- **D.** The Message Batches API, with a `custom_id` for each document.
 
-#### Correct answer to question 60: C
+#### Correct answer to question 60: D
 
-`max_tokens` is a limit the model cannot see. The task budget is visible and lets it plan.
+The Batches API halves the cost for work that can wait, and `custom_id` matches each result to its document.
