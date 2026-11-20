@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#1e1e1e" />
+    <meta
+      name="description"
+      content="Animazioni passo per passo per capire, senza conoscenze tecniche, come funziona Claude nei cinque domini della certificazione Claude Certified Architect – Foundations."
+    />
+    <title>Come funziona Claude · Animazioni · Claude Certified Architect</title>
+    <link rel="icon" href="../../assets/icon.svg" type="image/svg+xml" />
+    <script src="../../js/theme.js"></script>
+    <link rel="stylesheet" href="../../css/ccaf/animazioni.css" />
+  </head>
+  <body class="page-anim" data-home="../ccaf.html">
+    <header class="topbar">
+      <a
+        class="brand"
+        href="../../index.html"
+        aria-label="Torna a tutte le certificazioni"
+        title="Torna a tutte le certificazioni"
+      >
+        <image
+          src="../../assets/ccaf.png"
+          class="brand-mark"
+          aria-hidden="true"
+        ></image>
+        <span class="brand-name" data-short="CCA-F"
+          >Claude Certified Architect<br />Foundations</span
+        >
+      </a>
+      <div class="topbar-actions">
+        <span class="topbar-note">
+          <span>By</span>
+          <a
+            class="brand"
+            href="https://www.mauriziotolomeo.it"
+            aria-label="Visita il sito di Maurizio Tolomeo"
+            title="Visita il sito di Maurizio Tolomeo"
+          >
+            Maurizio Tolomeo
+          </a></span
+        >
+      </div>
+    </header>
+
+    <main>
+      <section class="anim-hero" aria-labelledby="anim-page-title">
+        <div>
+          <div class="eyebrow">Capire senza codice · Animazioni</div>
+          <h1 id="anim-page-title">Come funziona<br /><em>Claude.</em></h1>
+        </div>
+        <p class="anim-hero-copy">
+          Ogni dominio d’esame raccontato con piccole scene animate, passo per
+          passo, con esempi di tutti i giorni. Pensate per chi non programma:
+          avvia la riproduzione o scorri i passi con le frecce.
+        </p>
+      </section>
+
+      <div class="anim-tabs" id="anim-tabs" role="tablist" aria-label="Domini"></div>
+
+      <div class="anim-layout">
+        <aside class="anim-side" aria-labelledby="anim-domain-title">
+          <p class="anim-domain-index" id="anim-domain-index"></p>
+          <h2 class="anim-domain-title" id="anim-domain-title">Come ragiona Claude</h2>
+          <p class="anim-domain-text" id="anim-domain-text"></p>
+          <ol class="anim-scene-list" id="anim-scene-list" aria-label="Animazioni del dominio"></ol>
+          <a class="anim-domain-link" id="anim-domain-link" href="./studio.html"
+            >Approfondisci nei materiali <span aria-hidden="true">→</span></a
+          >
+        </aside>
+
+        <figure class="anim-player" id="anim-player">
+          <div class="anim-player-head">
+            <h3 class="anim-scene-title" id="anim-scene-title">Animazione</h3>
+            <span class="anim-counter" id="anim-counter"></span>
+          </div>
+          <div class="anim-stage" id="anim-stage" aria-hidden="true"></div>
+          <figcaption class="anim-caption">
+            <p class="anim-step-text" id="anim-step-text" aria-live="polite"></p>
+          </figcaption>
+          <div class="anim-timer" id="anim-timer" aria-hidden="true"></div>
+          <div class="anim-controls">
+            <button class="button subtle" id="anim-restart" type="button" title="Ricomincia dall’inizio">
+              <span aria-hidden="true">↺</span><span class="button-label">Ricomincia</span>
+            </button>
+            <button class="button secondary" id="anim-prev" type="button" title="Passo precedente (freccia sinistra)">
+              <span aria-hidden="true">←</span><span class="button-label">Indietro</span>
+            </button>
+            <button class="button" id="anim-play" type="button" aria-pressed="false">
+              <span id="anim-play-icon" aria-hidden="true">▶</span><span class="button-label" id="anim-play-label">Riproduci</span>
+            </button>
+            <button class="button secondary" id="anim-next" type="button" title="Passo successivo (freccia destra)">
+              <span class="button-label">Avanti</span><span aria-hidden="true">→</span>
+            </button>
+            <div class="anim-dots" id="anim-dots"></div>
+          </div>
+        </figure>
+      </div>
+
+      <footer class="material-row">
+        <span>Le animazioni semplificano: per i dettagli d’esame vale la teoria.</span>
+        <a href="./studio.html?doc=guide">Apri la guida d’esame →</a>
+      </footer>
+    </main>
+    <script type="module" src="../../js/ccaf/animazioni.js"></script>
+
+    <script type="module" src="../../js/speedInsights.js"></script>
+  </body>
+</html>
