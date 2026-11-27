@@ -1,10 +1,10 @@
 # Certificazioni Anthropic · Materiali di studio
 
-Sito statico in italiano per prepararsi alle certificazioni Anthropic. Per ora è disponibile **Claude Certified Architect — Foundations (CCA-F)**.
+Sito statico in italiano per prepararsi alle certificazioni Anthropic. Sono disponibili **Claude Certified Architect — Foundations (CCA-F)** e **Claude Certified Developer — Foundations (CCDV-F)**.
 
 ## Il sito
 
-La pagina iniziale ([src/index.html](src/index.html)) è il portale di tutte le certificazioni; ognuna ha una propria home (per la CCA-F [src/pages/ccaf.html](src/pages/ccaf.html)) con tre sezioni:
+La pagina iniziale ([src/index.html](src/index.html)) è il portale di tutte le certificazioni; ognuna ha una propria home (per la CCA-F [src/pages/ccaf.html](src/pages/ccaf.html), per la CCDV-F [src/pages/ccdvf.html](src/pages/ccdvf.html)) con tre sezioni:
 
 - **Studio** (`studio.html`): lettore dei materiali organizzati per sezione: orientamento (guida d'esame, pre-corso, vocabolario), domini d'esame, domini approfonditi, approfondimenti, esercitazioni, trappole d'esame e riferimenti ufficiali. Per i domini sono disponibili anche le slide in PDF.
 - **Simulazione** (`simulazione.html`): test completi a tempo, come all'esame, con correzione, punteggio stimato e storico dei risultati. Si possono caricare anche test propri in Markdown (vedi [formato-test.md](src/assets/ccaf/formato-test.md)).
@@ -19,6 +19,7 @@ Le domande sono in inglese, come all'esame reale; tutti gli altri materiali sono
 | `src/` | Sorgenti del sito (HTML, CSS, JavaScript vanilla) |
 | `src/pages/` | Home e pagine di ogni certificazione |
 | `src/assets/ccaf/` | Materiali della CCA-F: guide, appunti, slide, trappole d'esame, banche quesiti (`questions/`) e documenti ufficiali |
+| `src/assets/ccdvf/` | Materiali della CCDV-F: guida d'esame, prerequisiti, vocabolario, un'esposizione per ciascuno degli otto domini, banche quesiti (`questions/`) e guida ufficiale |
 | `src/server.mjs` | Server Express che serve la build |
 | `api/`, `vercel.json` | Pubblicazione su Vercel |
 

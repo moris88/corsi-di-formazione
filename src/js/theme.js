@@ -58,14 +58,24 @@
   });
 })();
 
-// Simulazione d'esame in corso (salvata da js/ccaf/simulazione.js): qualunque pagina del sito
+// Simulazione d'esame in corso (salvata da js/<sigla>/simulazione.js): qualunque pagina del sito
 // riporta subito alla simulazione, come all'esame vero non si può uscire dalla prova.
 (() => {
+  const SESSIONS = [
+    { key: "ccaf-simulation-session-v1", page: "ccaf/simulazione" },
+    { key: "ccdvf-simulation-session-v1", page: "ccdvf/simulazione" },
+  ];
   try {
-    const session = JSON.parse(localStorage.getItem("ccaf-simulation-session-v1") || "null");
-    if (session?.status !== "active" || /\/simulazione(\.html)?$/.test(location.pathname)) return;
     const script = document.currentScript?.src;
-    if (script) location.replace(new URL("../pages/ccaf/simulazione.html", script));
+    if (!script) return;
+    for (const { key, page } of SESSIONS) {
+      const session = JSON.parse(localStorage.getItem(key) || "null");
+      if (session?.status !== "active") continue;
+      // Già sulla pagina della simulazione in corso: nessun reindirizzamento
+      if (location.pathname.replace(/\.html$/, "").endsWith(`/${page}`)) return;
+      location.replace(new URL(`../pages/${page}.html`, script));
+      return;
+    }
   } catch {
     /* senza archiviazione locale non c'è nessuna prova da riprendere */
   }

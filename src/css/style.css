@@ -1744,7 +1744,7 @@ h1 {
 :root[data-theme="dark"] .exam-panel {
   background: rgba(30, 30, 30, 0.9);
 }
-:root[data-theme="dark"] .path-wip {
+:root[data-theme="dark"] .path-github .path-wip {
   color: #c9a2e4;
 }
 :root[data-theme="dark"] .doc-link:hover,
@@ -1816,5 +1816,15 @@ h1 {
   }
   .workspace {
     display: block;
+  }
+}
+
+/* Home con quattro percorsi: due colonne anche su desktop, senza l'ultima scheda a tutta larghezza */
+@media (min-width: 761px) {
+  .paths-four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .paths-four .path:last-child {
+    grid-column: auto;
   }
 }
