@@ -67,17 +67,33 @@ function copyStatic() {
 const escapeHtml = (text) =>
   text.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 
-// Banner della home CCA-F dalle variabili d'ambiente (es. impostate su Vercel): senza titolo il banner è rimosso
+// Banner delle home dalle variabili d'ambiente (es. impostate su Vercel): una coppia titolo/contenuto per certificazione.
+// Senza titolo il banner di quella home è rimosso.
+const BANNERS = [
+  { title: "BANNER_CCAF_TITLE", content: "BANNER_CCAF_CONTENT" }, // CCA-F
+  { title: "BANNER_CCDVF_TITLE", content: "BANNER_CCDVF_CONTENT" }, // CCDV-F
+];
+
 function banner(env) {
   return {
     name: "banner",
     transformIndexHtml(html) {
-      if (!html.includes("%BANNER_TITLE%")) return html;
-      const title = env.BANNER_TITLE?.trim();
-      if (!title) return html.replace(/\s*<aside class="home-alert"[\s\S]*?<\/aside>/, "");
-      return html
-        .replace("%BANNER_TITLE%", escapeHtml(title))
-        .replace("%BANNER_CONTENT%", escapeHtml(env.BANNER_CONTENT?.trim() ?? ""));
+      let result = html;
+      for (const { title: titleKey, content: contentKey } of BANNERS) {
+        if (!result.includes(`%${titleKey}%`)) continue;
+        const title = env[titleKey]?.trim();
+        if (!title) {
+          const aside = new RegExp(
+            `\\s*<aside class="home-alert"[^>]*>(?:(?!</aside>)[\\s\\S])*?%${titleKey}%[\\s\\S]*?</aside>`,
+          );
+          result = result.replace(aside, "");
+          continue;
+        }
+        result = result
+          .replace(`%${titleKey}%`, escapeHtml(title))
+          .replace(`%${contentKey}%`, escapeHtml(env[contentKey]?.trim() ?? ""));
+      }
+      return result;
     },
   };
 }
