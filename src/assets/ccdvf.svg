@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 604 604" role="img" aria-label="CCDV-F · Developer Foundations">
+  <title>CCDV-F · Developer Foundations</title>
+  <defs>
+    <path id="arc" d="M 92 302 A 210 210 0 0 1 512 302" />
+  </defs>
+  <circle cx="302" cy="302" r="296" fill="#b85a43" />
+  <circle cx="302" cy="302" r="270" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="4" />
+  <text font-family="ui-monospace, Menlo, Consolas, monospace" font-size="46" font-weight="700" letter-spacing="14" fill="#1e1e1e" text-anchor="middle">
+    <textPath href="#arc" startOffset="50%">DEVELOPER</textPath>
+  </text>
+  <text x="302" y="360" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="170" font-weight="700" fill="#fff" text-anchor="middle">&lt;/&gt;</text>
+  <text x="302" y="470" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="78" font-weight="700" letter-spacing="6" fill="#fff" text-anchor="middle">CCDV-F</text>
+  <text x="302" y="522" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="30" letter-spacing="10" fill="#fff" fill-opacity=".85" text-anchor="middle">FOUNDATIONS</text>
+</svg>
