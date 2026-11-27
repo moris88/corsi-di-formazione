@@ -6,7 +6,7 @@ Glossario dei termini che compaiono nel programma dell'esame, in ordine alfabeti
 
 ## A
 
-**Adaptive thinking** (D5): modalità in cui il modello decide da solo quanto ragionare prima di rispondere, in base alla difficoltà del compito. Non tutti i modelli la supportano: va verificato per il modello scelto.
+**Adaptive thinking** (D5): pensiero adattivo, la modalità predefinita sui modelli attuali: il modello decide da solo se e quanto ragionare, guidato dal parametro `effort`. Su Opus 5.5 e Fable 5.2 non si può disattivare.
 
 **Agente** (D1): un modello messo in un ciclo, che può usare strumenti per agire e non solo rispondere con testo. Decide da sé i passi da fare.
 
@@ -14,7 +14,7 @@ Glossario dei termini che compaiono nel programma dell'esame, in ordine alfabeti
 
 ## B
 
-**Batch (Message Batches API)** (D2, D5): modo di inviare molte richieste in modo asincrono, con risultati entro 24 ore e a costo ridotto. Adatto ai lavori non urgenti, non alle risposte in tempo reale.
+**Batch (Message Batches API)** (D2, D5): invio asincrono di molte richieste (fino a 100.000 per batch) con sconto del 50% e risultati entro 24 ore. Adatto ai lavori non urgenti, non alle risposte in tempo reale.
 
 ## C
 
@@ -23,6 +23,8 @@ Glossario dei termini che compaiono nel programma dell'esame, in ordine alfabeti
 **CLAUDE.md** (D2, D3): file di istruzioni che Claude Code legge per conoscere il progetto e le regole da seguire. Esiste una gerarchia di file a più livelli.
 
 **Compaction** (D6): riassunto della conversazione per liberare spazio nella finestra di contesto mantenendo le informazioni utili.
+
+**Context rot** (D5, D6): calo della capacità del modello di richiamare con precisione le informazioni quando il contesto cresce. Per questo il contesto va curato, non solo riempito.
 
 **Context drift** (D6): perdita graduale di aderenza al compito quando il contesto cresce e si riempie di dettagli non più utili.
 
@@ -34,11 +36,11 @@ Glossario dei termini che compaiono nel programma dell'esame, in ordine alfabeti
 
 ## E
 
-**Effort (livelli di impegno)** (D5): impostazione che regola quanto lavoro di ragionamento dedicare a una richiesta, a scapito di costo e latenza.
+**Effort (livelli di impegno)** (D5): parametro `output_config.effort` (`low`, `medium`, `high`, `xhigh`, `max`) che regola quanti token il modello spende su testo, strumenti e pensiero. È un segnale di comportamento, non un budget rigido.
 
 **Eval** (D4): insieme di test ripetibili che misurano la qualità delle risposte di un'applicazione Claude.
 
-**Extended thinking** (D5): modalità in cui il modello ragiona in modo esteso prima di rispondere, utile nei compiti difficili.
+**Extended thinking** (D5): pensiero esteso manuale (`thinking: {"type": "enabled", "budget_tokens": N}`). È deprecato su Opus 4.6 e Sonnet 4.6 e non è accettato dai modelli successivi, che usano il pensiero adattivo.
 
 ## F
 
@@ -98,11 +100,17 @@ Glossario dei termini che compaiono nel programma dell'esame, in ordine alfabeti
 
 **Sottoagente (subagent)** (D1, D6): agente lanciato da un altro per un compito specifico, con un contesto separato.
 
+**Stop reason** (D2, D4): campo `stop_reason` della risposta che dice perché il modello si è fermato: `end_turn`, `max_tokens`, `tool_use`, `pause_turn`, `refusal` e altri.
+
 **Streaming** (D2): ricezione della risposta mentre viene generata, a pezzi.
+
+**Strict tool use** (D8): `strict: true` sulla definizione di uno strumento garantisce che gli argomenti rispettino lo schema.
+
+**Structured output** (D6): `output_config.format` con uno schema JSON garantisce una risposta JSON valida e conforme.
 
 ## T
 
-**Temperatura / campionamento** (D5): parametri che influenzano quanto la scelta del token successivo è casuale.
+**Temperatura / campionamento** (D5): il modello sceglie (campiona) ogni token da una distribuzione di probabilità, per questo le risposte non sono deterministiche. Sui modelli attuali i parametri `temperature`, `top_p` e `top_k` con valori non predefiniti restituiscono errore 400.
 
 **Token** (D5): unità di testo con cui il modello lavora e con cui si misurano contesto e costi.
 
