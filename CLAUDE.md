@@ -67,6 +67,16 @@ Seconda certificazione del portale, costruita come copia adattata della CCA-F: s
 - **Pre-corso** (gruppo "Pre-corso" del catalogo, id `precorso` e `pc-*`): sette pagine in `src/assets/ccdvf/precorso/` (`00-mappa`, TypeScript, Node/npm, Git, HTTP e API, SDK, risorse) per colmare le basi tecniche, ciascuna con una tabella "dove compare" che rimanda ai domini, un mini-laboratorio e i link ufficiali. Gli esempi usano gli stessi modelli e la stessa versione dell'API delle pagine dei domini: se cambiano lì, vanno aggiornati anche qui. La pagina `06-risorse.md` raccoglie i link di studio.
 - Non copiate rispetto alla CCA-F: animazioni (`animazioni.html`), trappole d'esame, home con citazione a rotazione. Il banner della home ha variabili proprie, `BANNER_CCDVF_TITLE` e `BANNER_CCDVF_CONTENT` (come per la CCA-F, che usa `BANNER_CCAF_TITLE`/`BANNER_CCAF_CONTENT`): senza titolo il banner è rimosso. L'elenco delle coppie è `BANNERS` in `vite.config.mjs`. Le pagine dei domini (`appunti/domains/d1…d8`) contengono la teoria approfondita, con codice ed elenco delle fonti ufficiali in fondo (verificate a novembre 2026, senza domande di verifica); la banca quesiti contiene solo 3 domande di esempio scritte con parole proprie sui concetti degli esempi ufficiali. Il prompt per generare nuovi test con l'IA è `AI_PROMPT` in `simulazione/formatGuide.js` (70 domande, 8 domini).
 
+## Certificazione GH-900 (GitHub Foundations)
+
+Terza certificazione del portale, costruita sulla struttura della CCDV-F ma **in preparazione**: solo lo studio è attivo, la banca quesiti è vuota e *Allenamento* e *Simulazione* sono pulsanti disabilitati.
+
+- Percorsi: home `src/pages/gh900.html`, studio `src/pages/gh900/studio.html`, JS in `src/js/gh900/` (solo `studio*`), CSS in `src/css/gh900/studio.css`, materiali in `src/assets/github/` (`guide/`, `precorso/` con 8 moduli PC0–PC7 sui concetti dati per scontati dall'esame, `appunti/` con i domini D1–D7 approfonditi, `questions/` vuota, PDF della guida Microsoft Learn) e logo `src/assets/github/github-foundations.svg`.
+- Colori: il viola della scheda GitHub del portale, applicato dalla classe `theme-github` sul `<body>` (blocco in `style.css`, con variante per il tema scuro). Ridefinisce sia `--coral*` che `--primary*`, perché l'header usa `--coral`.
+- Esame: 7 domini (D1–D7) con pesi a intervallo (25-30 / 10-15 / 10-15 / 10-15 / 5-10 / 10-15 / 5-10), soglia 700/1000, guida Microsoft Learn aggiornata al 19/02/2026 (competenze di gennaio 2026). Durata e numero di domande non sono nella guida e non sono riportati.
+- Banner della home: variabili proprie `BANNER_GH900_TITLE` e `BANNER_GH900_CONTENT` (coppia registrata in `BANNERS` di `vite.config.mjs`); senza titolo il banner è rimosso.
+- Il catalogo è `src/js/gh900/studio/documents.js` (id `domain-1`…`domain-7`). Quando arriveranno allenamento e simulazione: duplicare le pagine e i JS dalla CCDV-F, sostituire i pulsanti disabilitati della home con i link e aggiungere `gh900/simulazione` a `SESSIONS` in `theme.js`.
+
 ## Formato dei contenuti
 
 - Formato delle banche quesiti: `src/assets/ccaf/formato-test.md` (specifica) e `template-test.md` (modello). In breve: frontmatter YAML (`title`, `duration_minutes`), `## Scenario: …`, `### Question N`, opzioni `- **A.** …`, e `#### Correct answer…: X` con spiegazione.

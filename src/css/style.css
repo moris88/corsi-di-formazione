@@ -758,6 +758,15 @@ h1 {
   --primary-dark: #57237a;
   --primary-pale: #f1e9f7;
 }
+/* Tema GitHub (pagine GH-900): stessi colori della scheda del portale; ridefinisce sia --coral* che --primary* */
+body.theme-github {
+  --coral: #6f2e98;
+  --coral-dark: #57237a;
+  --coral-pale: #f1e9f7;
+  --primary: #6f2e98;
+  --primary-dark: #57237a;
+  --primary-pale: #f1e9f7;
+}
 /* Percorso non ancora disponibile */
 .path-wip {
   margin: -10px 0 18px;
@@ -1746,6 +1755,14 @@ h1 {
 }
 :root[data-theme="dark"] .path-github .path-wip {
   color: #c9a2e4;
+}
+:root[data-theme="dark"] body.theme-github {
+  --coral: #9b5fc4;
+  --coral-dark: #c9a2e4;
+  --coral-pale: #2c1f38;
+  --primary: #9b5fc4;
+  --primary-dark: #c9a2e4;
+  --primary-pale: #2c1f38;
 }
 :root[data-theme="dark"] .doc-link:hover,
 :root[data-theme="dark"] .article-content blockquote,

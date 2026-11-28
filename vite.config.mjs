@@ -72,6 +72,7 @@ const escapeHtml = (text) =>
 const BANNERS = [
   { title: "BANNER_CCAF_TITLE", content: "BANNER_CCAF_CONTENT" }, // CCA-F
   { title: "BANNER_CCDVF_TITLE", content: "BANNER_CCDVF_CONTENT" }, // CCDV-F
+  { title: "BANNER_GH900_TITLE", content: "BANNER_GH900_CONTENT" }, // GH-900
 ];
 
 function banner(env) {
