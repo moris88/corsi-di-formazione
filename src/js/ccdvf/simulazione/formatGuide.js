@@ -24,19 +24,19 @@ LIVELLO RICHIESTO: avanzato
 (Prima di inviare, sostituisci "avanzato" con uno tra: facile, medio, difficile, avanzato, inferno.)
 
 1. STRUTTURA
-- 53 domande in inglese, come l'esame reale, numerate da 1 a 53 senza buchi né duplicati.
+- 70 domande in inglese, come l'esame reale, numerate da 1 a 70 senza buchi né duplicati.
 - Ogni domanda ha quattro opzioni A–D e UNA sola risposta corretta (il simulatore non gestisce le domande a risposta multipla).
 - Otto domini, ognuno con la sua intestazione "## Scenario: Domain N – Nome" (il nome del dominio sta nel titolo dello scenario), con questi pesi e numeri di domande:
-  - Domain 1 – Agents and Workflows: 14,7% (8 domande)
-  - Domain 2 – Applications and Integration: 33,1% (17 domande)
-  - Domain 3 – Claude Code: 3,1% (2 domande)
-  - Domain 4 – Eval, Testing, and Debugging: 2,6% (1 domanda)
-  - Domain 5 – Model Selection and Optimization: 16,8% (9 domande)
-  - Domain 6 – Prompt and Context Engineering: 11,0% (6 domande)
-  - Domain 7 – Security and Safety: 8,1% (4 domande)
-  - Domain 8 – Tools and MCPs: 10,6% (6 domande)
+  - Domain 1 – Agents and Workflows: 17% (12 domande)
+  - Domain 2 – Applications and Integration: 20% (14 domande)
+  - Domain 3 – Claude Code: 8% (6 domande)
+  - Domain 4 – Eval, Testing, and Debugging: 10% (7 domande)
+  - Domain 5 – Model Selection and Optimization: 12% (8 domande)
+  - Domain 6 – Prompt and Context Engineering: 15% (10 domande)
+  - Domain 7 – Security and Safety: 8% (6 domande)
+  - Domain 8 – Tools and MCP: 10% (7 domande)
 - Ogni domanda è autonoma: descrive da sé la situazione, senza un paragrafo di contesto comune. Non ripetere due volte lo stesso concetto.
-- Risposte corrette distribuite in modo uniforme tra A, B, C e D (circa 13 ciascuna), mai la stessa lettera per più di 3 domande di fila.
+- Risposte corrette distribuite in modo uniforme tra A, B, C e D (circa 17-18 ciascuna), mai la stessa lettera per più di 3 domande di fila.
 
 2. LIVELLI DI DIFFICOLTÀ (applica solo quello richiesto)
 - facile: concetti di base; situazione di 15–35 parole; una risposta chiaramente migliore; opzioni brevi (8–15 parole).
@@ -58,7 +58,7 @@ LIVELLO RICHIESTO: avanzato
 - Secondo paragrafo: per ogni opzione errata, in una frase, quale vincolo viola o quale errore commette.
 
 5. CONTROLLO FINALE (prima di consegnare, correggi ciò che non va)
-- 53 domande; ognuna ha quattro opzioni A–D e una sola riga "#### Correct answer to Question N: X" con lo stesso N della domanda.
+- 70 domande; ognuna ha quattro opzioni A–D e una sola riga "#### Correct answer to Question N: X" con lo stesso N della domanda.
 - Distribuzione delle lettere uniforme e numero di domande per dominio come indicato.
 - Ogni domanda rispetta il livello richiesto: lunghezza della situazione, numero di vincoli, opzioni quasi giuste.
 - Nel frontmatter, "difficulty" è il livello richiesto e il titolo lo riporta. La durata è di 120 minuti.

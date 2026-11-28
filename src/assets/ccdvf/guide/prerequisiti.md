@@ -51,6 +51,8 @@ Prima di cominciare, verifica di saper fare queste cose senza cercare ogni volta
 
 ## Se ti manca qualcosa
 
+Per colmare le lacune c'è il [pre-corso](./studio.html?doc=precorso): TypeScript, Node.js, Git, HTTP e API, SDK, ciascuno collegato ai domini d'esame, con mini-laboratori e [link di studio](./studio.html?doc=pc-risorse).
+
 - **API e SDK**: parti dalla documentazione ufficiale della Claude API e prova gli esempi nel linguaggio che usi.
 - **Agenti e strumenti**: costruisci un piccolo agente con un ciclo che chiama uno strumento, prima a mano e poi con l'Agent SDK.
 - **Concetti**: leggi il [vocabolario](./studio.html?doc=vocabolario) e poi i [domini](./studio.html?doc=domain-1).

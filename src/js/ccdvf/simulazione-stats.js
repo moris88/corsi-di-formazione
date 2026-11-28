@@ -7,14 +7,14 @@ const PASS_RATIO = 0.72;
 const STUDY = "./studio.html?doc=";
 
 export const DOMAINS = {
-  D1: { name: "Agenti e workflow", weight: 14.7 },
-  D2: { name: "Applicazioni e integrazione", weight: 33.1 },
-  D3: { name: "Claude Code", weight: 3.1 },
-  D4: { name: "Eval, test e debug", weight: 2.6 },
-  D5: { name: "Scelta e ottimizzazione dei modelli", weight: 16.8 },
-  D6: { name: "Prompt e context engineering", weight: 11.0 },
-  D7: { name: "Sicurezza e protezione", weight: 8.1 },
-  D8: { name: "Strumenti e MCP", weight: 10.6 },
+  D1: { name: "Agenti e workflow", weight: 17 },
+  D2: { name: "Applicazioni e integrazione", weight: 20 },
+  D3: { name: "Claude Code", weight: 8 },
+  D4: { name: "Eval, test e debug", weight: 10 },
+  D5: { name: "Scelta e ottimizzazione dei modelli", weight: 12 },
+  D6: { name: "Prompt e context engineering", weight: 15 },
+  D7: { name: "Sicurezza e protezione", weight: 8 },
+  D8: { name: "Strumenti e MCP", weight: 10 },
 };
 
 // Argomenti riconosciuti nel testo di domanda, opzioni e spiegazione (in inglese, come le banche).

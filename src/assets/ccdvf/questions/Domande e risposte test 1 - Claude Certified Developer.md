@@ -36,7 +36,7 @@ An agent that summarizes URLs submitted by customers fetches a page containing h
 
 Prompt injection is handled by separating untrusted content from trusted instructions and by enforcing controls in code, so that even a successful injection has little it can do. Temperature (A) has nothing to do with it, a request addressed to web pages (C) is not an enforceable control, and no model (D) is immune to injection.
 
-## Scenario: Domain 8 – Tools and MCPs
+## Scenario: Domain 8 – Tools and MCP
 
 ### Question 3
 

@@ -2,9 +2,11 @@
 
 ## Introduzione
 
-La certificazione **Claude Certified Developer — Foundations** (codice **CCDV-F**) verifica che una persona sappia costruire, integrare e mettere in produzione, a livello fondamentale, applicazioni, agenti e workflow basati sulla piattaforma Claude di Anthropic.
+La certificazione **Claude Certified Developer — Foundations** (codice **CCDV-F**) verifica che una persona sappia costruire e consegnare applicazioni, agenti e workflow di livello produttivo con Claude.
 
-È pensata per chi fa da ponte tra le capacità di Claude e le applicazioni pronte per la produzione: traduce i requisiti tecnici in sistemi funzionanti attraverso l'integrazione via API, la costruzione di agenti e strumenti, il prompt e il context engineering, la valutazione, la sicurezza e la scelta dei modelli.
+È pensata per sviluppatori operativi: integrano Claude nelle applicazioni con la Messages API e gli SDK, costruiscono agenti e workflow con il Claude Agent SDK e usano Claude Code per modernizzare ed estendere le basi di codice. Sanno anche progettare prompt e contesto, creare strumenti e server MCP, scegliere i modelli e gestire i token, valutare e fare debug dei guasti e applicare la sicurezza fin dalla progettazione.
+
+> **Guida aggiornata.** Questa pagina segue la versione in vigore dal 7 dicembre 2026. Trovi tutte le differenze rispetto alla precedente in [Cosa è cambiato](./studio.html?doc=novita).
 
 Rispetto alla [CCA-F](../ccaf.html), che si concentra sulle decisioni di architettura, la CCDV-F è più vicina al codice: API, SDK, strumenti, MCP, costi e guardrail.
 
@@ -14,20 +16,20 @@ Rispetto alla [CCA-F](../ccaf.html), che si concentra sulle decisioni di archite
 
 Chi la ottiene dimostra di saper:
 
-- costruire agenti e workflow con il Claude Agent SDK, con framework agentici o con cicli personalizzati;
-- integrare Claude nel codice applicativo tramite API e SDK, gestendo streaming, errori e input di formati diversi;
-- usare Claude Code sulle varie interfacce, scrivere Skill e configurare `CLAUDE.md`, `settings.json` e plugin;
-- scrivere prompt efficaci e applicare il context engineering per controllare il comportamento ed evitare la deriva del contesto;
-- progettare ed eseguire eval, fare debug analizzando le tracce, validare l'output strutturato e monitorare la qualità in produzione;
-- scegliere il livello di modello giusto e gestire token, caching e batch per ottimizzare costi e latenza;
-- applicare principi di sicurezza fin dalla progettazione, con guardrail e hook contro prompt injection e azioni distruttive;
-- creare strumenti, schemi di funzione e server MCP, valutando quando usare strumenti integrati, strumenti personalizzati, Skill o MCP.
+- scegliere tra architettura a workflow e agentica e costruire agenti con il Claude Agent SDK, harness e hook che impongono le azioni obbligatorie;
+- integrare Claude con la Messages API e gli SDK, compresi strumenti, streaming, output strutturato, prompt caching, batch e gestione resiliente degli errori;
+- usare ed estendere Claude Code, con precedenza della configurazione, modalità di permessi, Skill, plugin, hook e subagenti;
+- costruire valutazioni, con giudici LLM tarati e golden set, e diagnosticare i guasti dalle tracce;
+- scegliere il livello di modello e le opzioni di pensiero e ottimizzare costi e latenza con caching, batch e budget di token;
+- progettare prompt e contesto per controllare il comportamento, evitare la deriva, rendere robusto il parsing dell'output e ancorare le risposte ai documenti forniti;
+- difendersi dalla prompt injection con guardrail deterministici a più livelli, privilegio minimo e gestione corretta delle credenziali;
+- creare strumenti e server MCP e scegliere il meccanismo giusto tra strumenti integrati, strumenti personalizzati, Skill e MCP.
 
 ---
 
-## Il candidato minimo
+## A chi è rivolta
 
-L'esame è tarato sul **candidato minimamente qualificato**: una persona tecnica, operativa, che costruisce e rilascia applicazioni con Claude. L'esperienza consigliata è:
+L'esame si rivolge a ingegneri del software e AI/ML, sviluppatori full-stack e backend e solution engineer, in settori come sanità, retail, tecnologia, fintech e SaaS aziendale. Chi lo affronta costruisce, integra e rilascia: traduce i requisiti tecnici in applicazioni funzionanti con Claude, lavora con Claude Developer Platform (Messages API, Agent SDK, Managed Agents), con Claude Code su CLI, desktop, IDE, web e mobile e con MCP, in basi di codice di produzione, pipeline CI/CD con Git e GitHub Actions e contesti aziendali con politiche IT restrittive. L'esperienza tipica è:
 
 - da uno a cinque anni di ingegneria del software;
 - almeno sei mesi di pratica con Claude o con sistemi simili basati su LLM;
@@ -35,7 +37,7 @@ L'esame è tarato sul **candidato minimamente qualificato**: una persona tecnica
 - dimestichezza con le API REST e con la riga di comando;
 - comprensione di base di LLM, agenti, gestione del contesto e MCP.
 
-Non ci sono prerequisiti obbligatori: il titolo dipende solo dal risultato dell'esame. Non è pensato per chi usa Claude solo come utente finale, né per ruoli limitati alla scrittura di prompt senza sviluppo applicativo.
+Non ci sono prerequisiti obbligatori: il titolo dipende solo dal risultato dell'esame.
 
 Vedi anche [Prerequisiti tecnici](./studio.html?doc=prerequisiti).
 
@@ -46,8 +48,8 @@ Vedi anche [Prerequisiti tecnici](./studio.html?doc=prerequisiti).
 | Parametro | Valore |
 | --- | --- |
 | Codice | **CCDV-F** |
-| Numero di domande | **53** |
-| Tipo di domanda | Scelta multipla e risposta multipla: ogni domanda dice quante risposte selezionare |
+| Numero di domande | **70**, di cui 60 valutate e 10 non valutate (non identificabili, non influiscono sul punteggio) |
+| Tipo di domanda | Domande a scenario a scelta multipla: ogni domanda dice quante risposte selezionare |
 | Durata | **120 minuti** |
 | Modalità | Con sorveglianza (online o in centro d'esame) |
 | Punteggio per superare l'esame | **720** su una scala da 100 a 1000 |
@@ -55,7 +57,7 @@ Vedi anche [Prerequisiti tecnici](./studio.html?doc=prerequisiti).
 | Validità | 12 mesi dalla data di rilascio |
 | Esito | Superato/non superato, punteggio scalare e percentuale di risposte corrette per dominio |
 
-Due differenze da tenere a mente rispetto ad altri esami: esistono domande a **risposta multipla** (leggi sempre quante risposte vanno scelte) e il rapporto è di circa **2 minuti e 15 secondi a domanda**.
+Due cose da tenere a mente: leggi sempre **quante risposte vanno scelte** e ricorda che il ritmo è di circa **1 minuto e 43 secondi a domanda**. Dieci domande su 70 non contano, ma non si riconoscono: affrontale tutte con la stessa cura.
 
 ---
 
@@ -63,24 +65,25 @@ Due differenze da tenere a mente rispetto ad altri esami: esistono domande a **r
 
 | Dominio | Peso |
 | --- | --- |
-| 1. Agenti e workflow | 14,7% |
-| 2. Applicazioni e integrazione | **33,1%** |
-| 3. Claude Code | 3,1% |
-| 4. Eval, test e debug | 2,6% |
-| 5. Scelta e ottimizzazione dei modelli | 16,8% |
-| 6. Prompt e context engineering | 11,0% |
-| 7. Sicurezza e protezione | 8,1% |
-| 8. Strumenti e MCP | 10,6% |
+| 1. Agenti e workflow | 17% |
+| 2. Applicazioni e integrazione | **20%** |
+| 3. Claude Code | 8% |
+| 4. Eval, test e debug | 10% |
+| 5. Scelta e ottimizzazione dei modelli | 12% |
+| 6. Prompt e context engineering | 15% |
+| 7. Sicurezza e protezione | 8% |
+| 8. Strumenti e MCP | 10% |
 
-Il dominio 2 da solo vale un terzo dell'esame, e insieme ai domini 5 e 1 supera il 60%. Claude Code (D3) ed eval (D4) pesano poco: servono, ma non vanno studiati a scapito di API, modelli e agenti.
+Il dominio 2 resta il più pesante (20%), seguito da agenti (17%) e prompt e context engineering (15%): insieme valgono il 52%. Nessun dominio si può trascurare: Claude Code (8%) ed eval (10%) pesano ora molto più di prima.
 
-Ogni dominio è diviso in competenze con un peso proprio: le trovi nelle pagine dei singoli domini.
+Ogni dominio è diviso in competenze, ora senza una percentuale propria. Le differenze rispetto alla versione precedente sono in [Cosa è cambiato](./studio.html?doc=novita).
 
 ---
 
 ## Come funziona il punteggio
 
 - La valutazione è **a criterio fisso**: contano le tue conoscenze rispetto allo standard, non il confronto con altri candidati.
+- Ogni prova comprende alcune domande **non valutate**, mescolate a quelle valutate e non riconoscibili: non contano per il punteggio.
 - La soglia di 720 è stata fissata con uno studio formale fatto da esperti, pensando al candidato minimamente qualificato.
 - Il punteggio finale decide da solo l'esito. Le percentuali per dominio servono solo a capire dove migliorare.
 
@@ -91,12 +94,12 @@ Ogni dominio è diviso in competenze con un peso proprio: le trovi nelle pagine 
 Non esiste un corso obbligatorio, e Anthropic non garantisce che una risorsa porti al superamento. L'indicazione è di combinare pratica e studio:
 
 1. studia il programma e valuta te stesso su ogni competenza;
-2. leggi la documentazione ufficiale su API, modelli, prompt engineering, Claude Code, Skill e MCP;
-3. costruisci almeno un'applicazione con Claude che usi l'API, uno o più strumenti, un minimo di prompt e context engineering e qualche pratica di sicurezza e valutazione;
-4. esercitati sulle competenze da sviluppatore: prompt e istruzioni di sistema, agenti e workflow, Claude Code, gestione di token e costi, guardrail, strumenti e server MCP;
+2. leggi la documentazione ufficiale su Claude Developer Platform (Messages API, Claude Agent SDK, Managed Agents), Claude Code (Skill, plugin, file Rules, hook, subagenti) e MCP, comprese le differenze tra API di Anthropic e piattaforme cloud;
+3. costruisci e rilascia almeno un agente o workflow con strumenti, con l'Agent SDK o un harness tuo, che includa strumenti personalizzati o un server MCP, output strutturato, prompt caching, una valutazione su un golden set e guardrail deterministici;
+4. esercitati sulle competenze: scegliere tra workflow e agenti, leggere e scrivere interazioni corrette con la Messages API, diagnosticare guasti da tracce ed errori, tarare un giudice LLM su etichette umane, posizionare i punti di cache, rivedere un prompt che fallisce, ancorare le risposte ai documenti e scegliere il meccanismo giusto tra strumenti, Skill e MCP;
 5. fai le domande di esempio per prendere confidenza con lo stile.
 
-Su questo sito: studia i [domini](./studio.html?doc=domain-1), poi passa all'[allenamento](./allenamento.html) e infine alla [simulazione](./simulazione.html).
+Su questo sito: se ti mancano le basi tecniche parti dal [pre-corso](./studio.html?doc=precorso), poi studia i [domini](./studio.html?doc=domain-1), poi passa all'[allenamento](./allenamento.html) e infine alla [simulazione](./simulazione.html).
 
 ---
 
@@ -120,4 +123,4 @@ La certificazione dura **12 mesi**, perché la tecnologia cambia in fretta. Per 
 
 ## Fonti ufficiali
 
-Questa pagina riassume la guida ufficiale (versione 1.1, novembre 2026, soggetta a modifiche senza preavviso). In caso di dubbio, fa fede il [PDF originale](../../assets/ccdvf/Claude-Certified-Developer-Foundations-Exam-Guide.pdf).
+Questa pagina riassume la guida ufficiale (versione 1.1, in vigore dal 7 dicembre 2026, soggetta a modifiche senza preavviso). In caso di dubbio, fa fede il [PDF originale](../../assets/ccdvf/Claude-Certified-Developer-Foundations-Exam-Guide.pdf).

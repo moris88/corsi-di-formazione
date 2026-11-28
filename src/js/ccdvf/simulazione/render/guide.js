@@ -31,8 +31,8 @@ export function renderExamGuide() {
       <section class="guide-section" aria-labelledby="exam-title">
         <h2 id="exam-title">Come funziona l’esame reale</h2>
         <ol class="guide-steps">
-          <li><strong>53 domande in 120 minuti.</strong> Circa 2 minuti e 15 secondi a domanda. All’esame ci sono domande a scelta multipla e a risposta multipla, e ognuna dice quante risposte selezionare; in questo simulatore c’è una sola risposta corretta.</li>
-          <li><strong>Otto domini con pesi diversi.</strong> Le applicazioni e l’integrazione valgono il 33,1% dell’esame, la scelta dei modelli il 16,8%, gli agenti il 14,7%: i domini più leggeri sono Claude Code (3,1%) ed eval (2,6%).</li>
+          <li><strong>70 domande in 120 minuti.</strong> Circa 1 minuto e 43 secondi a domanda. All’esame le domande sono a scenario con scelta multipla (dieci non contano nel punteggio, ma non si riconoscono), e ognuna dice quante risposte selezionare; in questo simulatore c’è una sola risposta corretta.</li>
+          <li><strong>Otto domini con pesi diversi.</strong> Le applicazioni e l’integrazione valgono il 20% dell’esame, gli agenti il 17%, il prompt e context engineering il 15%: i domini più leggeri sono Claude Code e sicurezza (8% ciascuno).</li>
           <li><strong>Tieni il ritmo.</strong> Se una domanda ti blocca, passa alla successiva e torna a rivederla prima della consegna: non conviene perdere minuti su una sola.</li>
           <li><strong>Punteggio scalare da 100 a 1000.</strong> Per superare l’esame servono almeno 720 punti.</li>
           <li><strong>Segna le domande da rivedere.</strong> Puoi contrassegnare le domande dubbie per rivederle prima della consegna.</li>
