@@ -201,8 +201,10 @@
         </div>
       </form>`;
     dialog.addEventListener("click", (event) => {
-      // Clic sullo sfondo o su un modulo: la finestra si chiude
-      if (event.target === dialog || event.target.closest(".feedback-choice")) dialog.close();
+      // Clic sullo sfondo o su un modulo: la finestra si chiude. Aprire il questionario vale come "fatto"
+      const choice = event.target.closest(".feedback-choice");
+      if (choice?.getAttribute("href") === SURVEY.url) markSurveyDone();
+      if (event.target === dialog || choice) dialog.close();
     });
     dialog.addEventListener("close", () => dialog.remove());
     document.body.append(dialog);
@@ -215,6 +217,133 @@
     event.preventDefault();
     openFeedbackDialog();
   });
+
+  // Popup del questionario facoltativo: a tutto schermo, si chiude solo con la X o con "Annulla".
+  // Compare una volta sola: se l'utente apre il questionario non torna più; se lo chiude
+  // (X, Annulla o Esc) viene riproposto più tardi, con pause sempre più lunghe.
+  // Stato in localStorage: { done, dismissed, nextAt }. Non compare nelle pagine di allenamento
+  // e simulazione (page-exam), per non interrompere chi si sta esercitando.
+  const SURVEY = {
+    key: "ccaf-survey-v1",
+    startKey: "ccaf-survey-start",
+    url: FEEDBACK_FORMS[1].url,
+    firstDelayMs: 4 * 60 * 1000, // dopo quanto dall'apertura del sito (nella sessione del browser)
+    snoozeMs: [30 * 60 * 1000, 3 * 60 * 60 * 1000, 24 * 60 * 60 * 1000], // 1ª, 2ª, dalla 3ª chiusura in poi
+    retryMs: 60 * 1000, // se c'è già una finestra aperta
+  };
+
+  function readSurvey() {
+    try {
+      const state = JSON.parse(localStorage.getItem(SURVEY.key) || "null");
+      return {
+        done: state?.done === true,
+        dismissed: Number(state?.dismissed) || 0,
+        nextAt: Number(state?.nextAt) || 0,
+      };
+    } catch {
+      return { done: false, dismissed: 0, nextAt: 0 };
+    }
+  }
+
+  function writeSurvey(state) {
+    try {
+      localStorage.setItem(SURVEY.key, JSON.stringify(state));
+    } catch {
+      // Archiviazione non disponibile: il popup non si ripresenta in questa visita
+      surveyBlocked = true;
+    }
+  }
+
+  let surveyBlocked = false;
+  let surveyCheck = null; // controllo dei tempi, richiamato dopo ogni chiusura per riproporre il popup nella stessa pagina
+
+  function markSurveyDone() {
+    writeSurvey({ ...readSurvey(), done: true });
+  }
+
+  function snoozeSurvey() {
+    const state = readSurvey();
+    const dismissed = state.dismissed + 1;
+    const pause = SURVEY.snoozeMs[Math.min(dismissed - 1, SURVEY.snoozeMs.length - 1)];
+    writeSurvey({ ...state, dismissed, nextAt: Date.now() + pause });
+  }
+
+  function openSurveyDialog() {
+    const dialog = document.createElement("dialog");
+    dialog.className = "site-dialog survey-dialog";
+    dialog.setAttribute("aria-labelledby", "survey-title");
+    dialog.innerHTML = `
+      <div class="survey-card">
+        <button type="button" class="survey-close" data-survey="cancel" aria-label="Chiudi e riproponi più tardi" title="Chiudi">×</button>
+        <p class="survey-kicker">Questionario facoltativo</p>
+        <h2 class="survey-title" id="survey-title">Ci aiuti a migliorare il sito?</h2>
+        <p class="survey-text">Poche domande sulla tua esperienza con il sito e con la preparazione all’esame: ci dicono cosa funziona e cosa va migliorato.</p>
+        <p class="survey-note">Si apre in una nuova scheda e richiede l’accesso con un account Google. Se ora non puoi, premi Annulla: te lo riproporremo più avanti.</p>
+        <div class="survey-actions">
+          <button type="button" class="button secondary" data-survey="cancel">Annulla</button>
+          <a class="button" href="${SURVEY.url}" target="_blank" rel="noopener noreferrer" data-survey="open">Compila il questionario</a>
+        </div>
+      </div>`;
+    let handled = false;
+    // Esc non chiude: restano solo la X e "Annulla" (un secondo Esc può comunque chiudere, ed è trattato come Annulla)
+    dialog.addEventListener("cancel", (event) => event.preventDefault());
+    dialog.addEventListener("click", (event) => {
+      // Clic sullo sfondo: nessun effetto
+      const action = event.target.closest?.("[data-survey]")?.dataset.survey;
+      if (!action) return;
+      handled = true;
+      if (action === "open") markSurveyDone();
+      else snoozeSurvey();
+      dialog.close();
+    });
+    dialog.addEventListener("close", () => {
+      if (!handled) snoozeSurvey();
+      document.documentElement.classList.remove("survey-open");
+      dialog.remove();
+      surveyCheck?.();
+    });
+    document.body.append(dialog);
+    document.documentElement.classList.add("survey-open");
+    dialog.showModal();
+  }
+
+  function scheduleSurvey() {
+    if (typeof HTMLDialogElement === "undefined" || document.body.classList.contains("page-exam")) return;
+    if (readSurvey().done) return;
+    // Inizio della visita: salvato nella sessione del browser, così il conteggio prosegue cambiando pagina
+    let start = Date.now();
+    try {
+      start = Number(sessionStorage.getItem(SURVEY.startKey)) || start;
+      sessionStorage.setItem(SURVEY.startKey, String(start));
+    } catch {
+      /* senza sessionStorage il conteggio riparte a ogni pagina */
+    }
+    const check = () => {
+      if (surveyBlocked) return;
+      const state = readSurvey();
+      if (state.done) return;
+      const remaining = Math.max(start + SURVEY.firstDelayMs, state.nextAt) - Date.now();
+      if (remaining > 0) {
+        setTimeout(check, remaining);
+        return;
+      }
+      // Scheda in secondo piano: si aspetta che l'utente torni
+      if (document.hidden) {
+        document.addEventListener("visibilitychange", check, { once: true });
+        return;
+      }
+      // Un'altra finestra è già aperta: non si sovrappone
+      if (document.querySelector("dialog[open]")) {
+        setTimeout(check, SURVEY.retryMs);
+        return;
+      }
+      openSurveyDialog();
+    };
+    surveyCheck = check;
+    check();
+  }
+
+  document.addEventListener("DOMContentLoaded", scheduleSurvey);
 
   // Barre di scorrimento coral mentre il contenitore scorre: classe "is-scrolling" tolta poco dopo l'ultimo scroll
   const scrollTimers = new WeakMap();

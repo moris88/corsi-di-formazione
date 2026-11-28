@@ -1,14 +1,16 @@
 # Certificazioni Anthropic · Materiali di studio
 
-Sito statico in italiano per prepararsi alle certificazioni Anthropic. Sono disponibili **Claude Certified Architect — Foundations (CCA-F)** e **Claude Certified Developer — Foundations (CCDV-F)**.
+Sito statico in italiano per prepararsi alle certificazioni. Sono disponibili **Claude Certified Architect — Foundations (CCA-F)**e, in preparazione, **Claude Certified Developer — Foundations (CCDV-F)**, **GitHub Foundations (GH-900)**.
 
 ## Il sito
 
-La pagina iniziale ([src/index.html](src/index.html)) è il portale di tutte le certificazioni; ognuna ha una propria home (per la CCA-F [src/pages/ccaf.html](src/pages/ccaf.html), per la CCDV-F [src/pages/ccdvf.html](src/pages/ccdvf.html)) con tre sezioni:
+La pagina iniziale ([src/index.html](src/index.html)) è il portale di tutte le certificazioni; ognuna ha una propria home (per la CCA-F [src/pages/ccaf.html](src/pages/ccaf.html), per la CCDV-F [src/pages/ccdvf.html](src/pages/ccdvf.html), per la GH-900 [src/pages/gh900.html](src/pages/gh900.html)) con tre sezioni:
 
 - **Studio** (`studio.html`): lettore dei materiali organizzati per sezione: orientamento (guida d'esame, pre-corso, vocabolario), domini d'esame, domini approfonditi, approfondimenti, esercitazioni, trappole d'esame e riferimenti ufficiali. Per i domini sono disponibili anche le slide in PDF.
 - **Simulazione** (`simulazione.html`): test completi a tempo, come all'esame, con correzione, punteggio stimato e storico dei risultati. Si possono caricare anche test propri in Markdown (vedi [formato-test.md](src/assets/ccaf/formato-test.md)).
 - **Allenamento** (`allenamento.html`): quiz brevi con domande prese da tutte le banche disponibili, con statistiche sull'andamento (per sessione, scenario e difficoltà).
+
+La **GH-900** e la **CCDV-F** sono in preparazione: per ora è attivo solo lo **studio** (guida d'esame, pre-corso sui concetti di base, sette domini approfonditi e riferimenti); *Simulazione* e *Allenamento* sono disattivati e la banca quesiti è vuota.
 
 Le domande sono in inglese, come all'esame reale; tutti gli altri materiali sono in italiano. L'interfaccia ha tema chiaro e scuro ed è pensata anche per smartphone.
 
@@ -19,7 +21,8 @@ Le domande sono in inglese, come all'esame reale; tutti gli altri materiali sono
 | `src/` | Sorgenti del sito (HTML, CSS, JavaScript vanilla) |
 | `src/pages/` | Home e pagine di ogni certificazione |
 | `src/assets/ccaf/` | Materiali della CCA-F: guide, appunti, slide, trappole d'esame, banche quesiti (`questions/`) e documenti ufficiali |
-| `src/assets/ccdvf/` | Materiali della CCDV-F: guida d'esame, prerequisiti, vocabolario, un'esposizione per ciascuno degli otto domini, banche quesiti (`questions/`) e guida ufficiale |
+| `src/assets/ccdvf/` | Materiali della CCDV-F: guida d'esame, prerequisiti, vocabolario, pre-corso (`precorso/`), un'esposizione per ciascuno degli otto domini, banche quesiti (`questions/`) e guida ufficiale |
+| `src/assets/gh900/` | Materiali della GH-900: guida d'esame, vocabolario, pre-corso (`precorso/`), sette domini approfonditi (`appunti/`), banca quesiti vuota (`questions/`) e guida Microsoft Learn in PDF |
 | `src/server.mjs` | Server Express che serve la build |
 | `api/`, `vercel.json` | Pubblicazione su Vercel |
 
@@ -42,7 +45,7 @@ Su **Vercel** `vercel.json` esegue `npm run build` e instrada ogni richiesta all
 
 ## Segnalazioni e feedback
 
-Hai trovato un errore o hai un suggerimento? [Apri una segnalazione](https://forms.gle/wuPM9cL7cqiaPzQJ8). Puoi anche compilare il [questionario facoltativo](https://forms.gle/3NvXVDYVc4z3kJVf8). Entrambi i moduli sono disponibili in ogni pagina, dal pulsante **Segnala / Feedback**.
+Hai trovato un errore o hai un suggerimento? [Apri una segnalazione](https://forms.gle/wuPM9cL7cqiaPzQJ8). Puoi anche compilare il [questionario facoltativo](https://forms.gle/3NvXVDYVc4z3kJVf8). Entrambi i moduli sono disponibili in ogni pagina, dal pulsante **Segnala / Feedback**. Il questionario viene proposto anche con un popup a tutto schermo: compare una sola volta dopo qualche minuto di utilizzo e, se lo chiudi con la X o con Annulla, torna dopo un po' (30 minuti, poi 3 ore, poi ogni giorno); non appare nelle pagine di allenamento e simulazione e sparisce per sempre dopo aver aperto il questionario.
 
 ## Nota
 
